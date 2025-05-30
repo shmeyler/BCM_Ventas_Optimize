@@ -566,84 +566,137 @@ const knowledgeBaseData = [
   }
 ];
 
-// Header Component with BCM branding
+// Header Component with BCM branding and API management
 const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn }) => {
+  const [showAPIManager, setShowAPIManager] = useState(false);
+  const [apiStatus, setApiStatus] = useState({});
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadAPIStatus();
+    }
+  }, [isLoggedIn]);
+
+  const loadAPIStatus = async () => {
+    try {
+      const status = await GeographicAPI.checkAPIStatus();
+      setApiStatus(status);
+    } catch (error) {
+      console.error('Error loading API status:', error);
+    }
+  };
+
+  const getDataSourceIndicator = () => {
+    const freeActive = apiStatus.census?.available && apiStatus.usps?.available;
+    const premiumCount = Object.values(apiStatus).filter(s => s.type === 'PREMIUM' && s.available).length;
+    
+    return (
+      <div className="flex items-center space-x-2">
+        <CloudIcon className="h-4 w-4 text-gray-600" />
+        <span className="text-xs text-gray-600">
+          {freeActive ? '🟢' : '🟡'} Free APIs
+          {premiumCount > 0 && ` | 🔑 ${premiumCount} Premium`}
+        </span>
+      </div>
+    );
+  };
+
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-3">
-              <img 
-                src="https://www.beebyclarkmeyler.com/hs-fs/hubfs/BCM_2024_Logo_Update_White.png?width=2550&height=3300&name=BCM_2024_Logo_Update_White.png"
-                alt="BCM Logo"
-                className="h-8 w-auto bg-bcm-orange p-1 rounded"
-              />
-              <div>
-                <div className="text-lg font-bold text-gray-900">BCM VentasAI</div>
-                <div className="text-xs text-bcm-orange font-semibold">Optimize</div>
+    <>
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="https://www.beebyclarkmeyler.com/hs-fs/hubfs/BCM_2024_Logo_Update_White.png?width=2550&height=3300&name=BCM_2024_Logo_Update_White.png"
+                  alt="BCM Logo"
+                  className="h-8 w-auto bg-bcm-orange p-1 rounded"
+                />
+                <div>
+                  <div className="text-lg font-bold text-gray-900">BCM VentasAI</div>
+                  <div className="text-xs text-bcm-orange font-semibold">Optimize</div>
+                </div>
               </div>
+              
+              {isLoggedIn && (
+                <nav className="hidden md:flex space-x-6">
+                  <button 
+                    onClick={() => setCurrentView('dashboard')}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      currentView === 'dashboard' 
+                        ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Platform
+                  </button>
+                  <button 
+                    onClick={() => setCurrentView('analytics')}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      currentView === 'analytics' 
+                        ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Analytics
+                  </button>
+                  <button 
+                    onClick={() => setCurrentView('resources')}
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      currentView === 'resources' 
+                        ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Resources
+                  </button>
+                </nav>
+              )}
             </div>
             
-            {isLoggedIn && (
-              <nav className="hidden md:flex space-x-6">
-                <button 
-                  onClick={() => setCurrentView('dashboard')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    currentView === 'dashboard' 
-                      ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Platform
-                </button>
-                <button 
-                  onClick={() => setCurrentView('analytics')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    currentView === 'analytics' 
-                      ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Analytics
-                </button>
-                <button 
-                  onClick={() => setCurrentView('resources')}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    currentView === 'resources' 
-                      ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Resources
-                </button>
-              </nav>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {!isLoggedIn ? (
-              <>
-                <button 
-                  onClick={() => setShowLoginModal(true)}
-                  className="text-gray-600 hover:text-gray-900 text-sm font-medium"
-                >
-                  Login
-                </button>
-                <button className="bg-bcm-orange hover:bg-bcm-orange-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                  Request a demo
-                </button>
-              </>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <UserIcon className="h-5 w-5 text-gray-600" />
-                <span className="text-sm text-gray-600">Welcome back</span>
-              </div>
-            )}
+            <div className="flex items-center space-x-4">
+              {isLoggedIn && (
+                <>
+                  {getDataSourceIndicator()}
+                  <button
+                    onClick={() => setShowAPIManager(true)}
+                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 text-sm font-medium"
+                  >
+                    <KeyIcon className="h-4 w-4" />
+                    <span>Data Sources</span>
+                  </button>
+                </>
+              )}
+              
+              {!isLoggedIn ? (
+                <>
+                  <button 
+                    onClick={() => setShowLoginModal(true)}
+                    className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                  >
+                    Login
+                  </button>
+                  <button className="bg-bcm-orange hover:bg-bcm-orange-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Request a demo
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <UserIcon className="h-5 w-5 text-gray-600" />
+                  <span className="text-sm text-gray-600">Welcome back</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <APIKeyManager 
+        isOpen={showAPIManager}
+        onClose={() => setShowAPIManager(false)}
+      />
+    </>
   );
 };
 
