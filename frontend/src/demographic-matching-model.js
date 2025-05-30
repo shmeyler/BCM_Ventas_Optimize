@@ -829,6 +829,32 @@ class DemographicMatchingModel {
   /**
    * Helper methods for statistical calculations
    */
+  extractRealPopulation(region) {
+    // Extract population from real demographic data
+    if (region.demographics && region.demographics.populationDensity) {
+      // More sophisticated population estimation
+      const density = region.demographics.populationDensity;
+      const urbanization = region.demographics.urbanizationLevel || 'SUBURBAN';
+      
+      // Estimate actual population based on density and urbanization
+      let populationMultiplier = 1;
+      if (urbanization === 'URBAN') populationMultiplier = 15;
+      else if (urbanization === 'SUBURBAN') populationMultiplier = 8;
+      else populationMultiplier = 3;
+      
+      return Math.max(5000, Math.min(500000, density * populationMultiplier));
+    }
+    return 50000; // Default population estimate
+  }
+
+  getConfidenceLevel(power, dataQuality) {
+    if (!dataQuality.reliable) return 'Unreliable';
+    if (power >= 0.8 && dataQuality.score >= 80) return 'High';
+    if (power >= 0.6 && dataQuality.score >= 60) return 'Medium';
+    if (power >= 0.4 && dataQuality.score >= 40) return 'Low';
+    return 'Very Low';
+  }
+
   getZScore(p) {
     // Approximation for Z-scores (inverse normal CDF)
     if (p === 0.025) return 1.96;  // 95% confidence
