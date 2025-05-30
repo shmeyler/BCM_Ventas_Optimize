@@ -230,53 +230,123 @@ const realAPIService = new RealAPIService();
 
 // Enhanced Geographic API Service with real data integration
 const GeographicAPI = {
-  // Get ZIP code data from real APIs with fallback
+  // Get ZIP code data from our backend API
   async getZipCodeData(zipCode) {
     try {
-      console.log(`📍 Fetching real data for ZIP code: ${zipCode}`);
+      console.log(`📍 Fetching data for ZIP code: ${zipCode} from backend`);
       
-      // Try real Census API first
-      const realData = await realAPIService.getRealZipCodeData(zipCode);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/geographic/zip/${zipCode}`);
       
-      if (realData && realData.source !== 'MOCK_FALLBACK') {
-        console.log(`✅ Real Census data retrieved for ${zipCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Backend data retrieved for ZIP ${zipCode} (Source: ${data.source})`);
         return {
-          ...realData,
+          ...data,
           selected: false,
           type: null
         };
+      } else {
+        console.error(`❌ Backend API error for ZIP ${zipCode}: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
       }
       
-      // Fallback to enhanced mock data
-      console.log(`🔄 Using enhanced mock data for ${zipCode}`);
-      return this.getEnhancedMockZipData(zipCode);
-      
     } catch (error) {
-      console.error('Error fetching ZIP code data:', error);
+      console.error('Error fetching ZIP code data from backend:', error);
+      // Fallback to enhanced mock data only if backend is completely unavailable
+      console.log(`🔄 Using enhanced mock data for ${zipCode} (backend unavailable)`);
       return this.getEnhancedMockZipData(zipCode);
     }
   },
 
-  // Get DMA data from real APIs with fallback
+  // Get multiple ZIP codes data from our backend API
+  async getMultipleZipCodes(zipCodes) {
+    try {
+      console.log(`📍 Fetching data for multiple ZIP codes: ${zipCodes.join(',')} from backend`);
+      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/geographic/zips?zip_codes=${zipCodes.join(',')}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Backend data retrieved for ${zipCodes.length} ZIP codes (Source: ${data.source})`);
+        return data.regions.map(region => ({
+          ...region,
+          selected: false,
+          type: null
+        }));
+      } else {
+        console.error(`❌ Backend API error for multiple ZIP codes: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching multiple ZIP codes from backend:', error);
+      // Fallback to processing each ZIP individually with mock data
+      const results = [];
+      for (const zipCode of zipCodes) {
+        results.push(await this.getEnhancedMockZipData(zipCode));
+      }
+      return results;
+    }
+  },
+
+  // Get DMA data from our backend API
   async getDMAData(dmaId) {
     try {
-      console.log(`📺 Fetching real data for DMA: ${dmaId}`);
+      console.log(`📺 Fetching DMA data from backend`);
       
-      // Try premium Nielsen API if available
-      const realData = await realAPIService.getPremiumDMAData(dmaId);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/geographic/dmas`);
       
-      if (realData && realData.source !== 'MOCK_FALLBACK') {
-        console.log(`✅ Real Nielsen data retrieved for ${dmaId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Backend DMA data retrieved (Source: ${data.source})`);
+        
+        // Find the specific DMA requested or return the first one
+        const dma = data.regions.find(region => region.id === dmaId) || data.regions[0];
         return {
-          ...realData,
+          ...dma,
           selected: false,
           type: null
         };
+      } else {
+        console.error(`❌ Backend API error for DMA data: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
       }
       
-      // Fallback to enhanced mock data
-      console.log(`🔄 Using enhanced mock data for ${dmaId}`);
+    } catch (error) {
+      console.error('Error fetching DMA data from backend:', error);
+      // Fallback to enhanced mock data only if backend is completely unavailable
+      console.log(`🔄 Using enhanced mock data for DMA ${dmaId} (backend unavailable)`);
       return this.getEnhancedMockDMAData(dmaId);
+    }
+  },
+
+  // Get all available states from our backend API
+  async getStatesData() {
+    try {
+      console.log(`🏛️ Fetching states data from backend`);
+      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/geographic/states`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Backend states data retrieved (Source: ${data.source})`);
+        return data.regions.map(region => ({
+          ...region,
+          selected: false,
+          type: 'state'
+        }));
+      } else {
+        console.error(`❌ Backend API error for states data: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching states data from backend:', error);
+      // Fallback to mock states data only if backend is completely unavailable
+      console.log(`🔄 Using mock states data (backend unavailable)`);
+      return mockRegions.states || [];
+    }
+  },
       
     } catch (error) {
       console.error('Error fetching DMA data:', error);
