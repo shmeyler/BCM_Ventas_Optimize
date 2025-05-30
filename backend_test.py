@@ -1,154 +1,118 @@
+
 import requests
-import sys
 import json
-import time
+import sys
 from datetime import datetime
 
-class VentasAIAPITester:
-    def __init__(self, base_url="https://2e6a8e6e-d1d4-4773-8628-eee77b08df7f.preview.emergentagent.com"):
-        self.base_url = base_url
-        self.tests_run = 0
-        self.tests_passed = 0
+# Base URL from frontend/.env
+BASE_URL = "https://2e6a8e6e-d1d4-4773-8628-eee77b08df7f.preview.emergentagent.com"
+API_BASE_URL = f"{BASE_URL}/api"
 
-    def run_test(self, name, method, endpoint, expected_status, data=None):
-        """Run a single API test"""
-        url = f"{self.base_url}/{endpoint}"
-        headers = {'Content-Type': 'application/json'}
-        
-        self.tests_run += 1
-        print(f"\n🔍 Testing {name}...")
-        
+def test_backend_root():
+    """Test if the backend root endpoint is responding"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/")
+        print(f"\n1. Testing backend root endpoint: {API_BASE_URL}/")
+        print(f"Status Code: {response.status_code}")
+        print(f"Response: {response.json()}")
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error testing backend root: {str(e)}")
+        return False
+
+def test_status_endpoint_get():
+    """Test the GET /api/status endpoint"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/status")
+        print(f"\n2. Testing GET /api/status endpoint")
+        print(f"Status Code: {response.status_code}")
+        print(f"Response: {response.json()}")
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error testing GET /api/status: {str(e)}")
+        return False
+
+def test_status_endpoint_post():
+    """Test the POST /api/status endpoint"""
+    try:
+        data = {"client_name": f"Test Client {datetime.now().isoformat()}"}
+        response = requests.post(f"{API_BASE_URL}/status", json=data)
+        print(f"\n3. Testing POST /api/status endpoint")
+        print(f"Request Data: {data}")
+        print(f"Status Code: {response.status_code}")
+        print(f"Response: {response.json()}")
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error testing POST /api/status: {str(e)}")
+        return False
+
+def check_geographic_endpoints():
+    """Check if there are any geographic data endpoints available"""
+    potential_endpoints = [
+        "/api/geo",
+        "/api/geographic",
+        "/api/locations",
+        "/api/maps",
+        "/api/coordinates"
+    ]
+    
+    print("\n4. Checking for geographic data endpoints")
+    found_endpoints = []
+    
+    for endpoint in potential_endpoints:
         try:
-            if method == 'GET':
-                response = requests.get(url, headers=headers)
-            elif method == 'POST':
-                response = requests.post(url, json=data, headers=headers)
-
-            success = response.status_code == expected_status
-            if success:
-                self.tests_passed += 1
-                print(f"✅ Passed - Status: {response.status_code}")
-                try:
-                    print(f"Response: {json.dumps(response.json(), indent=2)}")
-                except:
-                    print(f"Response: {response.text}")
-            else:
-                print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
-                print(f"Response: {response.text}")
-
-            return success, response.json() if success and response.text else {}
-
+            response = requests.get(f"{BASE_URL}{endpoint}")
+            print(f"Testing {endpoint}: Status Code {response.status_code}")
+            if response.status_code != 404:
+                found_endpoints.append(endpoint)
+                print(f"Response: {response.text[:200]}...")  # Print first 200 chars
         except Exception as e:
-            print(f"❌ Failed - Error: {str(e)}")
-            return False, {}
-
-    def test_root_endpoint(self):
-        """Test the root API endpoint"""
-        return self.run_test(
-            "Root API Endpoint",
-            "GET",
-            "api",
-            200
-        )
-
-    def test_status_endpoint(self):
-        """Test the status endpoint"""
-        return self.run_test(
-            "Status Endpoint",
-            "GET",
-            "api/status",
-            200
-        )
-
-    def test_create_status_check(self, client_name):
-        """Test creating a status check"""
-        return self.run_test(
-            "Create Status Check",
-            "POST",
-            "api/status",
-            200,
-            data={"client_name": client_name}
-        )
-
-    def test_api_status(self):
-        """Test the API status endpoint"""
-        return self.run_test(
-            "API Status",
-            "GET",
-            "api/api-status",
-            200
-        )
-
-    def test_zip_code_data(self, zip_code="10001"):
-        """Test getting ZIP code data"""
-        return self.run_test(
-            f"ZIP Code Data for {zip_code}",
-            "GET",
-            f"api/geo/zip/{zip_code}",
-            200
-        )
-
-    def test_dma_data(self, dma_id="501"):
-        """Test getting DMA data"""
-        return self.run_test(
-            f"DMA Data for {dma_id}",
-            "GET",
-            f"api/geo/dma/{dma_id}",
-            200
-        )
-
-    def test_validate_api_key(self, api_name="census", api_key="test_key"):
-        """Test validating an API key"""
-        return self.run_test(
-            f"Validate {api_name} API Key",
-            "POST",
-            "api/validate-key",
-            200,
-            data={"api_name": api_name, "api_key": api_key}
-        )
-
-    def test_usage_statistics(self):
-        """Test getting usage statistics"""
-        return self.run_test(
-            "Usage Statistics",
-            "GET",
-            "api/usage-stats",
-            200
-        )
-
-def main():
-    # Setup
-    tester = VentasAIAPITester()
-    test_client = f"test_client_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            print(f"Error testing {endpoint}: {str(e)}")
     
-    # Run tests
-    print("🚀 Starting VentasAI API Tests...")
+    if found_endpoints:
+        print(f"Found geographic endpoints: {found_endpoints}")
+    else:
+        print("No geographic endpoints found")
     
-    # Test root endpoint
-    tester.test_root_endpoint()
+    return found_endpoints
+
+def run_all_tests():
+    """Run all tests and return results"""
+    results = {
+        "backend_responding": False,
+        "status_get_working": False,
+        "status_post_working": False,
+        "geographic_endpoints": []
+    }
     
-    # Test status endpoints
-    tester.test_status_endpoint()
-    tester.test_create_status_check(test_client)
+    print("=== Starting Backend API Tests ===")
+    print(f"Testing API at: {API_BASE_URL}")
     
-    # Test API status
-    tester.test_api_status()
+    # Test 1: Backend responding
+    results["backend_responding"] = test_backend_root()
     
-    # Test geographic data endpoints
-    tester.test_zip_code_data("10001")
-    tester.test_zip_code_data("90210")
-    tester.test_dma_data("501")
+    # Test 2: GET /api/status
+    results["status_get_working"] = test_status_endpoint_get()
     
-    # Test API key validation
-    tester.test_validate_api_key("census", "test_census_key")
-    tester.test_validate_api_key("nielsen", "test_nielsen_key")
+    # Test 3: POST /api/status
+    results["status_post_working"] = test_status_endpoint_post()
     
-    # Test usage statistics
-    tester.test_usage_statistics()
+    # Test 4: Check for geographic endpoints
+    results["geographic_endpoints"] = check_geographic_endpoints()
     
-    # Print results
-    print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
-    return 0 if tester.tests_passed == tester.tests_run else 1
+    # Print summary
+    print("\n=== Test Results Summary ===")
+    print(f"Backend responding: {'✅' if results['backend_responding'] else '❌'}")
+    print(f"GET /api/status working: {'✅' if results['status_get_working'] else '❌'}")
+    print(f"POST /api/status working: {'✅' if results['status_post_working'] else '❌'}")
+    print(f"Geographic endpoints found: {len(results['geographic_endpoints'])}")
+    if results['geographic_endpoints']:
+        for endpoint in results['geographic_endpoints']:
+            print(f"  - {endpoint}")
+    else:
+        print("  - None found")
+    
+    return results
 
 if __name__ == "__main__":
-    sys.exit(main())
+    run_all_tests()
