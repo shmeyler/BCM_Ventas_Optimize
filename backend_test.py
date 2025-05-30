@@ -318,7 +318,7 @@ def test_zip_endpoint():
     return all_passed
 
 def test_zips_endpoint():
-    """Test the /api/geographic/zips endpoint."""
+    """Test the /api/geographic/zips endpoint with improved DataUSA.io integration and fallback."""
     print_separator("Testing /api/geographic/zips endpoint")
     
     results = {
@@ -328,9 +328,9 @@ def test_zips_endpoint():
     }
     
     # Test with multiple valid ZIP codes
-    print("\n--- Testing with multiple valid ZIP codes (10001,90210) ---")
+    print("\n--- Testing with multiple valid ZIP codes (10001,90210,12345) ---")
     try:
-        response = requests.get(f"{API_BASE_URL}/geographic/zips", params={"zip_codes": "10001,90210"})
+        response = requests.get(f"{API_BASE_URL}/geographic/zips", params={"zip_codes": "10001,90210,12345"})
         print(f"Status Code: {response.status_code}")
         
         if response.status_code != 200:
@@ -353,8 +353,34 @@ def test_zips_endpoint():
                     if data["count"] != len(regions):
                         print(f"❌ Test failed: Count ({data['count']}) doesn't match number of regions ({len(regions)})")
                     else:
-                        print("✅ Test passed for multiple valid ZIP codes")
-                        results["valid_zips"] = True
+                        # Check if we got all three ZIP codes
+                        zip_codes = [region.get("id") for region in regions]
+                        if not all(zip_code in zip_codes for zip_code in ["10001", "90210", "12345"]):
+                            print(f"❌ Test failed: Not all requested ZIP codes were returned. Got: {zip_codes}")
+                        else:
+                            # Check source field for each region
+                            valid_sources = True
+                            for region in regions:
+                                source = region.get("source", "")
+                                if source not in ["DATAUSA_IO", "FALLBACK_REALISTIC"]:
+                                    print(f"❌ Test failed: Invalid source value for {region.get('id')}: {source}")
+                                    valid_sources = False
+                                    break
+                                
+                                # Check name field format based on source
+                                name = region.get("name", "")
+                                if source == "DATAUSA_IO" and "(DataUSA.io)" not in name:
+                                    print(f"❌ Test failed: Name should include '(DataUSA.io)' for DATAUSA_IO source")
+                                    valid_sources = False
+                                    break
+                                elif source == "FALLBACK_REALISTIC" and "(Fallback Data)" not in name:
+                                    print(f"❌ Test failed: Name should include '(Fallback Data)' for FALLBACK_REALISTIC source")
+                                    valid_sources = False
+                                    break
+                            
+                            if valid_sources:
+                                print("✅ Test passed for multiple valid ZIP codes")
+                                results["valid_zips"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
@@ -376,8 +402,13 @@ def test_zips_endpoint():
             if not regions or len(regions) == 0:
                 print("❌ Test failed: No regions returned")
             else:
-                print("✅ Test passed for mix of valid and invalid ZIP codes")
-                results["mixed_zips"] = True
+                # Check if we got the valid ZIP codes
+                zip_codes = [region.get("id") for region in regions]
+                if not all(zip_code in zip_codes for zip_code in ["10001", "90210"]):
+                    print(f"❌ Test failed: Not all valid ZIP codes were returned. Got: {zip_codes}")
+                else:
+                    print("✅ Test passed for mix of valid and invalid ZIP codes")
+                    results["mixed_zips"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
