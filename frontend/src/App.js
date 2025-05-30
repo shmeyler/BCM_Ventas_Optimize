@@ -35,6 +35,11 @@ function App() {
     setCurrentView('dashboard');
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentView('home');
+  };
+
   return (
     <div className="App bg-gray-50 min-h-screen">
       <motion.div
