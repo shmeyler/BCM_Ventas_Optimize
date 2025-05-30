@@ -43,6 +43,29 @@ const API_CONFIG = {
     cost: 'FREE'
   },
 
+  datausa: {
+    baseUrl: 'https://datausa.io/api/data',
+    measures: [
+      'Population',
+      'Median Household Income',
+      'Median Age',
+      'Total Population 25 Years And Over',
+      'Bachelor Degree Or Higher',
+      'Graduate Degree',
+      'Unemployment Rate',
+      'Labor Force',
+      'Median Property Value',
+      'Owner Occupied',
+      'Renter Occupied'
+    ],
+    rateLimit: {
+      requestsPerSecond: 2,
+      requestsPerDay: 10000
+    },
+    cost: 'FREE',
+    description: 'Comprehensive demographic data from multiple US government sources'
+  },
+
   usps: {
     baseUrl: 'https://secure.shippingapis.com/ShippingAPI.dll',
     rateLimit: {
