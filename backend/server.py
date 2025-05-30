@@ -100,26 +100,37 @@ class DataUSAService:
                 'Labor Force'
             ]
             
-            url = f"{cls.BASE_URL}?drilldowns=ZCTA&measures={','.join(measures)}&year=latest&geo={zcta}"
+            # Try different years starting with the most recent available
+            years_to_try = ['2022', '2021', '2020', '2019']
             
-            # Make async request using requests in thread pool
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None, 
-                lambda: requests.get(url, timeout=10)
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"DataUSA API error: {response.status_code}")
-                return None
+            for year in years_to_try:
+                url = f"{cls.BASE_URL}?drilldowns=ZCTA&measures={','.join(measures)}&year={year}&geo={zcta}"
                 
-            data = response.json()
-            
-            if not data.get('data') or len(data['data']) == 0:
-                logger.warning(f"No DataUSA data found for ZIP {zip_code}")
-                return None
+                logger.info(f"Trying DataUSA.io for ZIP {zip_code} with year {year}: {url}")
                 
-            return data['data'][0]
+                # Make async request using requests in thread pool
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None, 
+                    lambda: requests.get(url, timeout=10)
+                )
+                
+                if response.status_code != 200:
+                    logger.error(f"DataUSA API error: {response.status_code}")
+                    continue
+                    
+                data = response.json()
+                
+                if data.get('data') and len(data['data']) > 0:
+                    logger.info(f"Successfully got DataUSA data for ZIP {zip_code} using year {year}")
+                    return data['data'][0]
+                else:
+                    logger.warning(f"No DataUSA data found for ZIP {zip_code} in year {year}")
+                    continue
+            
+            # If no data found for any year, log the issue
+            logger.error(f"No DataUSA data found for ZIP {zip_code} in any available year")
+            return None
             
         except Exception as e:
             logger.error(f"Error fetching DataUSA data for ZIP {zip_code}: {e}")
