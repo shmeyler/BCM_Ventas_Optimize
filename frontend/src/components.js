@@ -65,7 +65,7 @@ const Header = ({ currentView, setCurrentView }) => {
                 onClick={() => setCurrentView('dashboard')}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   currentView === 'dashboard' 
-                    ? 'bg-purple-100 text-purple-700' 
+                    ? 'bg-purple-100 text-blue-700' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -75,7 +75,7 @@ const Header = ({ currentView, setCurrentView }) => {
                 onClick={() => setCurrentView('analytics')}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   currentView === 'analytics' 
-                    ? 'bg-purple-100 text-purple-700' 
+                    ? 'bg-purple-100 text-blue-700' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -91,7 +91,7 @@ const Header = ({ currentView, setCurrentView }) => {
             <button className="text-gray-600 hover:text-gray-900 text-sm font-medium">
               Login
             </button>
-            <button className="bg-blue-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               Request a demo
             </button>
           </div>
@@ -220,7 +220,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
             <div className="flex space-x-4">
               <button
                 onClick={() => setCurrentView('setup')}
-                className="flex-1 bg-blue-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               >
                 Configure Test
               </button>
@@ -451,7 +451,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
             </button>
             <button
               onClick={handleNext}
-              className="px-6 py-3 bg-blue-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               {currentStep === 4 ? 'Launch Test' : 'Next'}
             </button>
@@ -528,7 +528,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
               <CheckCircleIcon className="w-5 h-5 text-blue-600" />
             </div>
             <p className="text-3xl font-bold text-purple-900">95%</p>
-            <p className="text-sm text-purple-700">confidence level</p>
+            <p className="text-sm text-blue-700">confidence level</p>
           </div>
           
           <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-2xl">
@@ -576,7 +576,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
         <div className="flex justify-center space-x-4">
           <button
             onClick={() => setCurrentView('attribution')}
-            className="bg-blue-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
           >
             View Attribution Analysis
           </button>
@@ -772,7 +772,7 @@ const ResultsAnalysis = ({ testData }) => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Export Options</h3>
             <div className="space-y-3">
-              <button className="w-full bg-blue-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors">
                 Download Full Report
               </button>
               <button className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-semibold transition-colors">
