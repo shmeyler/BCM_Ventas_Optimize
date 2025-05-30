@@ -407,8 +407,8 @@ const GeographicAPI = {
       const dataSource = regionType === 'zip' ? 'zipCodes' : 
                         regionType === 'dma' ? 'dmas' : 'zipCodes';
       
-      // Use the advanced matching model
-      const similarRegions = matchingModel.findSimilarRegions(enhancedRegion, dataSource, {
+      // Use the advanced matching model with REAL data from backend API
+      const similarRegions = await matchingModel.findSimilarRegionsWithRealData(enhancedRegion, dataSource, {
         algorithm,
         customWeights,
         minSimilarity,
