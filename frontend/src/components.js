@@ -595,7 +595,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
 // Attribution Modeling Component
 const AttributionModeling = ({ testData }) => {
   return (
-    <section className="py-16 bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white">
+    <section className="py-16 bg-gradient-to-br from-purple-900 via-blue-800 to-purple-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4">Smart Attribution Analysis</h2>
@@ -619,7 +619,7 @@ const AttributionModeling = ({ testData }) => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-purple-300">Last-click: {channel.attribution}%</p>
-                      <div className="w-full bg-purple-800 rounded-full h-2 mt-1">
+                      <div className="w-full bg-blue-800 rounded-full h-2 mt-1">
                         <div className="bg-purple-400 h-2 rounded-full" style={{width: `${channel.attribution}%`}}></div>
                       </div>
                     </div>
@@ -902,7 +902,7 @@ const CaseStudies = () => {
               />
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="bg-blue-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                     {study.channel}
                   </span>
                   <span className="text-2xl font-bold text-green-600">{study.metric}</span>
@@ -921,7 +921,7 @@ const CaseStudies = () => {
 // Final CTA Component
 const FinalCTA = () => {
   return (
-    <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-800">
+    <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-800">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
