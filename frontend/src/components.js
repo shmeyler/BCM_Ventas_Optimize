@@ -65,7 +65,7 @@ const Header = ({ currentView, setCurrentView }) => {
                 onClick={() => setCurrentView('dashboard')}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   currentView === 'dashboard' 
-                    ? 'bg-purple-100 text-blue-700' 
+                    ? 'bg-blue-100 text-blue-700' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -75,7 +75,7 @@ const Header = ({ currentView, setCurrentView }) => {
                 onClick={() => setCurrentView('analytics')}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   currentView === 'analytics' 
-                    ? 'bg-purple-100 text-blue-700' 
+                    ? 'bg-blue-100 text-blue-700' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -234,7 +234,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
           </div>
 
           {/* Live Preview */}
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8">
+          <div className="bg-gradient-to-br from-purple-50 to-blue-100 rounded-2xl p-8">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Configuration Preview</h3>
             
             <div className="space-y-6">
@@ -522,7 +522,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
             <p className="text-sm text-green-700">return on ad spend</p>
           </div>
           
-          <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-2xl">
+          <div className="bg-gradient-to-r from-purple-50 to-blue-100 p-6 rounded-2xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-blue-600">Statistical Confidence</h3>
               <CheckCircleIcon className="w-5 h-5 text-blue-600" />
@@ -838,7 +838,7 @@ const ProcessSection = () => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="text-center"
             >
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 {step.icon}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
@@ -902,7 +902,7 @@ const CaseStudies = () => {
               />
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-blue-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
                     {study.channel}
                   </span>
                   <span className="text-2xl font-bold text-green-600">{study.metric}</span>
@@ -931,7 +931,7 @@ const FinalCTA = () => {
           <h2 className="text-4xl font-bold text-white mb-6">
             Upgrade your measurement with BCM VentasAI
           </h2>
-          <p className="text-xl text-purple-100 mb-8">
+          <p className="text-xl text-blue-100 mb-8">
             Start your first geo-incrementality test today and discover your true marketing impact
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
