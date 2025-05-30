@@ -178,9 +178,12 @@ class DataUSAService:
             brandLoyalty=50.0
         )
         
+        # Get proper city/state name
+        location_name = get_zip_location_name(zip_code)
+        
         return GeographicRegion(
             id=zip_code,
-            name=f"{zip_code} (DataUSA.io)",
+            name=f"{location_name} ({zip_code})",
             source="DATAUSA_IO",
             demographics=demographics,
             lastUpdated=datetime.utcnow().isoformat()
