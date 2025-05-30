@@ -1277,7 +1277,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
               newRegion = await realAPIService.getDataUSAZipCodeData(searchValue);
               break;
             case 'census':
-              newRegion = await realAPIService.getRealZipCodeData(searchValue);
+              newRegion = await GeographicAPI.getZipCodeData(searchValue);
               break;
             default:
               newRegion = await GeographicAPI.getEnhancedMockZipData(searchValue);
