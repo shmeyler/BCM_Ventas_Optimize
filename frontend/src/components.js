@@ -347,7 +347,55 @@ const GeographicAPI = {
       return mockRegions.states || [];
     }
   },
+  
+  async getStatesData() {
+    try {
+      console.log(`🏛️ Fetching states data from backend`);
       
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/states`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Backend states data retrieved (Source: ${data.source})`);
+        return data.regions.map(region => ({
+          ...region,
+          selected: false,
+          type: 'state'
+        }));
+      } else {
+        console.error(`❌ Backend API error for states data: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching states data from backend:', error);
+      // Fallback to mock states data only if backend is completely unavailable
+      console.log(`🔄 Using mock states data (backend unavailable)`);
+      return mockRegions.states || [];
+    }
+  },
+      
+  async getDMAData(dmaId) {
+    try {
+      console.log(`📺 Fetching DMA data from backend`);
+      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/dmas`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Backend DMA data retrieved (Source: ${data.source})`);
+        
+        // Find the specific DMA requested or return the first one
+        const dma = data.regions.find(region => region.id === dmaId) || data.regions[0];
+        return {
+          ...dma,
+          selected: false,
+          type: null
+        };
+      } else {
+        console.error(`❌ Backend API error for DMA data: ${response.status}`);
+        throw new Error(`Backend API error: ${response.status}`);
+      }
     } catch (error) {
       console.error('Error fetching DMA data:', error);
       return this.getEnhancedMockDMAData(dmaId);
