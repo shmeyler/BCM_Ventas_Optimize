@@ -346,8 +346,6 @@ const GeographicAPI = {
       console.log(`🔄 Using mock states data (backend unavailable)`);
       return mockRegions.states || [];
     }
-  },
-  
   async getStatesData() {
     try {
       console.log(`🏛️ Fetching states data from backend`);
