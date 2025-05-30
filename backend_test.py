@@ -176,7 +176,7 @@ def test_dmas_endpoint():
         return False
 
 def test_zip_endpoint():
-    """Test the /api/geographic/zip/{zip_code} endpoint."""
+    """Test the /api/geographic/zip/{zip_code} endpoint with improved DataUSA.io integration and fallback."""
     print_separator("Testing /api/geographic/zip/{zip_code} endpoint")
     
     results = {
@@ -223,9 +223,24 @@ def test_zip_endpoint():
                         print(f"❌ Test failed: Demographics missing required field '{field}'")
                         valid_structure = False
                         break
+                
+                # Check source field - should be either "DATAUSA_IO" or "FALLBACK_REALISTIC"
+                source = data.get("source", "")
+                if source not in ["DATAUSA_IO", "FALLBACK_REALISTIC"]:
+                    print(f"❌ Test failed: Invalid source value: {source}")
+                    valid_structure = False
+                
+                # Check name field format based on source
+                name = data.get("name", "")
+                if source == "DATAUSA_IO" and "(DataUSA.io)" not in name:
+                    print(f"❌ Test failed: Name should include '(DataUSA.io)' for DATAUSA_IO source")
+                    valid_structure = False
+                elif source == "FALLBACK_REALISTIC" and "(Fallback Data)" not in name:
+                    print(f"❌ Test failed: Name should include '(Fallback Data)' for FALLBACK_REALISTIC source")
+                    valid_structure = False
             
             if valid_structure:
-                print("✅ Test passed for valid ZIP code")
+                print(f"✅ Test passed for valid ZIP code 10001 (Source: {data.get('source')})")
                 results["valid_zip"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
@@ -242,8 +257,14 @@ def test_zip_endpoint():
         else:
             data = response.json()
             print(f"Response: {json.dumps(data, indent=2)}")
-            print("✅ Test passed for second valid ZIP code")
-            results["valid_zip_2"] = True
+            
+            # Check source field - should be either "DATAUSA_IO" or "FALLBACK_REALISTIC"
+            source = data.get("source", "")
+            if source not in ["DATAUSA_IO", "FALLBACK_REALISTIC"]:
+                print(f"❌ Test failed: Invalid source value: {source}")
+            else:
+                print(f"✅ Test passed for valid ZIP code 90210 (Source: {source})")
+                results["valid_zip_2"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
@@ -262,18 +283,26 @@ def test_zip_endpoint():
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
-    # Test with non-existent ZIP code
+    # Test with non-existent ZIP code (should now return fallback data instead of 404)
     print("\n--- Testing with non-existent ZIP code (00000) ---")
     try:
         response = requests.get(f"{API_BASE_URL}/geographic/zip/00000")
         print(f"Status Code: {response.status_code}")
-        print(f"Response: {response.text}")
         
-        if response.status_code == 404:
-            print("✅ Test passed for non-existent ZIP code (received 404 as expected)")
-            results["nonexistent_zip"] = True
+        if response.status_code != 200:
+            print(f"❌ Test failed: Expected status code 200 (with fallback data), got {response.status_code}")
+            print(f"Response: {response.text}")
         else:
-            print(f"❌ Test failed: Expected status code 404, got {response.status_code}")
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Should be using fallback data
+            source = data.get("source", "")
+            if source != "FALLBACK_REALISTIC":
+                print(f"❌ Test failed: Expected source to be FALLBACK_REALISTIC, got {source}")
+            else:
+                print("✅ Test passed for non-existent ZIP code (received fallback data as expected)")
+                results["nonexistent_zip"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
