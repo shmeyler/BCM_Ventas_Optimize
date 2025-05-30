@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const APIKeyManager = ({ isOpen, onClose }) => {
-  const [apiService] = useState(new RealAPIService());
+  const [apiService] = useState(() => new RealAPIService());
   const [apiKeys, setApiKeys] = useState({});
   const [validationStatus, setValidationStatus] = useState({});
   const [usageStats, setUsageStats] = useState(null);
