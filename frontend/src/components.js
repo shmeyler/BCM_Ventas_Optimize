@@ -931,6 +931,170 @@ const KnowledgeBase = () => {
   );
 };
 
+// API Key Management Component (inline to fix import issues)
+const APIKeyManager = ({ isOpen, onClose }) => {
+  const [apiService] = useState(() => new RealAPIService());
+  const [apiKeys, setApiKeys] = useState({});
+  const [validationStatus, setValidationStatus] = useState({});
+  const [usageStats, setUsageStats] = useState(null);
+  const [isValidating, setIsValidating] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCurrentKeys();
+      loadUsageStats();
+    }
+  }, [isOpen]);
+
+  const loadCurrentKeys = () => {
+    const keys = apiService.loadAPIKeys();
+    setApiKeys(keys);
+    
+    // Check which keys are already validated
+    Object.keys(keys).forEach(service => {
+      if (keys[service]) {
+        setValidationStatus(prev => ({
+          ...prev,
+          [service]: { valid: true, message: 'Stored key (not re-validated)' }
+        }));
+      }
+    });
+  };
+
+  const loadUsageStats = () => {
+    const stats = apiService.getUsageStatistics();
+    setUsageStats(stats);
+  };
+
+  const handleKeyUpdate = (service, value) => {
+    setApiKeys(prev => ({
+      ...prev,
+      [service]: value
+    }));
+  };
+
+  const validateAPIKey = async (service) => {
+    if (!apiKeys[service] || apiKeys[service].trim() === '') {
+      setValidationStatus(prev => ({
+        ...prev,
+        [service]: { valid: false, message: 'API key is required' }
+      }));
+      return;
+    }
+
+    setIsValidating(prev => ({ ...prev, [service]: true }));
+
+    try {
+      const result = await apiService.validateAPIKey(service, apiKeys[service]);
+      setValidationStatus(prev => ({
+        ...prev,
+        [service]: result
+      }));
+
+      if (result.valid) {
+        await apiService.saveAPIKey(service, apiKeys[service]);
+      }
+    } catch (error) {
+      setValidationStatus(prev => ({
+        ...prev,
+        [service]: { 
+          valid: false, 
+          message: 'Validation failed: ' + error.message 
+        }
+      }));
+    }
+
+    setIsValidating(prev => ({ ...prev, [service]: false }));
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center">
+            <KeyIcon className="h-8 w-8 mr-3 text-bcm-orange" />
+            Data Source Configuration
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Free Government Sources */}
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="text-green-600">✅</span>
+            <span className="ml-2">Free Government Sources</span>
+          </h3>
+          <div className="grid gap-4">
+            {['census', 'datausa', 'usps'].map(service => (
+              <div key={service} className="bg-green-50 border border-green-200 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">
+                      {service === 'census' ? '🏛️' : service === 'datausa' ? '🇺🇸' : '📮'}
+                    </span>
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 capitalize">
+                        {service === 'census' ? 'US Census Bureau' : 
+                         service === 'datausa' ? 'DataUSA.io' :
+                         'USPS ZIP Code API'}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {service === 'census' 
+                          ? 'Comprehensive demographic and economic data' 
+                          : service === 'datausa'
+                          ? 'Government data aggregation from Census, BLS, and federal sources'
+                          : 'ZIP code validation and geographic data'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                      FREE
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    <CheckCircleIcon className="h-4 w-4 inline mr-1" />
+                    Active and ready to use - No API key required
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={onClose}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 // Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [regionType, setRegionType] = useState('state'); // 'state', 'zip', 'dma'
