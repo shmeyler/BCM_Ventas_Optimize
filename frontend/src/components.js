@@ -54,10 +54,10 @@ const Header = ({ currentView, setCurrentView }) => {
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">W</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">B</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">WorkMagic</span>
+              <span className="text-xl font-bold text-gray-900">BCM VentasAI</span>
             </div>
             
             <nav className="hidden md:flex space-x-6">
