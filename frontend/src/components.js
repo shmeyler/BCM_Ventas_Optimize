@@ -369,6 +369,7 @@ const GeographicAPI = {
         console.error(`❌ Backend API error for DMA data: ${response.status}`);
         throw new Error(`Backend API error: ${response.status}`);
       }
+      
     } catch (error) {
       console.error('Error fetching DMA data:', error);
       return this.getEnhancedMockDMAData(dmaId);
