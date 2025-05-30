@@ -932,12 +932,38 @@ const KnowledgeBase = () => {
 // Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [regionType, setRegionType] = useState('state'); // 'state', 'zip', 'dma'
+  const [dataSource, setDataSource] = useState('datausa'); // 'census', 'datausa', 'enhanced_mock'
   const [regions, setRegions] = useState(mockRegions);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [similarRegions, setSimilarRegions] = useState([]);
   const [showSimilarityAnalysis, setShowSimilarityAnalysis] = useState(false);
   const [selectedRegionForAnalysis, setSelectedRegionForAnalysis] = useState(null);
+
+  // Data source options
+  const dataSourceOptions = [
+    { 
+      value: 'datausa', 
+      label: 'DataUSA.io', 
+      description: 'Comprehensive government data aggregation',
+      type: 'FREE',
+      icon: '🇺🇸'
+    },
+    { 
+      value: 'census', 
+      label: 'US Census Bureau', 
+      description: 'Direct Census ACS data',
+      type: 'FREE',
+      icon: '🏛️'
+    },
+    { 
+      value: 'enhanced_mock', 
+      label: 'Enhanced Mock Data', 
+      description: 'Realistic synthetic demographics',
+      type: 'DEMO',
+      icon: '🎭'
+    }
+  ];
 
   // Update regions when region type changes
   useEffect(() => {
