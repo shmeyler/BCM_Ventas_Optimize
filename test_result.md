@@ -141,17 +141,53 @@ backend:
         agent: "testing"
         comment: "The POST /api/status endpoint is working correctly. It successfully creates a new status check entry in the database and returns the created object with an ID and timestamp. Status code 200."
 
-  - task: "Geographic Data Endpoints"
-    implemented: false
-    working: "NA"
+  - task: "Geographic States Endpoint"
+    implemented: true
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: false
     status_history:
-      - working: "NA"
+      - working: true
         agent: "testing"
-        comment: "No geographic data endpoints were found. Tested potential endpoints like /api/geo, /api/geographic, /api/locations, /api/maps, and /api/coordinates, but all returned 404 Not Found."
+        comment: "The GET /api/geographic/states endpoint is working correctly. It returns a list of US states with mock demographic data. The response format matches the GeographicRegion model."
+  
+  - task: "Geographic DMAs Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/geographic/dmas endpoint is working correctly. It returns a list of Designated Market Areas with mock demographic data. The response format matches the GeographicRegion model."
+  
+  - task: "Geographic ZIP Code Endpoint"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "The GET /api/geographic/zip/{zip_code} endpoint is implemented but not working correctly. The endpoint is trying to fetch data from DataUSA.io API, but the API is not returning any data for the ZIP codes tested (10001, 90210). The DataUSA.io API appears to be having issues or the API endpoint format may have changed."
+  
+  - task: "Geographic Multiple ZIP Codes Endpoint"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "The GET /api/geographic/zips endpoint is implemented but not working correctly. Like the single ZIP endpoint, it's trying to fetch data from DataUSA.io API, but the API is not returning any data for the ZIP codes tested."
 
 frontend:
   - task: "Data Sources Button Functionality"
