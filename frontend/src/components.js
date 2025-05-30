@@ -1297,32 +1297,64 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const handleSearch = async (searchValue) => {
     setSearchTerm(searchValue);
     
-    if (searchValue.length >= 3 && (regionType === 'zip' || regionType === 'dma')) {
+    // Trigger search for ZIP codes when exactly 5 digits are entered
+    if (regionType === 'zip' && /^\d{5}$/.test(searchValue)) {
       setIsLoading(true);
       
       try {
+        console.log(`🔍 Searching for ZIP code: ${searchValue}`);
         let newRegion;
-        if (regionType === 'zip' && /^\d{5}$/.test(searchValue)) {
-          // Use selected data source for ZIP code lookup
-          switch (dataSource) {
-            case 'datausa':
-              newRegion = await GeographicAPI.getZipCodeData(searchValue);
-              break;
-            case 'census':
-              newRegion = await GeographicAPI.getZipCodeData(searchValue);
-              break;
-            default:
-              newRegion = await GeographicAPI.getEnhancedMockZipData(searchValue);
-          }
-        } else if (regionType === 'dma') {
-          newRegion = await GeographicAPI.getDMAData(searchValue);
+        
+        // Use selected data source for ZIP code lookup
+        switch (dataSource) {
+          case 'datausa':
+            newRegion = await GeographicAPI.getZipCodeData(searchValue);
+            break;
+          case 'census':
+            newRegion = await GeographicAPI.getZipCodeData(searchValue);
+            break;
+          default:
+            newRegion = await GeographicAPI.getEnhancedMockZipData(searchValue);
         }
+        
+        if (newRegion) {
+          // Check if this ZIP code already exists in the list
+          const existingIndex = regions.findIndex(r => r.id === newRegion.id);
+          if (existingIndex !== -1) {
+            // Update existing region
+            setRegions(prev => prev.map((region, index) => 
+              index === existingIndex ? newRegion : region
+            ));
+            console.log(`✅ Updated existing ZIP code: ${searchValue}`);
+          } else {
+            // Add new region to the top of the list
+            setRegions(prev => [newRegion, ...prev]);
+            console.log(`✅ Added new ZIP code: ${searchValue}`);
+          }
+        } else {
+          console.log(`❌ No data found for ZIP code: ${searchValue}`);
+        }
+      } catch (error) {
+        console.error('Error searching for ZIP code:', error);
+        alert(`Error searching for ZIP code ${searchValue}. Please try again.`);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    // Trigger search for DMAs when 3+ characters are entered
+    else if (regionType === 'dma' && searchValue.length >= 3) {
+      setIsLoading(true);
+      
+      try {
+        console.log(`🔍 Searching for DMA: ${searchValue}`);
+        const newRegion = await GeographicAPI.getDMAData(searchValue);
         
         if (newRegion && !regions.find(r => r.id === newRegion.id)) {
           setRegions(prev => [newRegion, ...prev]);
+          console.log(`✅ Added new DMA: ${searchValue}`);
         }
       } catch (error) {
-        console.error('Error searching:', error);
+        console.error('Error searching for DMA:', error);
       } finally {
         setIsLoading(false);
       }
