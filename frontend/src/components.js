@@ -214,112 +214,340 @@ const mockDMAs = [
   }
 ];
 
-// Geographic API Service for real data integration
+// Initialize the demographic matching model
+const matchingModel = new DemographicMatchingModel({
+  threshold: 0.7,
+  maxResults: 10
+});
+
+// Geographic API Service with advanced demographic matching
 const GeographicAPI = {
-  // Mock API call for ZIP code data
+  // Mock API call for ZIP code data with enhanced demographics
   async getZipCodeData(zipCode) {
     try {
       // In production, this would call actual APIs like:
       // - USPS ZIP Code API
       // - Census ACS API
       // - Zippopotam.us API
+      // - American Community Survey
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Return mock data based on ZIP code
-      const zipData = mockZipCodes.find(zip => zip.id === zipCode) || {
+      // Check if we have enhanced data for this ZIP code
+      const enhancedData = matchingModel.data.zipCodes.find(zip => zip.id === zipCode);
+      
+      if (enhancedData) {
+        return {
+          ...enhancedData,
+          selected: false,
+          type: null
+        };
+      }
+      
+      // Generate realistic demographic data for unknown ZIP codes
+      const generatedData = {
         id: zipCode,
         name: `${zipCode} Area`,
-        population: Math.floor(Math.random() * 50000).toLocaleString(),
-        medianIncome: `$${Math.floor(Math.random() * 40000 + 40000).toLocaleString()}`,
-        avgAge: (Math.random() * 20 + 25).toFixed(1),
-        density: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+        demographics: this.generateRealisticDemographics('urban'),
         selected: false,
-        type: null,
-        demographics: {
-          urban: Math.floor(Math.random() * 60 + 20),
-          suburban: Math.floor(Math.random() * 40 + 20),
-          rural: Math.floor(Math.random() * 30 + 10)
-        },
-        similarity: Math.random() * 0.3 + 0.7
+        type: null
       };
       
-      return zipData;
+      return generatedData;
     } catch (error) {
       console.error('Error fetching ZIP code data:', error);
       return null;
     }
   },
 
-  // Mock API call for DMA data
+  // Mock API call for DMA data with enhanced demographics
   async getDMAData(dmaId) {
     try {
       // In production, this would call Nielsen DMA API or similar
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const dmaData = mockDMAs.find(dma => dma.id === dmaId) || {
+      // Check if we have enhanced data for this DMA
+      const enhancedData = matchingModel.data.dmas.find(dma => dma.id === dmaId);
+      
+      if (enhancedData) {
+        return {
+          ...enhancedData,
+          selected: false,
+          type: null
+        };
+      }
+      
+      // Generate realistic DMA data
+      const generatedData = {
         id: dmaId,
         name: `DMA ${dmaId}`,
-        population: `${(Math.random() * 5 + 1).toFixed(1)}M`,
-        households: `${(Math.random() * 2 + 0.5).toFixed(1)}M`,
-        medianIncome: `$${Math.floor(Math.random() * 30000 + 45000).toLocaleString()}`,
-        tvHouseholds: `${(Math.random() * 1.8 + 0.4).toFixed(1)}M`,
+        demographics: this.generateRealisticDemographics('suburban'),
         selected: false,
-        type: null,
-        characteristics: {
-          competitiveness: ['Low', 'Medium', 'High', 'Very High'][Math.floor(Math.random() * 4)],
-          digitalAdoption: ['Low', 'Medium', 'High', 'Very High'][Math.floor(Math.random() * 4)],
-          retailDensity: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)]
-        },
-        similarity: Math.random() * 0.3 + 0.7
+        type: null
       };
       
-      return dmaData;
+      return generatedData;
     } catch (error) {
       console.error('Error fetching DMA data:', error);
       return null;
     }
   },
 
-  // Geographic matching algorithm
+  // Advanced geographic matching using demographic model
   async findSimilarRegions(selectedRegion, regionType, criteria = {}) {
     try {
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      let dataSource;
-      switch (regionType) {
-        case 'zip':
-          dataSource = mockZipCodes;
-          break;
-        case 'dma':
-          dataSource = mockDMAs;
-          break;
-        default:
-          dataSource = mockRegions;
-      }
+      const {
+        algorithm = 'weighted_euclidean',
+        customWeights = {},
+        minSimilarity = 0.7,
+        maxResults = 5,
+        includeValidation = true
+      } = criteria;
       
-      // Mock similarity matching algorithm
-      const similarRegions = dataSource
-        .filter(region => region.id !== selectedRegion.id)
-        .map(region => ({
-          ...region,
-          similarity: Math.random() * 0.4 + 0.6, // Mock similarity score
-          matchReasons: [
-            'Similar population density',
-            'Comparable median income',
-            'Similar age demographics',
-            'Matching urbanization level'
-          ].slice(0, Math.floor(Math.random() * 3) + 1)
-        }))
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 5);
+      // Map region type to data source
+      const dataSource = regionType === 'zip' ? 'zipCodes' : 
+                        regionType === 'dma' ? 'dmas' : 'zipCodes';
+      
+      // Use the advanced matching model
+      const similarRegions = matchingModel.findSimilarRegions(selectedRegion, dataSource, {
+        algorithm,
+        customWeights,
+        minSimilarity,
+        maxResults
+      });
+      
+      // Add statistical validation if requested
+      if (includeValidation && similarRegions.length > 0) {
+        const validatedRegions = matchingModel.validateMatchSignificance(
+          selectedRegion, 
+          similarRegions,
+          {
+            expectedLift: 0.15, // 15% expected lift
+            alpha: 0.05,
+            beta: 0.2,
+            baselineConversionRate: 0.03
+          }
+        );
+        
+        return validatedRegions;
+      }
       
       return similarRegions;
     } catch (error) {
       console.error('Error finding similar regions:', error);
       return [];
     }
+  },
+
+  // Generate realistic demographic data for unknown regions
+  generateRealisticDemographics(areaType = 'suburban') {
+    const baseProfiles = {
+      urban: {
+        medianAge: 32 + Math.random() * 8,
+        medianIncome: 55000 + Math.random() * 40000,
+        populationDensity: 20000 + Math.random() * 40000,
+        householdSize: 1.8 + Math.random() * 0.8,
+        collegeEducated: 65 + Math.random() * 20,
+        unemploymentRate: 4 + Math.random() * 4,
+        whiteCollarJobs: 70 + Math.random() * 20,
+        homeOwnership: 30 + Math.random() * 30,
+        urbanizationLevel: 'Urban'
+      },
+      suburban: {
+        medianAge: 35 + Math.random() * 10,
+        medianIncome: 60000 + Math.random() * 50000,
+        populationDensity: 2000 + Math.random() * 8000,
+        householdSize: 2.3 + Math.random() * 0.7,
+        collegeEducated: 70 + Math.random() * 15,
+        unemploymentRate: 3 + Math.random() * 3,
+        whiteCollarJobs: 75 + Math.random() * 15,
+        homeOwnership: 60 + Math.random() * 25,
+        urbanizationLevel: 'Suburban'
+      },
+      rural: {
+        medianAge: 38 + Math.random() * 12,
+        medianIncome: 45000 + Math.random() * 25000,
+        populationDensity: 100 + Math.random() * 1000,
+        householdSize: 2.5 + Math.random() * 0.8,
+        collegeEducated: 45 + Math.random() * 25,
+        unemploymentRate: 4 + Math.random() * 5,
+        whiteCollarJobs: 50 + Math.random() * 25,
+        homeOwnership: 70 + Math.random() * 20,
+        urbanizationLevel: 'Rural'
+      }
+    };
+
+    const baseProfile = baseProfiles[areaType] || baseProfiles.suburban;
+    
+    return {
+      ...baseProfile,
+      medianHomeValue: baseProfile.medianIncome * (2.5 + Math.random() * 3),
+      rentBurden: 30 + Math.random() * 20,
+      internetPenetration: 85 + Math.random() * 12,
+      mobileUsage: 85 + Math.random() * 10,
+      socialMediaUsage: 65 + Math.random() * 20,
+      onlineShoppingIndex: 100 + Math.random() * 60,
+      retailDensity: 200 + Math.random() * 200,
+      competitionIndex: 60 + Math.random() * 30,
+      tvConsumption: 3 + Math.random() * 2,
+      digitalAdReceptivity: 70 + Math.random() * 20,
+      brandLoyalty: 40 + Math.random() * 30
+    };
+  },
+
+  // Get detailed demographic analysis
+  async getDetailedAnalysis(region1, region2) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const similarity = matchingModel.calculateSimilarity(region1, region2);
+      const comparison = matchingModel.generateDemographicComparison(region1, region2);
+      const reasons = matchingModel.generateMatchReasons(region1, region2);
+      
+      return {
+        overallSimilarity: similarity,
+        detailedComparison: comparison,
+        matchReasons: reasons,
+        recommendationStrength: similarity > 0.8 ? 'Strong' : similarity > 0.6 ? 'Moderate' : 'Weak'
+      };
+    } catch (error) {
+      console.error('Error generating detailed analysis:', error);
+      return null;
+    }
+  },
+
+  // Test design optimization
+  async optimizeTestDesign(testRegions, controlCandidates, testObjectives = {}) {
+    try {
+      const {
+        primaryMetric = 'conversion_rate',
+        expectedLift = 0.1,
+        testDuration = 21,
+        budgetConstraints = {},
+        stratificationVars = ['medianIncome', 'urbanizationLevel']
+      } = testObjectives;
+
+      // Calculate optimal control group composition
+      const optimizedDesign = {
+        testRegions: testRegions,
+        recommendedControls: [],
+        stratificationAnalysis: {},
+        powerAnalysis: {},
+        recommendations: []
+      };
+
+      // Find best control matches for each test region
+      for (const testRegion of testRegions) {
+        const matches = await this.findSimilarRegions(testRegion, 'zip', {
+          minSimilarity: 0.65,
+          maxResults: 3,
+          includeValidation: true
+        });
+        
+        optimizedDesign.recommendedControls.push(...matches.slice(0, 2));
+      }
+
+      // Perform stratification analysis
+      for (const stratVar of stratificationVars) {
+        optimizedDesign.stratificationAnalysis[stratVar] = this.analyzeStratification(
+          testRegions, 
+          optimizedDesign.recommendedControls, 
+          stratVar
+        );
+      }
+
+      // Calculate overall test power
+      optimizedDesign.powerAnalysis = this.calculateTestPower(
+        testRegions,
+        optimizedDesign.recommendedControls,
+        expectedLift,
+        testDuration
+      );
+
+      // Generate optimization recommendations
+      optimizedDesign.recommendations = this.generateTestRecommendations(optimizedDesign);
+
+      return optimizedDesign;
+    } catch (error) {
+      console.error('Error optimizing test design:', error);
+      return null;
+    }
+  },
+
+  // Helper methods for test optimization
+  analyzeStratification(testRegions, controlRegions, variable) {
+    // Analyze balance across stratification variable
+    const testValues = testRegions.map(r => r.demographics[variable]).filter(v => v !== undefined);
+    const controlValues = controlRegions.map(r => r.demographics[variable]).filter(v => v !== undefined);
+    
+    const testMean = testValues.reduce((sum, val) => sum + val, 0) / testValues.length;
+    const controlMean = controlValues.reduce((sum, val) => sum + val, 0) / controlValues.length;
+    
+    return {
+      testMean,
+      controlMean,
+      difference: Math.abs(testMean - controlMean),
+      balanceScore: Math.max(0, 1 - Math.abs(testMean - controlMean) / Math.max(testMean, controlMean)),
+      isBalanced: Math.abs(testMean - controlMean) / Math.max(testMean, controlMean) < 0.1
+    };
+  },
+
+  calculateTestPower(testRegions, controlRegions, expectedLift, duration) {
+    const totalTestPop = testRegions.reduce((sum, r) => sum + (r.demographics.populationDensity || 10000), 0);
+    const totalControlPop = controlRegions.reduce((sum, r) => sum + (r.demographics.populationDensity || 10000), 0);
+    
+    // Simplified power calculation
+    const effectSize = expectedLift / 0.3; // Assuming 30% baseline variation
+    const harmonicMean = 2 / (1/totalTestPop + 1/totalControlPop);
+    const durationFactor = Math.sqrt(duration / 21); // 21 days baseline
+    
+    const power = Math.min(0.95, Math.max(0.05, effectSize * Math.sqrt(harmonicMean / 10000) * durationFactor));
+    
+    return {
+      statisticalPower: power,
+      confidenceLevel: power > 0.8 ? 'High' : power > 0.6 ? 'Medium' : 'Low',
+      recommendedDuration: power < 0.8 ? Math.ceil(21 / Math.pow(power / 0.8, 2)) : duration,
+      sampleSizeAdequacy: power > 0.7 ? 'Adequate' : 'Insufficient'
+    };
+  },
+
+  generateTestRecommendations(designAnalysis) {
+    const recommendations = [];
+    
+    if (designAnalysis.powerAnalysis.statisticalPower < 0.8) {
+      recommendations.push({
+        type: 'power',
+        priority: 'high',
+        message: `Increase test duration to ${designAnalysis.powerAnalysis.recommendedDuration} days for 80% power`,
+        impact: 'Statistical significance'
+      });
+    }
+
+    // Check stratification balance
+    for (const [variable, analysis] of Object.entries(designAnalysis.stratificationAnalysis)) {
+      if (!analysis.isBalanced) {
+        recommendations.push({
+          type: 'balance',
+          priority: 'medium',
+          message: `Test and control groups are imbalanced on ${variable} (${(analysis.difference).toFixed(1)} difference)`,
+          impact: 'Internal validity'
+        });
+      }
+    }
+
+    if (designAnalysis.recommendedControls.length < designAnalysis.testRegions.length) {
+      recommendations.push({
+        type: 'matching',
+        priority: 'medium',
+        message: 'Consider adding more control regions for better statistical power',
+        impact: 'Test reliability'
+      });
+    }
+
+    return recommendations;
   }
 };
 
