@@ -12,7 +12,7 @@ import {
   CheckCircleIcon,
   ArrowRightIcon,
   GlobeAltIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   PresentationChartLineIcon,
   DocumentChartBarIcon
 } from '@heroicons/react/24/outline';
