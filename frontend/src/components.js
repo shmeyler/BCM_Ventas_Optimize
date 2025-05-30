@@ -1678,6 +1678,36 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   );
 };
 
+// CSV Upload Modal
+const CSVUploadModal = ({ isOpen, onClose, onUpload }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Upload ZIP Codes CSV</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Upload a CSV file with ZIP codes (one per row, first row should be header).
+        </p>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={onUpload}
+          className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+        />
+        <div className="flex space-x-3">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Test Setup Wizard Component (updated colors)
 const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
   const [currentStep, setCurrentStep] = useState(1);
