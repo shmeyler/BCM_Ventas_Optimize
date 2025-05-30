@@ -213,6 +213,115 @@ const mockDMAs = [
   }
 ];
 
+// Geographic API Service for real data integration
+const GeographicAPI = {
+  // Mock API call for ZIP code data
+  async getZipCodeData(zipCode) {
+    try {
+      // In production, this would call actual APIs like:
+      // - USPS ZIP Code API
+      // - Census ACS API
+      // - Zippopotam.us API
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return mock data based on ZIP code
+      const zipData = mockZipCodes.find(zip => zip.id === zipCode) || {
+        id: zipCode,
+        name: `${zipCode} Area`,
+        population: Math.floor(Math.random() * 50000).toLocaleString(),
+        medianIncome: `$${Math.floor(Math.random() * 40000 + 40000).toLocaleString()}`,
+        avgAge: (Math.random() * 20 + 25).toFixed(1),
+        density: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+        selected: false,
+        type: null,
+        demographics: {
+          urban: Math.floor(Math.random() * 60 + 20),
+          suburban: Math.floor(Math.random() * 40 + 20),
+          rural: Math.floor(Math.random() * 30 + 10)
+        },
+        similarity: Math.random() * 0.3 + 0.7
+      };
+      
+      return zipData;
+    } catch (error) {
+      console.error('Error fetching ZIP code data:', error);
+      return null;
+    }
+  },
+
+  // Mock API call for DMA data
+  async getDMAData(dmaId) {
+    try {
+      // In production, this would call Nielsen DMA API or similar
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const dmaData = mockDMAs.find(dma => dma.id === dmaId) || {
+        id: dmaId,
+        name: `DMA ${dmaId}`,
+        population: `${(Math.random() * 5 + 1).toFixed(1)}M`,
+        households: `${(Math.random() * 2 + 0.5).toFixed(1)}M`,
+        medianIncome: `$${Math.floor(Math.random() * 30000 + 45000).toLocaleString()}`,
+        tvHouseholds: `${(Math.random() * 1.8 + 0.4).toFixed(1)}M`,
+        selected: false,
+        type: null,
+        characteristics: {
+          competitiveness: ['Low', 'Medium', 'High', 'Very High'][Math.floor(Math.random() * 4)],
+          digitalAdoption: ['Low', 'Medium', 'High', 'Very High'][Math.floor(Math.random() * 4)],
+          retailDensity: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)]
+        },
+        similarity: Math.random() * 0.3 + 0.7
+      };
+      
+      return dmaData;
+    } catch (error) {
+      console.error('Error fetching DMA data:', error);
+      return null;
+    }
+  },
+
+  // Geographic matching algorithm
+  async findSimilarRegions(selectedRegion, regionType, criteria = {}) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      let dataSource;
+      switch (regionType) {
+        case 'zip':
+          dataSource = mockZipCodes;
+          break;
+        case 'dma':
+          dataSource = mockDMAs;
+          break;
+        default:
+          dataSource = mockRegions;
+      }
+      
+      // Mock similarity matching algorithm
+      const similarRegions = dataSource
+        .filter(region => region.id !== selectedRegion.id)
+        .map(region => ({
+          ...region,
+          similarity: Math.random() * 0.4 + 0.6, // Mock similarity score
+          matchReasons: [
+            'Similar population density',
+            'Comparable median income',
+            'Similar age demographics',
+            'Matching urbanization level'
+          ].slice(0, Math.floor(Math.random() * 3) + 1)
+        }))
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 5);
+      
+      return similarRegions;
+    } catch (error) {
+      console.error('Error finding similar regions:', error);
+      return [];
+    }
+  }
+};
+
 const mockTestResults = [
   { date: '2024-01-01', testGroup: 4200, controlGroup: 3800, lift: 10.5 },
   { date: '2024-01-02', testGroup: 4400, controlGroup: 3750, lift: 17.3 },
