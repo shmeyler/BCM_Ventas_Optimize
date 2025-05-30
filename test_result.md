@@ -237,7 +237,13 @@ test_plan:
     - "Data Sources Button Functionality"
     - "Region Selection Toggle Functionality"
     - "CSV Upload Functionality"
-  stuck_tasks: []
+    - "Geographic States Endpoint"
+    - "Geographic DMAs Endpoint"
+    - "Geographic ZIP Code Endpoint"
+    - "Geographic Multiple ZIP Codes Endpoint"
+  stuck_tasks:
+    - "Geographic ZIP Code Endpoint"
+    - "Geographic Multiple ZIP Codes Endpoint"
   test_all: false
   test_priority: "high_first"
 
