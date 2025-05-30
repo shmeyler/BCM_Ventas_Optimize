@@ -447,8 +447,6 @@ const GeographicAPI = {
             dailySpend: null, // Will be estimated  
             kpi: 'conversions',
             minimumDetectableEffect: 0.05 // 5% minimum
-            beta: 0.2,
-            baselineConversionRate: 0.03
           }
         );
         
