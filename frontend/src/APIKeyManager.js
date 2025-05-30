@@ -105,6 +105,7 @@ const APIKeyManager = ({ isOpen, onClose }) => {
       statista: '📊',
       comscore: '🌐',
       census: '🏛️',
+      datausa: '🇺🇸',
       usps: '📮'
     };
     return icons[service] || '🔑';
