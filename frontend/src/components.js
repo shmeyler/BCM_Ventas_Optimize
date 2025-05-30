@@ -703,7 +703,7 @@ const ResultsAnalysis = ({ testData }) => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <TrendingUpIcon className="w-6 h-6 text-blue-500 mt-1" />
+                  <ArrowTrendingUpIcon className="w-6 h-6 text-blue-500 mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Strong Performance</p>
                     <p className="text-gray-600">Test group outperformed control by $124K in additional revenue</p>
