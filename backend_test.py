@@ -475,6 +475,64 @@ def test_zips_endpoint():
     
     return all_passed
 
+def check_backend_logs():
+    """Check backend logs for errors related to DataUSA.io API integration."""
+    print("\n" + "=" * 80)
+    print(f" Checking Backend Logs for DataUSA.io API Errors ".center(80, "="))
+    print("=" * 80 + "\n")
+    
+    try:
+        # Get the last 100 lines of the backend log
+        import subprocess
+        result = subprocess.run(
+            ["tail", "-n", "100", "/var/log/supervisor/backend.log"], 
+            capture_output=True, 
+            text=True
+        )
+        
+        log_content = result.stdout
+        
+        # If no output from the main log, try stderr
+        if not log_content:
+            result = subprocess.run(
+                ["tail", "-n", "100", "/var/log/supervisor/backend.stderr.log"], 
+                capture_output=True, 
+                text=True
+            )
+            log_content = result.stdout
+        
+        # Print the log content
+        print("Backend Log Content:")
+        print(log_content)
+        
+        # Look for specific error patterns related to DataUSA.io
+        datausa_errors = []
+        zip_errors = []
+        
+        for line in log_content.splitlines():
+            if "DataUSA" in line and ("error" in line.lower() or "failed" in line.lower() or "warning" in line.lower()):
+                datausa_errors.append(line)
+            if "ZIP" in line and ("error" in line.lower() or "failed" in line.lower() or "warning" in line.lower()):
+                zip_errors.append(line)
+        
+        if datausa_errors:
+            print("\nDataUSA.io Related Errors:")
+            for error in datausa_errors:
+                print(f"  - {error}")
+        
+        if zip_errors:
+            print("\nZIP Code Related Errors:")
+            for error in zip_errors:
+                print(f"  - {error}")
+        
+        if not datausa_errors and not zip_errors:
+            print("\nNo specific DataUSA.io or ZIP code errors found in the logs.")
+        
+        return True
+    except Exception as e:
+        print(f"Error checking backend logs: {str(e)}")
+        return False
+
 def run_all_tests():
     """Run all tests and return results"""
     results = {
