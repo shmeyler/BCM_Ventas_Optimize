@@ -5,24 +5,35 @@ import Components from './components';
 
 const {
   Header,
+  LoginModal,
   HeroSection,
   GeoTestingDashboard,
   TestSetupWizard,
   LiveAnalytics,
   AttributionModeling,
   ResultsAnalysis,
+  KnowledgeBase,
   ProcessSection,
   CaseStudies,
   FinalCTA
 } = Components;
 
 function App() {
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState('home');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [testData, setTestData] = useState({
     selectedRegions: [],
     testConfiguration: {},
     liveResults: {}
   });
+
+  const handleLogin = (credentials) => {
+    // Accept any credentials for now
+    setIsLoggedIn(true);
+    setShowLoginModal(false);
+    setCurrentView('dashboard');
+  };
 
   return (
     <div className="App bg-gray-50 min-h-screen">
@@ -31,10 +42,29 @@ function App() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Header currentView={currentView} setCurrentView={setCurrentView} />
-        <HeroSection setCurrentView={setCurrentView} />
+        <Header 
+          currentView={currentView} 
+          setCurrentView={setCurrentView}
+          setShowLoginModal={setShowLoginModal}
+          isLoggedIn={isLoggedIn}
+        />
         
-        {currentView === 'dashboard' && (
+        <LoginModal 
+          showModal={showLoginModal}
+          setShowModal={setShowLoginModal}
+          onLogin={handleLogin}
+        />
+        
+        {currentView === 'home' && !isLoggedIn && (
+          <>
+            <HeroSection setCurrentView={setCurrentView} />
+            <ProcessSection />
+            <CaseStudies />
+            <FinalCTA />
+          </>
+        )}
+        
+        {currentView === 'dashboard' && isLoggedIn && (
           <GeoTestingDashboard 
             testData={testData}
             setTestData={setTestData}
@@ -42,7 +72,7 @@ function App() {
           />
         )}
         
-        {currentView === 'setup' && (
+        {currentView === 'setup' && isLoggedIn && (
           <TestSetupWizard 
             testData={testData}
             setTestData={setTestData}
@@ -57,21 +87,21 @@ function App() {
           />
         )}
         
-        {currentView === 'attribution' && (
+        {currentView === 'attribution' && isLoggedIn && (
           <AttributionModeling 
             testData={testData}
           />
         )}
         
-        {currentView === 'results' && (
+        {currentView === 'results' && isLoggedIn && (
           <ResultsAnalysis 
             testData={testData}
           />
         )}
         
-        <ProcessSection />
-        <CaseStudies />
-        <FinalCTA />
+        {currentView === 'resources' && (
+          <KnowledgeBase />
+        )}
       </motion.div>
     </div>
   );

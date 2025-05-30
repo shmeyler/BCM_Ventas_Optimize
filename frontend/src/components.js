@@ -14,7 +14,12 @@ import {
   GlobeAltIcon,
   ArrowTrendingUpIcon,
   PresentationChartLineIcon,
-  DocumentChartBarIcon
+  DocumentChartBarIcon,
+  XMarkIcon,
+  UserIcon,
+  LockClosedIcon,
+  BookOpenIcon,
+  QuestionMarkCircleIcon
 } from '@heroicons/react/24/outline';
 
 // Mock data for various components
@@ -46,54 +51,160 @@ const mockAttributionData = [
   { channel: 'Organic', attribution: 5, incrementality: 2, difference: -3 }
 ];
 
-// Header Component
-const Header = ({ currentView, setCurrentView }) => {
+// Knowledge Base FAQ Data
+const knowledgeBaseData = [
+  {
+    category: "Incrementality Testing",
+    questions: [
+      {
+        question: "What is incrementality testing?",
+        answer: "Incrementality testing is an experimental methodology that measures the true causal impact of marketing activities by comparing test groups (exposed to marketing) against control groups (not exposed). It reveals the additional conversions, revenue, or actions that occur specifically because of your marketing efforts."
+      },
+      {
+        question: "How does geo-incrementality testing work?",
+        answer: "Geo-incrementality testing divides geographic regions into test and control groups. Marketing campaigns run in test regions while control regions receive no exposure. By comparing performance between these regions, we can isolate the true incremental impact of marketing activities."
+      },
+      {
+        question: "What are the benefits of incrementality testing?",
+        answer: "Incrementality testing provides unbiased measurement of marketing effectiveness, accounts for baseline performance, eliminates correlation bias, measures cross-channel effects, and helps optimize budget allocation based on true causal impact rather than attribution models."
+      },
+      {
+        question: "How long should an incrementality test run?",
+        answer: "Test duration depends on business factors like purchase cycles, seasonal patterns, and statistical power requirements. Most tests run 2-8 weeks, with e-commerce typically requiring 14-21 days and longer consideration purchases needing 4-6 weeks."
+      }
+    ]
+  },
+  {
+    category: "Data-Driven Attribution (DDA)",
+    questions: [
+      {
+        question: "What is Data-Driven Attribution?",
+        answer: "Data-Driven Attribution uses machine learning algorithms to analyze all touchpoints in customer journeys and assign credit based on their actual contribution to conversions. Unlike rule-based models, DDA adapts to your specific business and customer behavior patterns."
+      },
+      {
+        question: "How does DDA differ from other attribution models?",
+        answer: "Unlike last-click, first-click, or linear attribution models that use fixed rules, DDA analyzes conversion and non-conversion paths to determine which touchpoints actually drive conversions. It's customized to your data and updates as customer behavior changes."
+      },
+      {
+        question: "What are the limitations of DDA?",
+        answer: "DDA requires significant data volume, doesn't account for external factors, can show correlation rather than causation, and may struggle with long attribution windows or complex customer journeys. It also requires ongoing model training and validation."
+      }
+    ]
+  },
+  {
+    category: "Multi-Touch Attribution (MTA)",
+    questions: [
+      {
+        question: "What is Multi-Touch Attribution?",
+        answer: "Multi-Touch Attribution assigns conversion credit across multiple touchpoints in a customer journey. It recognizes that customers typically interact with multiple channels before converting and attempts to fairly distribute credit among these interactions."
+      },
+      {
+        question: "What are common MTA models?",
+        answer: "Common MTA models include: Linear (equal credit to all touchpoints), Time-decay (more credit to recent touchpoints), Position-based (more credit to first and last touch), and Algorithmic (data-driven credit assignment based on statistical analysis)."
+      },
+      {
+        question: "What challenges does MTA face?",
+        answer: "MTA faces challenges with cross-device tracking, privacy regulations limiting data collection, view-through attribution complexity, and the inability to measure true causality. It often shows correlation rather than causal impact."
+      }
+    ]
+  },
+  {
+    category: "Digital Measurement Best Practices",
+    questions: [
+      {
+        question: "How should I combine different measurement approaches?",
+        answer: "A robust measurement strategy combines multiple approaches: Use incrementality testing for unbiased causal measurement, MTA/DDA for tactical optimization, MMM for strategic planning, and A/B testing for creative and landing page optimization. Each method serves different purposes and time horizons."
+      },
+      {
+        question: "What is Marketing Mix Modeling (MMM)?",
+        answer: "Marketing Mix Modeling uses statistical analysis to measure the impact of various marketing activities on sales/conversions. It accounts for external factors like seasonality, economic conditions, and competitive activities while measuring the contribution of each marketing channel over time."
+      },
+      {
+        question: "How do I measure cross-channel effects?",
+        answer: "Cross-channel effects are best measured through incrementality testing and MMM. These approaches can capture halo effects where one channel influences performance in another, synergy effects where channels work better together, and cannibalization where channels compete for the same conversions."
+      },
+      {
+        question: "What metrics should I focus on for measurement?",
+        answer: "Focus on incremental metrics that show true business impact: Incremental ROAS, Incremental conversions, Incremental revenue, Statistical confidence levels, and Cost per incremental conversion. Avoid vanity metrics that don't reflect true marketing effectiveness."
+      }
+    ]
+  }
+];
+
+// Header Component with BCM branding
+const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn }) => {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">B</span>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="https://www.beebyclarkmeyler.com/hs-fs/hubfs/BCM_2024_Logo_Update_White.png?width=2550&height=3300&name=BCM_2024_Logo_Update_White.png"
+                alt="BCM Logo"
+                className="h-8 w-auto bg-bcm-orange p-1 rounded"
+              />
+              <div>
+                <div className="text-lg font-bold text-gray-900">BCM VentasAI</div>
+                <div className="text-xs text-bcm-orange font-semibold">Optimize</div>
               </div>
-              <span className="text-xl font-bold text-gray-900">BCM VentasAI</span>
             </div>
             
-            <nav className="hidden md:flex space-x-6">
-              <button 
-                onClick={() => setCurrentView('dashboard')}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  currentView === 'dashboard' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Platform
-              </button>
-              <button 
-                onClick={() => setCurrentView('analytics')}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  currentView === 'analytics' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Analytics
-              </button>
-              <span className="text-gray-600 text-sm font-medium">Success Stories</span>
-              <span className="text-gray-600 text-sm font-medium">Resources</span>
-              <span className="text-gray-600 text-sm font-medium">About Us</span>
-            </nav>
+            {isLoggedIn && (
+              <nav className="hidden md:flex space-x-6">
+                <button 
+                  onClick={() => setCurrentView('dashboard')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentView === 'dashboard' 
+                      ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Platform
+                </button>
+                <button 
+                  onClick={() => setCurrentView('analytics')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentView === 'analytics' 
+                      ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Analytics
+                </button>
+                <button 
+                  onClick={() => setCurrentView('resources')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    currentView === 'resources' 
+                      ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Resources
+                </button>
+              </nav>
+            )}
           </div>
           
           <div className="flex items-center space-x-4">
-            <button className="text-gray-600 hover:text-gray-900 text-sm font-medium">
-              Login
-            </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-              Request a demo
-            </button>
+            {!isLoggedIn ? (
+              <>
+                <button 
+                  onClick={() => setShowLoginModal(true)}
+                  className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                >
+                  Login
+                </button>
+                <button className="bg-bcm-orange hover:bg-bcm-orange-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                  Request a demo
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <UserIcon className="h-5 w-5 text-gray-600" />
+                <span className="text-sm text-gray-600">Welcome back</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -101,10 +212,91 @@ const Header = ({ currentView, setCurrentView }) => {
   );
 };
 
+// Login Modal Component
+const LoginModal = ({ showModal, setShowModal, onLogin }) => {
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onLogin(credentials);
+  };
+
+  return (
+    <AnimatePresence>
+      {showModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-2xl p-8 w-full max-w-md"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Login to BCM VentasAI</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials({...credentials, email: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange focus:border-transparent"
+                  placeholder="Enter any email"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={credentials.password}
+                  onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange focus:border-transparent"
+                  placeholder="Enter any password"
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-bcm-orange hover:bg-bcm-orange-dark text-white py-3 rounded-lg font-semibold transition-colors"
+              >
+                Login
+              </button>
+            </form>
+            
+            <p className="text-sm text-gray-500 text-center mt-4">
+              For demo purposes, any email/password combination will work
+            </p>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 // Hero Section Component
 const HeroSection = ({ setCurrentView }) => {
   return (
-    <section className="bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 py-20">
+    <section className="bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <motion.h1 
@@ -131,14 +323,14 @@ const HeroSection = ({ setCurrentView }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             onClick={() => setCurrentView('dashboard')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+            className="bg-bcm-orange hover:bg-bcm-orange-dark text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
           >
             Start Free Test
           </motion.button>
           
           <div className="mt-16">
             <img 
-              src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHx3b3JsZCUyMG1hcCUyMGFuYWx5dGljc3xlbnwwfHx8fDE3NDg2MTE5MjB8MA&ixlib=rb-4.1.0&q=85"
+              src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHx8fDE3NDg2MTE5MjB8MA&ixlib=rb-4.1.0&q=85"
               alt="Global Analytics"
               className="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl"
             />
@@ -149,7 +341,107 @@ const HeroSection = ({ setCurrentView }) => {
   );
 };
 
-// Geo Testing Dashboard Component
+// Knowledge Base Component
+const KnowledgeBase = () => {
+  const [selectedCategory, setSelectedCategory] = useState("Incrementality Testing");
+  const [expandedQuestion, setExpandedQuestion] = useState(null);
+
+  return (
+    <section className="py-16 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Knowledge Base
+          </h1>
+          <p className="text-xl text-gray-600">
+            Learn about incrementality testing, attribution, and digital measurement best practices
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Category Navigation */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <BookOpenIcon className="h-5 w-5 mr-2 text-bcm-orange" />
+                Topics
+              </h3>
+              <nav className="space-y-2">
+                {knowledgeBaseData.map((category) => (
+                  <button
+                    key={category.category}
+                    onClick={() => setSelectedCategory(category.category)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedCategory === category.category
+                        ? 'bg-bcm-orange bg-opacity-10 text-bcm-orange'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    {category.category}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-2xl p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <QuestionMarkCircleIcon className="h-6 w-6 mr-3 text-bcm-orange" />
+                {selectedCategory}
+              </h2>
+
+              <div className="space-y-4">
+                {knowledgeBaseData
+                  .find(cat => cat.category === selectedCategory)
+                  ?.questions.map((qa, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg">
+                      <button
+                        onClick={() => setExpandedQuestion(
+                          expandedQuestion === `${selectedCategory}-${index}` 
+                            ? null 
+                            : `${selectedCategory}-${index}`
+                        )}
+                        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="font-semibold text-gray-900">
+                          {qa.question}
+                        </span>
+                        <span className={`transform transition-transform ${
+                          expandedQuestion === `${selectedCategory}-${index}` ? 'rotate-180' : ''
+                        }`}>
+                          ▼
+                        </span>
+                      </button>
+                      
+                      <AnimatePresence>
+                        {expandedQuestion === `${selectedCategory}-${index}` && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-6 pb-4 text-gray-600 leading-relaxed border-t border-gray-200 pt-4">
+                              {qa.answer}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Geo Testing Dashboard Component (updated colors)
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [regions, setRegions] = useState(mockRegions);
   const [isTestRunning, setIsTestRunning] = useState(false);
@@ -196,8 +488,8 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                       onClick={() => selectRegion(region.id, 'test')}
                       className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                         region.type === 'test'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-blue-100'
+                          ? 'bg-bcm-orange text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-orange-100'
                       }`}
                     >
                       Test
@@ -220,7 +512,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
             <div className="flex space-x-4">
               <button
                 onClick={() => setCurrentView('setup')}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                className="flex-1 bg-bcm-orange hover:bg-bcm-orange-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               >
                 Configure Test
               </button>
@@ -234,14 +526,14 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
           </div>
 
           {/* Live Preview */}
-          <div className="bg-gradient-to-br from-purple-50 to-blue-100 rounded-2xl p-8">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Configuration Preview</h3>
             
             <div className="space-y-6">
               <div className="bg-white rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-semibold text-gray-900">Test Regions</h4>
-                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  <span className="bg-orange-100 text-bcm-orange px-3 py-1 rounded-full text-sm">
                     {regions.filter(r => r.type === 'test').length} selected
                   </span>
                 </div>
@@ -275,7 +567,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
               <div className="bg-white rounded-lg p-6">
                 <h4 className="font-semibold text-gray-900 mb-4">Estimated Test Power</h4>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
+                  <div className="bg-bcm-orange h-2 rounded-full" style={{ width: '85%' }}></div>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">85% statistical power detected</p>
               </div>
@@ -287,7 +579,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   );
 };
 
-// Test Setup Wizard Component
+// Test Setup Wizard Component (updated colors)
 const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -326,14 +618,14 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
           {steps.map((step, index) => (
             <div key={step.id} className="flex flex-col items-center">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                currentStep >= step.id ? 'bg-bcm-orange text-white' : 'bg-gray-300 text-gray-600'
               }`}>
                 <step.icon className="w-6 h-6" />
               </div>
               <span className="mt-2 text-sm font-medium text-gray-700">{step.title}</span>
               {index < steps.length - 1 && (
                 <div className={`w-24 h-1 mt-4 ${
-                  currentStep > step.id ? 'bg-blue-600' : 'bg-gray-300'
+                  currentStep > step.id ? 'bg-bcm-orange' : 'bg-gray-300'
                 }`}></div>
               )}
             </div>
@@ -352,7 +644,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
                     type="text"
                     value={formData.testName}
                     onChange={(e) => setFormData({...formData, testName: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange"
                     placeholder="Q1 2024 Meta Ads Test"
                   />
                 </div>
@@ -361,7 +653,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
                   <select
                     value={formData.duration}
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange"
                   >
                     <option value="7">7 days</option>
                     <option value="14">14 days</option>
@@ -381,7 +673,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
                   <label key={channel} className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-bcm-orange border-gray-300 rounded focus:ring-bcm-orange"
                       onChange={(e) => {
                         if (e.target.checked) {
                           setFormData({...formData, channels: [...formData.channels, channel]});
@@ -407,7 +699,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
                     type="number"
                     value={formData.budget}
                     onChange={(e) => setFormData({...formData, budget: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange"
                     placeholder="10000"
                   />
                 </div>
@@ -451,7 +743,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
             </button>
             <button
               onClick={handleNext}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="px-6 py-3 bg-bcm-orange hover:bg-bcm-orange-dark text-white rounded-lg transition-colors"
             >
               {currentStep === 4 ? 'Launch Test' : 'Next'}
             </button>
@@ -462,7 +754,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
   );
 };
 
-// Live Analytics Component
+// Live Analytics Component (updated colors)
 const LiveAnalytics = ({ testData, setCurrentView }) => {
   const [timeRange, setTimeRange] = useState('7d');
   const [isLive, setIsLive] = useState(true);
@@ -522,22 +814,22 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
             <p className="text-sm text-green-700">return on ad spend</p>
           </div>
           
-          <div className="bg-gradient-to-r from-purple-50 to-blue-100 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-blue-600">Statistical Confidence</h3>
-              <CheckCircleIcon className="w-5 h-5 text-blue-600" />
-            </div>
-            <p className="text-3xl font-bold text-purple-900">95%</p>
-            <p className="text-sm text-blue-700">confidence level</p>
-          </div>
-          
           <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-2xl">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-orange-600">Incremental Revenue</h3>
-              <PresentationChartLineIcon className="w-5 h-5 text-orange-600" />
+              <h3 className="text-sm font-medium text-bcm-orange">Statistical Confidence</h3>
+              <CheckCircleIcon className="w-5 h-5 text-bcm-orange" />
             </div>
-            <p className="text-3xl font-bold text-orange-900">$124K</p>
-            <p className="text-sm text-orange-700">additional revenue</p>
+            <p className="text-3xl font-bold text-gray-900">95%</p>
+            <p className="text-sm text-bcm-orange">confidence level</p>
+          </div>
+          
+          <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-6 rounded-2xl">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-yellow-600">Incremental Revenue</h3>
+              <PresentationChartLineIcon className="w-5 h-5 text-yellow-600" />
+            </div>
+            <p className="text-3xl font-bold text-yellow-900">$124K</p>
+            <p className="text-sm text-yellow-700">additional revenue</p>
           </div>
         </div>
 
@@ -566,7 +858,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="lift" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="lift" stroke="rgb(227, 128, 68)" fill="rgb(227, 128, 68)" fillOpacity={0.6} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -576,7 +868,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
         <div className="flex justify-center space-x-4">
           <button
             onClick={() => setCurrentView('attribution')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            className="bg-bcm-orange hover:bg-bcm-orange-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors"
           >
             View Attribution Analysis
           </button>
@@ -592,14 +884,14 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
   );
 };
 
-// Attribution Modeling Component
+// Attribution Modeling Component (updated colors)
 const AttributionModeling = ({ testData }) => {
   return (
-    <section className="py-16 bg-gradient-to-br from-purple-900 via-blue-800 to-purple-900 text-white">
+    <section className="py-16 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4">Smart Attribution Analysis</h2>
-          <p className="text-xl text-purple-200">Compare last-click attribution vs. incrementality-based attribution</p>
+          <p className="text-xl text-gray-300">Compare last-click attribution vs. incrementality-based attribution</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -618,15 +910,15 @@ const AttributionModeling = ({ testData }) => {
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-purple-300">Last-click: {channel.attribution}%</p>
-                      <div className="w-full bg-blue-800 rounded-full h-2 mt-1">
-                        <div className="bg-purple-400 h-2 rounded-full" style={{width: `${channel.attribution}%`}}></div>
+                      <p className="text-gray-300">Last-click: {channel.attribution}%</p>
+                      <div className="w-full bg-gray-700 rounded-full h-2 mt-1">
+                        <div className="bg-gray-400 h-2 rounded-full" style={{width: `${channel.attribution}%`}}></div>
                       </div>
                     </div>
                     <div>
-                      <p className="text-blue-300">Incrementality: {channel.incrementality}%</p>
-                      <div className="w-full bg-blue-800 rounded-full h-2 mt-1">
-                        <div className="bg-blue-400 h-2 rounded-full" style={{width: `${channel.incrementality}%`}}></div>
+                      <p className="text-orange-300">Incrementality: {channel.incrementality}%</p>
+                      <div className="w-full bg-orange-900 rounded-full h-2 mt-1">
+                        <div className="h-2 rounded-full" style={{width: `${channel.incrementality}%`, backgroundColor: 'rgb(227, 128, 68)'}}></div>
                       </div>
                     </div>
                   </div>
@@ -650,8 +942,8 @@ const AttributionModeling = ({ testData }) => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="attribution" fill="#A855F7" name="Last-click Attribution" />
-                <Bar dataKey="incrementality" fill="#3B82F6" name="Incrementality-based" />
+                <Bar dataKey="attribution" fill="#9CA3AF" name="Last-click Attribution" />
+                <Bar dataKey="incrementality" fill="rgb(227, 128, 68)" name="Incrementality-based" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -663,15 +955,15 @@ const AttributionModeling = ({ testData }) => {
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div>
                 <p className="text-3xl font-bold text-green-400">+$89K</p>
-                <p className="text-purple-200">Incremental revenue identified</p>
+                <p className="text-gray-300">Incremental revenue identified</p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-blue-400">23%</p>
-                <p className="text-purple-200">Attribution adjustment</p>
+                <p className="text-3xl font-bold" style={{color: 'rgb(227, 128, 68)'}}>23%</p>
+                <p className="text-gray-300">Attribution adjustment</p>
               </div>
               <div>
                 <p className="text-3xl font-bold text-yellow-400">$2.1M</p>
-                <p className="text-purple-200">Annual revenue impact</p>
+                <p className="text-gray-300">Annual revenue impact</p>
               </div>
             </div>
           </div>
@@ -681,7 +973,7 @@ const AttributionModeling = ({ testData }) => {
   );
 };
 
-// Results Analysis Component
+// Results Analysis Component (updated colors)
 const ResultsAnalysis = ({ testData }) => {
   return (
     <section className="py-16 bg-gray-50">
@@ -704,14 +996,14 @@ const ResultsAnalysis = ({ testData }) => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <ArrowTrendingUpIcon className="w-6 h-6 text-blue-500 mt-1" />
+                  <ArrowTrendingUpIcon className="w-6 h-6 text-bcm-orange mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Strong Performance</p>
                     <p className="text-gray-600">Test group outperformed control by $124K in additional revenue</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <PresentationChartLineIcon className="w-6 h-6 text-purple-500 mt-1" />
+                  <PresentationChartLineIcon className="w-6 h-6 text-bcm-orange mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Attribution Insights</p>
                     <p className="text-gray-600">Significant differences found between last-click and incrementality attribution</p>
@@ -742,9 +1034,9 @@ const ResultsAnalysis = ({ testData }) => {
                 <h4 className="font-semibold text-yellow-800">Optimize Meta Ads</h4>
                 <p className="text-sm text-yellow-700">Attribution shows overvaluation. Implement incremental bidding strategies</p>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-800">Expand Testing</h4>
-                <p className="text-sm text-blue-700">Run follow-up tests in additional regions to validate findings</p>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <h4 className="font-semibold text-bcm-orange">Expand Testing</h4>
+                <p className="text-sm" style={{color: 'rgb(180, 100, 50)'}}>Run follow-up tests in additional regions to validate findings</p>
               </div>
             </div>
           </div>
@@ -760,7 +1052,7 @@ const ResultsAnalysis = ({ testData }) => {
                 'Integrate findings with MMM model'
               ].map((step, index) => (
                 <div key={index} className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  <div className="w-6 h-6 text-white rounded-full flex items-center justify-center text-sm font-bold" style={{backgroundColor: 'rgb(227, 128, 68)'}}>
                     {index + 1}
                   </div>
                   <span className="text-gray-700">{step}</span>
@@ -772,7 +1064,7 @@ const ResultsAnalysis = ({ testData }) => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Export Options</h3>
             <div className="space-y-3">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors">
+              <button className="w-full text-white py-3 rounded-lg font-semibold transition-colors hover:opacity-90" style={{backgroundColor: 'rgb(227, 128, 68)'}}>
                 Download Full Report
               </button>
               <button className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-semibold transition-colors">
@@ -792,7 +1084,7 @@ const ResultsAnalysis = ({ testData }) => {
   );
 };
 
-// Process Section Component
+// Process Section Component (updated colors)
 const ProcessSection = () => {
   const steps = [
     {
@@ -838,12 +1130,12 @@ const ProcessSection = () => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="text-center"
             >
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                 {step.icon}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
               <p className="text-gray-600 mb-2">{step.description}</p>
-              <span className="text-sm text-blue-600 font-medium">{step.time}</span>
+              <span className="text-sm font-medium" style={{color: 'rgb(227, 128, 68)'}}>{step.time}</span>
             </motion.div>
           ))}
         </div>
@@ -852,7 +1144,7 @@ const ProcessSection = () => {
   );
 };
 
-// Case Studies Component
+// Case Studies Component (updated colors)
 const CaseStudies = () => {
   const caseStudies = [
     {
@@ -902,7 +1194,7 @@ const CaseStudies = () => {
               />
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-orange-100 px-3 py-1 rounded-full text-sm font-medium" style={{color: 'rgb(227, 128, 68)'}}>
                     {study.channel}
                   </span>
                   <span className="text-2xl font-bold text-green-600">{study.metric}</span>
@@ -918,10 +1210,10 @@ const CaseStudies = () => {
   );
 };
 
-// Final CTA Component
+// Final CTA Component (updated colors)
 const FinalCTA = () => {
   return (
-    <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-800">
+    <section className="py-16" style={{background: 'linear-gradient(to right, rgb(227, 128, 68), rgb(200, 100, 50))'}}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -931,14 +1223,14 @@ const FinalCTA = () => {
           <h2 className="text-4xl font-bold text-white mb-6">
             Upgrade your measurement with BCM VentasAI
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-orange-100 mb-8">
             Start your first geo-incrementality test today and discover your true marketing impact
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button className="bg-white text-gray-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors">
               Book a Demo
             </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-gray-700 transition-colors">
               Start Free Trial
             </button>
           </div>
@@ -951,12 +1243,14 @@ const FinalCTA = () => {
 // Export all components
 const Components = {
   Header,
+  LoginModal,
   HeroSection,
   GeoTestingDashboard,
   TestSetupWizard,
   LiveAnalytics,
   AttributionModeling,
   ResultsAnalysis,
+  KnowledgeBase,
   ProcessSection,
   CaseStudies,
   FinalCTA
