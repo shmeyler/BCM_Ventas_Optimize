@@ -142,6 +142,7 @@ class RealAPIService {
   loadAPIKeys() {
     const keys = {
       census: process.env.REACT_APP_CENSUS_API_KEY || null, // Census is actually keyless for public data
+      datausa: null, // DataUSA.io is completely free, no key needed
       nielsen: localStorage.getItem('nielsen_api_key') || process.env.REACT_APP_NIELSEN_API_KEY || null,
       statista: localStorage.getItem('statista_api_key') || process.env.REACT_APP_STATISTA_API_KEY || null,
       comscore: localStorage.getItem('comscore_api_key') || process.env.REACT_APP_COMSCORE_API_KEY || null
