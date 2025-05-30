@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import DemographicMatchingModel from './demographic-matching-model';
 import RealAPIService from './real-api-service';
-import APIKeyManager from './APIKeyManager';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
@@ -29,7 +28,10 @@ import {
   BuildingOfficeIcon,
   HomeIcon,
   KeyIcon,
-  CloudIcon
+  CloudIcon,
+  InformationCircleIcon,
+  CurrencyDollarIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 // Mock data for various components
