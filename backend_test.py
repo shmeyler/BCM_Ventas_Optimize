@@ -542,7 +542,8 @@ def run_all_tests():
         "states_endpoint_working": False,
         "dmas_endpoint_working": False,
         "zip_endpoint_working": False,
-        "zips_endpoint_working": False
+        "zips_endpoint_working": False,
+        "logs_checked": False
     }
     
     print("=== Starting Backend API Tests ===")
@@ -569,6 +570,9 @@ def run_all_tests():
     # Test 7: Geographic Multiple ZIPs Endpoint
     results["zips_endpoint_working"] = test_zips_endpoint()
     
+    # Test 8: Check Backend Logs
+    results["logs_checked"] = check_backend_logs()
+    
     # Print summary
     print("\n=== Test Results Summary ===")
     print(f"Backend responding: {'✅' if results['backend_responding'] else '❌'}")
@@ -578,6 +582,7 @@ def run_all_tests():
     print(f"GET /api/geographic/dmas working: {'✅' if results['dmas_endpoint_working'] else '❌'}")
     print(f"GET /api/geographic/zip/{'{zip_code}'} working: {'✅' if results['zip_endpoint_working'] else '❌'}")
     print(f"GET /api/geographic/zips working: {'✅' if results['zips_endpoint_working'] else '❌'}")
+    print(f"Backend logs checked: {'✅' if results['logs_checked'] else '❌'}")
     
     return results
 
