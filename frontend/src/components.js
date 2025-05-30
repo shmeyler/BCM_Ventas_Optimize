@@ -1147,16 +1147,23 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
 
   // Handle region selection
   const selectRegion = async (regionId, type) => {
-    const updatedRegions = regions.map(region => 
-      region.id === regionId 
-        ? { ...region, selected: true, type }
-        : region
-    );
+    const updatedRegions = regions.map(region => {
+      if (region.id === regionId) {
+        // Toggle selection: if same type clicked, deselect; otherwise select new type
+        if (region.type === type) {
+          return { ...region, selected: false, type: null };
+        } else {
+          return { ...region, selected: true, type };
+        }
+      }
+      return region;
+    });
+    
     setRegions(updatedRegions);
 
     // Find similar regions for control group suggestions
-    if (type === 'test') {
-      const selectedRegion = updatedRegions.find(r => r.id === regionId);
+    const selectedRegion = updatedRegions.find(r => r.id === regionId);
+    if (selectedRegion && selectedRegion.selected && type === 'test') {
       setSelectedRegionForAnalysis(selectedRegion);
       setIsLoading(true);
       
