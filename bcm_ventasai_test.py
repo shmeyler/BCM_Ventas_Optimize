@@ -4,7 +4,7 @@ from datetime import datetime
 import uuid
 
 class BCMVentasAITester:
-    def __init__(self, base_url="https://db56f08e-9e9a-409a-8d04-cfba074684c0.preview.emergentagent.com"):
+    def __init__(self, base_url="https://2e6a8e6e-d1d4-4773-8628-eee77b08df7f.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
