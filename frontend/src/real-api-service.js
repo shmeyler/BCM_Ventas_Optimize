@@ -478,8 +478,120 @@ class RealAPIService {
   }
 
   /**
-   * Get enhanced demographic data from multiple sources
+   * Get demographic data from Census ACS API
    */
+  async getCensusACSData(zipCode, apiKey = null) {
+    try {
+      console.log(`🏛️ Fetching Census ACS data for ZIP ${zipCode}`);
+      
+      // Convert ZIP to ZCTA for Census API
+      const zcta = zipCode.padStart(5, '0');
+      
+      // Define ACS variables we want to fetch
+      const variables = [
+        'B01003_001E', // Total Population
+        'B19013_001E', // Median Household Income
+        'B25003_002E', // Owner Occupied Housing Units
+        'B25003_003E', // Renter Occupied Housing Units
+        'B08303_001E', // Total Commuters
+        'B15003_022E', // Bachelor's Degree
+        'B15003_023E', // Master's Degree
+        'B15003_024E', // Professional Degree
+        'B15003_025E', // Doctorate Degree
+        'B23025_005E', // Unemployed
+        'B23025_002E', // Labor Force
+        'B25077_001E', // Median Home Value
+        'B25064_001E', // Median Gross Rent
+        'B01002_001E', // Median Age
+        'B25010_001E'  // Average Household Size
+      ];
+      
+      const variableString = variables.join(',');
+      let url = `${API_CONFIG.census.baseUrl}?get=${variableString}&for=zip%20code%20tabulation%20area:${zcta}`;
+      
+      // Add API key if provided
+      if (apiKey) {
+        url += `&key=${apiKey}`;
+      }
+      
+      const response = await axios.get(url, {
+        timeout: 10000
+      });
+      
+      if (response.data && response.data.length > 1) {
+        const headers = response.data[0];
+        const data = response.data[1];
+        
+        // Create a mapping of variable names to values
+        const censusData = {};
+        headers.forEach((header, index) => {
+          censusData[header] = data[index];
+        });
+        
+        return this.transformCensusACSData(censusData, zipCode);
+      } else {
+        console.log(`No Census ACS data found for ZIP ${zipCode}`);
+        return null;
+      }
+      
+    } catch (error) {
+      console.error(`Error fetching Census ACS data for ZIP ${zipCode}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Transform Census ACS data to our standard format
+   */
+  transformCensusACSData(censusData, zipCode) {
+    const population = parseFloat(censusData['B01003_001E']) || 0;
+    const laborForce = parseFloat(censusData['B23025_002E']) || 1;
+    const unemployed = parseFloat(censusData['B23025_005E']) || 0;
+    const ownerOccupied = parseFloat(censusData['B25003_002E']) || 0;
+    const renterOccupied = parseFloat(censusData['B25003_003E']) || 0;
+    const totalHousing = ownerOccupied + renterOccupied || 1;
+    
+    // Calculate education levels
+    const bachelors = parseFloat(censusData['B15003_022E']) || 0;
+    const masters = parseFloat(censusData['B15003_023E']) || 0;
+    const professional = parseFloat(censusData['B15003_024E']) || 0;
+    const doctorate = parseFloat(censusData['B15003_025E']) || 0;
+    const totalHigherEd = bachelors + masters + professional + doctorate;
+    
+    // Estimate education percentage (simplified)
+    const collegeEducated = population > 0 ? (totalHigherEd / population) * 100 : 25;
+    
+    return {
+      id: zipCode,
+      name: `${zipCode} (Census ACS)`,
+      source: 'CENSUS_ACS',
+      selected: false,
+      type: 'zip',
+      demographics: {
+        medianAge: parseFloat(censusData['B01002_001E']) || 35,
+        medianIncome: parseInt(censusData['B19013_001E']) || 50000,
+        populationDensity: population,
+        householdSize: parseFloat(censusData['B25010_001E']) || 2.5,
+        collegeEducated: Math.min(100, Math.max(0, collegeEducated)),
+        unemploymentRate: laborForce > 0 ? (unemployed / laborForce) * 100 : 5.0,
+        whiteCollarJobs: 65.0, // Would need occupation data for accuracy
+        homeOwnership: totalHousing > 0 ? (ownerOccupied / totalHousing) * 100 : 65,
+        medianHomeValue: parseInt(censusData['B25077_001E']) || 200000,
+        rentBurden: 30.0, // Would need detailed rent burden data
+        internetPenetration: 90.0, // Not available in basic ACS
+        mobileUsage: 88.0,
+        socialMediaUsage: 70.0,
+        onlineShoppingIndex: 120.0,
+        urbanizationLevel: population > 50000 ? 'URBAN' : population > 10000 ? 'SUBURBAN' : 'RURAL',
+        retailDensity: 300,
+        competitionIndex: 75.0,
+        tvConsumption: 4.0,
+        digitalAdReceptivity: 78.0,
+        brandLoyalty: 50.0
+      },
+      lastUpdated: new Date().toISOString()
+    };
+  }
   async getEnhancedDemographics(regionId, regionType) {
     const sources = [];
     
