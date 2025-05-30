@@ -304,6 +304,10 @@ class RealAPIService {
       }
     };
   }
+
+  /**
+   * Get real ZIP code data from US Census Bureau
+   */
   async getRealZipCodeData(zipCode) {
     try {
       // Check cache first
