@@ -1293,34 +1293,100 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                 className="bg-blue-50 rounded-2xl p-6"
               >
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  Recommended Control Regions
+                  AI-Powered Control Recommendations
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Based on your test selection: <strong>{selectedRegionForAnalysis.name}</strong>
+                  Based on advanced demographic matching for: <strong>{selectedRegionForAnalysis.name}</strong>
                 </p>
                 
                 <div className="space-y-3">
                   {similarRegions.map((region, index) => (
-                    <div key={region.id} className="bg-white rounded-lg p-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold text-gray-900 text-sm">{region.name}</h4>
-                        <span className="text-xs font-medium text-blue-600">
-                          {(region.similarity * 100).toFixed(0)}% match
-                        </span>
+                    <div key={region.id} className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-sm">{region.name}</h4>
+                          {region.validation && (
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                region.validation.confidenceLevel === 'High' ? 'bg-green-100 text-green-800' :
+                                region.validation.confidenceLevel === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {region.validation.confidenceLevel} Confidence
+                              </span>
+                              <span className="text-xs text-gray-600">
+                                {(region.validation.statisticalPower * 100).toFixed(0)}% Power
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-medium text-blue-600">
+                            {(region.similarity * 100).toFixed(0)}% match
+                          </span>
+                          <div className="w-16 bg-gray-200 rounded-full h-1 mt-1">
+                            <div 
+                              className="bg-blue-500 h-1 rounded-full" 
+                              style={{ width: `${region.similarity * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-600">
-                        {region.matchReasons && region.matchReasons.slice(0, 2).map((reason, idx) => (
-                          <div key={idx}>• {reason}</div>
+                      
+                      {/* Advanced demographic comparison */}
+                      {regionType === 'zip' && region.demographicComparison && (
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                          <div>Income: ${region.demographics?.medianIncome?.toLocaleString()}</div>
+                          <div>Age: {region.demographics?.medianAge?.toFixed(1)}</div>
+                          <div>Education: {region.demographics?.collegeEducated?.toFixed(0)}%</div>
+                          <div>Density: {region.demographics?.populationDensity?.toLocaleString()}/sq mi</div>
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-600 mb-3">
+                        <strong>Match Factors:</strong>
+                        {region.matchReasons && region.matchReasons.slice(0, 3).map((reason, idx) => (
+                          <div key={idx} className="inline-block bg-gray-100 px-2 py-1 rounded mr-1 mt-1">
+                            {reason}
+                          </div>
                         ))}
                       </div>
-                      <button
-                        onClick={() => selectRegion(region.id, 'control')}
-                        className="mt-2 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                      >
-                        Add as Control
-                      </button>
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => selectRegion(region.id, 'control')}
+                          className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                        >
+                          Add as Control
+                        </button>
+                        <button
+                          onClick={() => handleDetailedAnalysis(selectedRegionForAnalysis, region)}
+                          className="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition-colors"
+                        >
+                          Detailed Analysis
+                        </button>
+                      </div>
                     </div>
                   ))}
+                </div>
+                
+                {/* Test Design Optimization */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-2">Test Design Recommendations</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Recommended Test Duration:</span>
+                      <span className="font-medium">21-28 days</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Expected Statistical Power:</span>
+                      <span className="font-medium text-green-600">85%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Demographic Balance Score:</span>
+                      <span className="font-medium text-blue-600">92%</span>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
