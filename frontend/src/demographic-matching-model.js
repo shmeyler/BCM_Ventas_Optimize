@@ -558,53 +558,323 @@ class DemographicMatchingModel {
   }
 
   /**
-   * Validate statistical significance of match
+   * Enhanced statistical power analysis with real A/B testing parameters
    */
-  validateMatchSignificance(targetRegion, candidateRegions, testMetrics = {}) {
-    // Statistical power calculation for geo-incrementality test
+  validateMatchSignificanceWithRealMetrics(targetRegion, candidateRegions, testMetrics = {}) {
     const { 
       expectedLift = 0.1, 
       alpha = 0.05, 
       beta = 0.2,
-      baselineConversionRate = 0.05 
+      baselineConversionRate = 0.05,
+      weeklyTraffic = null,
+      dailySpend = null,
+      kpi = 'conversions', // 'conversions', 'revenue', 'clicks'
+      minimumDetectableEffect = null
     } = testMetrics;
 
     const results = candidateRegions.map(candidate => {
-      // Calculate sample size requirements
-      const populationTarget = this.extractPopulation(targetRegion);
-      const populationCandidate = this.extractPopulation(candidate);
+      // Extract real population data
+      const populationTarget = this.extractRealPopulation(targetRegion);
+      const populationCandidate = this.extractRealPopulation(candidate);
       
-      // Simplified power calculation
-      const minSampleSize = this.calculateMinSampleSize(
+      // Calculate required sample size based on real parameters
+      const effectSize = minimumDetectableEffect || expectedLift;
+      const realSampleSize = this.calculateRealSampleSize(
         baselineConversionRate, 
-        expectedLift, 
+        effectSize, 
         alpha, 
         beta
       );
 
-      const targetSampleAdequate = populationTarget >= minSampleSize;
-      const candidateSampleAdequate = populationCandidate >= minSampleSize;
+      // Calculate realistic weekly sample based on traffic/spend
+      const weeklyTargetSample = this.estimateWeeklySample(targetRegion, weeklyTraffic, dailySpend);
+      const weeklyCandidateSample = this.estimateWeeklySample(candidate, weeklyTraffic, dailySpend);
       
-      const statisticalPower = this.calculateStatisticalPower(
-        populationTarget, 
-        populationCandidate, 
-        baselineConversionRate, 
-        expectedLift
+      // Calculate minimum test duration
+      const minTestWeeks = Math.max(
+        Math.ceil(realSampleSize / weeklyTargetSample),
+        Math.ceil(realSampleSize / weeklyCandidateSample),
+        2 // Minimum 2 weeks
       );
+
+      // Real statistical power calculation
+      const actualPower = this.calculateRealStatisticalPower(
+        weeklyTargetSample * minTestWeeks,
+        weeklyCandidateSample * minTestWeeks,
+        baselineConversionRate,
+        effectSize,
+        alpha
+      );
+
+      // Data quality assessment
+      const dataQuality = this.assessDataQuality(targetRegion, candidate);
 
       return {
         ...candidate,
         validation: {
-          targetSampleAdequate,
-          candidateSampleAdequate,
-          statisticalPower,
-          recommendedTestDuration: this.calculateTestDuration(minSampleSize, populationTarget),
-          confidenceLevel: statisticalPower >= 0.8 ? 'High' : statisticalPower >= 0.6 ? 'Medium' : 'Low'
+          realSampleSize,
+          weeklyTargetSample,
+          weeklyCandidateSample,
+          minimumTestWeeks: minTestWeeks,
+          statisticalPower: actualPower,
+          confidenceLevel: this.getConfidenceLevel(actualPower, dataQuality),
+          dataQuality,
+          recommendations: this.generateTestRecommendations(
+            actualPower, 
+            minTestWeeks, 
+            dataQuality, 
+            effectSize,
+            kpi
+          ),
+          warnings: this.generateTestWarnings(actualPower, dataQuality, minTestWeeks)
         }
       };
     });
 
     return results;
+  }
+
+  /**
+   * Real statistical power calculation using proper formulas
+   */
+  calculateRealStatisticalPower(n1, n2, p1, effect, alpha) {
+    const p2 = p1 * (1 + effect);
+    const pooledP = (p1 + p2) / 2;
+    const pooledVariance = pooledP * (1 - pooledP);
+    
+    // Standard error
+    const se = Math.sqrt(pooledVariance * (1/n1 + 1/n2));
+    
+    // Critical value for two-tailed test
+    const zAlpha = this.getZScore(alpha / 2);
+    
+    // Effect size in standard deviations
+    const delta = Math.abs(p2 - p1) / se;
+    
+    // Power calculation using normal approximation
+    const zBeta = delta - zAlpha;
+    const power = this.normalCDF(zBeta);
+    
+    return Math.min(0.99, Math.max(0.05, power));
+  }
+
+  /**
+   * Calculate required sample size with real statistical methods
+   */
+  calculateRealSampleSize(p1, effect, alpha, beta) {
+    const p2 = p1 * (1 + effect);
+    const zAlpha = this.getZScore(alpha / 2); // Two-tailed
+    const zBeta = this.getZScore(beta);
+    
+    const pooledP = (p1 + p2) / 2;
+    const numerator = Math.pow(zAlpha + zBeta, 2) * 2 * pooledP * (1 - pooledP);
+    const denominator = Math.pow(p2 - p1, 2);
+    
+    return Math.ceil(numerator / denominator);
+  }
+
+  /**
+   * Estimate weekly sample based on traffic/spend data
+   */
+  estimateWeeklySample(region, weeklyTraffic, dailySpend) {
+    if (weeklyTraffic) {
+      return weeklyTraffic;
+    }
+    
+    if (dailySpend) {
+      // Estimate based on typical CPM/CPC for demographic
+      const estimatedCPM = this.estimateCPM(region);
+      const dailyImpressions = (dailySpend / estimatedCPM) * 1000;
+      const estimatedCTR = this.estimateCTR(region);
+      const dailyClicks = dailyImpressions * (estimatedCTR / 100);
+      return Math.round(dailyClicks * 7); // Weekly
+    }
+    
+    // Fallback: estimate based on population
+    const population = this.extractRealPopulation(region);
+    return Math.round(population * 0.001); // Assume 0.1% weekly reach
+  }
+
+  /**
+   * Assess data quality and reliability
+   */
+  assessDataQuality(targetRegion, candidateRegion) {
+    const targetSource = targetRegion.source || 'UNKNOWN';
+    const candidateSource = candidateRegion.source || 'UNKNOWN';
+    
+    let score = 100;
+    const issues = [];
+    
+    // Check data sources
+    if (targetSource.includes('FALLBACK') || candidateSource.includes('FALLBACK')) {
+      score -= 30;
+      issues.push('Using fallback demographic data - may not be current');
+    }
+    
+    if (targetSource.includes('MOCK') || candidateSource.includes('MOCK')) {
+      score -= 50;
+      issues.push('Using mock data - not suitable for real testing');
+    }
+    
+    // Check demographic data completeness
+    const targetDemographics = Object.keys(targetRegion.demographics || {});
+    const candidateDemographics = Object.keys(candidateRegion.demographics || {});
+    
+    if (targetDemographics.length < 10 || candidateDemographics.length < 10) {
+      score -= 20;
+      issues.push('Limited demographic variables available');
+    }
+    
+    // Check similarity score reliability
+    const similarity = candidateRegion.similarity || 0;
+    if (similarity < 0.6) {
+      score -= 25;
+      issues.push('Low demographic similarity - may affect test validity');
+    }
+    
+    return {
+      score: Math.max(0, score),
+      grade: score >= 80 ? 'A' : score >= 60 ? 'B' : score >= 40 ? 'C' : 'D',
+      issues,
+      reliable: score >= 60
+    };
+  }
+
+  /**
+   * Generate honest test recommendations
+   */
+  generateTestRecommendations(power, testWeeks, dataQuality, effect, kpi) {
+    const recommendations = [];
+    
+    if (power < 0.8) {
+      recommendations.push({
+        type: 'warning',
+        text: `Statistical power is ${(power * 100).toFixed(0)}% (below 80% standard). Consider increasing test duration or effect size.`
+      });
+    }
+    
+    if (testWeeks > 8) {
+      recommendations.push({
+        type: 'caution',
+        text: `Test requires ${testWeeks} weeks - consider external factors that might impact results over this duration.`
+      });
+    }
+    
+    if (dataQuality.score < 60) {
+      recommendations.push({
+        type: 'error',
+        text: `Data quality score: ${dataQuality.score}/100. Results may not be reliable for decision-making.`
+      });
+    }
+    
+    if (effect < 0.05) {
+      recommendations.push({
+        type: 'info',
+        text: `Testing for ${(effect * 100).toFixed(1)}% lift requires very large sample sizes. Consider if this effect is business-meaningful.`
+      });
+    }
+    
+    // KPI-specific recommendations
+    if (kpi === 'revenue' && effect < 0.1) {
+      recommendations.push({
+        type: 'business',
+        text: 'Revenue tests typically need >10% lifts to justify media investment changes.'
+      });
+    }
+    
+    return recommendations;
+  }
+
+  /**
+   * Generate test warnings based on real constraints
+   */
+  generateTestWarnings(power, dataQuality, testWeeks) {
+    const warnings = [];
+    
+    if (!dataQuality.reliable) {
+      warnings.push({
+        severity: 'high',
+        message: 'Data quality insufficient for reliable testing',
+        impact: 'Test results may be misleading'
+      });
+    }
+    
+    if (power < 0.5) {
+      warnings.push({
+        severity: 'high',
+        message: 'Very low statistical power - high risk of false negatives',
+        impact: 'May miss real effects'
+      });
+    }
+    
+    if (testWeeks < 2) {
+      warnings.push({
+        severity: 'medium',
+        message: 'Test duration too short for reliable results',
+        impact: 'Day-of-week and external factors not accounted for'
+      });
+    }
+    
+    if (testWeeks > 12) {
+      warnings.push({
+        severity: 'medium',
+        message: 'Very long test duration increases external validity threats',
+        impact: 'Seasonality and market changes may confound results'
+      });
+    }
+    
+    return warnings;
+  }
+
+  /**
+   * Helper methods for statistical calculations
+   */
+  getZScore(p) {
+    // Approximation for Z-scores (inverse normal CDF)
+    if (p === 0.025) return 1.96;  // 95% confidence
+    if (p === 0.05) return 1.645;  // 90% confidence
+    if (p === 0.1) return 1.28;    // 80% power
+    if (p === 0.2) return 0.84;    // 80% power
+    // Rough approximation for other values
+    return Math.sqrt(-2 * Math.log(p));
+  }
+
+  normalCDF(z) {
+    // Approximation of normal cumulative distribution function
+    return 0.5 * (1 + this.erf(z / Math.sqrt(2)));
+  }
+
+  erf(x) {
+    // Approximation of error function
+    const a = 0.147;
+    const sign = x >= 0 ? 1 : -1;
+    x = Math.abs(x);
+    const x2 = x * x;
+    const x3 = x2 * x;
+    const x4 = x3 * x;
+    return sign * Math.sqrt(1 - Math.exp(-x2 * (4/Math.PI + a*x2) / (1 + a*x2)));
+  }
+
+  estimateCPM(region) {
+    // Estimate CPM based on demographic data
+    const income = region.demographics?.medianIncome || 50000;
+    const urbanization = region.demographics?.urbanizationLevel || 'SUBURBAN';
+    
+    let baseCPM = 2.50; // Default CPM
+    
+    if (income > 75000) baseCPM += 2.00;
+    if (income > 100000) baseCPM += 3.00;
+    if (urbanization === 'URBAN') baseCPM += 1.50;
+    
+    return baseCPM;
+  }
+
+  estimateCTR(region) {
+    // Estimate CTR based on demographic data
+    const digitalReceptivity = region.demographics?.digitalAdReceptivity || 70;
+    const baselineMedia = region.demographics?.socialMediaUsage || 70;
+    
+    return Math.max(0.5, Math.min(3.0, (digitalReceptivity + baselineMedia) / 50));
   }
 
   /**
