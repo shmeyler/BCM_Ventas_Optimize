@@ -180,6 +180,194 @@ class DataUSAService:
 async def root():
     return {"message": "Hello World"}
 
+# Geographic API Endpoints
+@api_router.get("/geographic/zip/{zip_code}", response_model=GeographicRegion)
+async def get_zip_demographics(zip_code: str):
+    """Get demographic data for a specific ZIP code from DataUSA.io"""
+    try:
+        # Validate ZIP code format
+        if not zip_code.isdigit() or len(zip_code) not in [4, 5]:
+            raise HTTPException(status_code=400, detail="Invalid ZIP code format")
+        
+        # Get data from DataUSA.io
+        datausa_data = await DataUSAService.get_zip_demographics(zip_code)
+        
+        if not datausa_data:
+            raise HTTPException(status_code=404, detail=f"No demographic data found for ZIP code {zip_code}")
+        
+        # Transform to our format
+        region = DataUSAService.transform_datausa_to_demographics(datausa_data, zip_code)
+        
+        return region
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing ZIP code {zip_code}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/geographic/zips", response_model=GeographicResponse)
+async def get_multiple_zip_demographics(zip_codes: str):
+    """Get demographic data for multiple ZIP codes (comma-separated)"""
+    try:
+        zip_list = [zip_code.strip() for zip_code in zip_codes.split(',') if zip_code.strip()]
+        
+        if len(zip_list) > 50:  # Limit to prevent abuse
+            raise HTTPException(status_code=400, detail="Too many ZIP codes requested (max 50)")
+        
+        regions = []
+        
+        # Process each ZIP code
+        for zip_code in zip_list:
+            try:
+                datausa_data = await DataUSAService.get_zip_demographics(zip_code)
+                if datausa_data:
+                    region = DataUSAService.transform_datausa_to_demographics(datausa_data, zip_code)
+                    regions.append(region)
+            except Exception as e:
+                logger.warning(f"Failed to get data for ZIP {zip_code}: {e}")
+                continue
+        
+        return GeographicResponse(
+            regions=regions,
+            count=len(regions),
+            source="DATAUSA_IO"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing multiple ZIP codes: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/geographic/states", response_model=GeographicResponse)
+async def get_states():
+    """Get list of US states with basic demographic data"""
+    try:
+        # For now, return a basic list of major states
+        # In a full implementation, this would fetch state-level data from DataUSA.io
+        states = [
+            {"id": "CA", "name": "California", "code": "CA"},
+            {"id": "TX", "name": "Texas", "code": "TX"},
+            {"id": "FL", "name": "Florida", "code": "FL"},
+            {"id": "NY", "name": "New York", "code": "NY"},
+            {"id": "PA", "name": "Pennsylvania", "code": "PA"},
+            {"id": "IL", "name": "Illinois", "code": "IL"},
+            {"id": "OH", "name": "Ohio", "code": "OH"},
+            {"id": "GA", "name": "Georgia", "code": "GA"},
+            {"id": "NC", "name": "North Carolina", "code": "NC"},
+            {"id": "MI", "name": "Michigan", "code": "MI"}
+        ]
+        
+        # Create basic demographic data for states
+        state_regions = []
+        for state in states:
+            demographics = Demographics(
+                medianAge=38.0,
+                medianIncome=55000,
+                populationDensity=100,
+                householdSize=2.5,
+                collegeEducated=32.0,
+                unemploymentRate=5.5,
+                whiteCollarJobs=65.0,
+                homeOwnership=65.0,
+                medianHomeValue=250000,
+                rentBurden=30.0,
+                internetPenetration=85.0,
+                mobileUsage=88.0,
+                socialMediaUsage=70.0,
+                onlineShoppingIndex=120.0,
+                urbanizationLevel="MIXED",
+                retailDensity=300,
+                competitionIndex=75.0,
+                tvConsumption=4.0,
+                digitalAdReceptivity=78.0,
+                brandLoyalty=50.0
+            )
+            
+            region = GeographicRegion(
+                id=state["code"],
+                name=state["name"],
+                source="STATE_LIST",
+                type="state",
+                demographics=demographics,
+                lastUpdated=datetime.utcnow().isoformat()
+            )
+            state_regions.append(region)
+        
+        return GeographicResponse(
+            regions=state_regions,
+            count=len(state_regions),
+            source="STATE_LIST"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting states: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/geographic/dmas", response_model=GeographicResponse) 
+async def get_dmas():
+    """Get list of Designated Market Areas (DMAs)"""
+    try:
+        # Major DMAs for testing
+        dmas = [
+            {"id": "501", "name": "New York", "rank": 1},
+            {"id": "803", "name": "Los Angeles", "rank": 2},
+            {"id": "602", "name": "Chicago", "rank": 3},
+            {"id": "504", "name": "Philadelphia", "rank": 4},
+            {"id": "623", "name": "Dallas-Ft. Worth", "rank": 5},
+            {"id": "807", "name": "San Francisco-Oakland-San Jose", "rank": 6},
+            {"id": "539", "name": "Tampa-St. Pete (Sarasota)", "rank": 7},
+            {"id": "511", "name": "Washington, DC (Hagerstown)", "rank": 8},
+            {"id": "618", "name": "Houston", "rank": 9},
+            {"id": "506", "name": "Boston (Manchester)", "rank": 10}
+        ]
+        
+        dma_regions = []
+        for dma in dmas:
+            demographics = Demographics(
+                medianAge=36.0,
+                medianIncome=60000,
+                populationDensity=500,
+                householdSize=2.4,
+                collegeEducated=35.0,
+                unemploymentRate=4.8,
+                whiteCollarJobs=70.0,
+                homeOwnership=60.0,
+                medianHomeValue=300000,
+                rentBurden=32.0,
+                internetPenetration=90.0,
+                mobileUsage=92.0,
+                socialMediaUsage=75.0,
+                onlineShoppingIndex=130.0,
+                urbanizationLevel="URBAN",
+                retailDensity=500,
+                competitionIndex=85.0,
+                tvConsumption=3.5,
+                digitalAdReceptivity=82.0,
+                brandLoyalty=45.0
+            )
+            
+            region = GeographicRegion(
+                id=dma["id"],
+                name=f"DMA {dma['rank']}: {dma['name']}",
+                source="DMA_LIST",
+                type="dma",
+                demographics=demographics,
+                lastUpdated=datetime.utcnow().isoformat()
+            )
+            dma_regions.append(region)
+        
+        return GeographicResponse(
+            regions=dma_regions,
+            count=len(dma_regions),
+            source="DMA_LIST"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting DMAs: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.dict()
