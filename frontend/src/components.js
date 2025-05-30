@@ -113,7 +113,7 @@ const HeroSection = ({ setCurrentView }) => {
             transition={{ duration: 0.6 }}
             className="text-5xl md:text-6xl font-bold text-gray-900 mb-6"
           >
-            Geo Incrementality Testing
+            BCM VentasAI Optimize
           </motion.h1>
           
           <motion.p 
