@@ -571,36 +571,10 @@ const knowledgeBaseData = [
 // Header Component with BCM branding and API management
 const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn }) => {
   const [showAPIManager, setShowAPIManager] = useState(false);
-  const [apiStatus, setApiStatus] = useState({});
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      loadAPIStatus();
-    }
-  }, [isLoggedIn]);
-
-  const loadAPIStatus = async () => {
-    try {
-      const status = await GeographicAPI.checkAPIStatus();
-      setApiStatus(status);
-    } catch (error) {
-      console.error('Error loading API status:', error);
-    }
-  };
-
-  const getDataSourceIndicator = () => {
-    const freeActive = apiStatus.census?.available && apiStatus.usps?.available;
-    const premiumCount = Object.values(apiStatus).filter(s => s.type === 'PREMIUM' && s.available).length;
-    
-    return (
-      <div className="flex items-center space-x-2">
-        <CloudIcon className="h-4 w-4 text-gray-600" />
-        <span className="text-xs text-gray-600">
-          {freeActive ? '🟢' : '🟡'} Free APIs
-          {premiumCount > 0 && ` | 🔑 ${premiumCount} Premium`}
-        </span>
-      </div>
-    );
+  const handleDataSourcesClick = () => {
+    console.log('Data Sources button clicked!');
+    setShowAPIManager(true);
   };
 
   return (
@@ -659,16 +633,13 @@ const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn }) 
             
             <div className="flex items-center space-x-4">
               {isLoggedIn && (
-                <>
-                  {getDataSourceIndicator()}
-                  <button
-                    onClick={() => setShowAPIManager(true)}
-                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 text-sm font-medium"
-                  >
-                    <KeyIcon className="h-4 w-4" />
-                    <span>Data Sources</span>
-                  </button>
-                </>
+                <button
+                  onClick={handleDataSourcesClick}
+                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 text-sm font-medium border border-gray-300 px-3 py-2 rounded-lg hover:bg-gray-50"
+                >
+                  <KeyIcon className="h-4 w-4" />
+                  <span>Data Sources</span>
+                </button>
               )}
               
               {!isLoggedIn ? (
@@ -694,10 +665,12 @@ const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn }) 
         </div>
       </header>
 
-      <APIKeyManager 
-        isOpen={showAPIManager}
-        onClose={() => setShowAPIManager(false)}
-      />
+      {showAPIManager && (
+        <APIKeyManager 
+          isOpen={showAPIManager}
+          onClose={() => setShowAPIManager(false)}
+        />
+      )}
     </>
   );
 };
