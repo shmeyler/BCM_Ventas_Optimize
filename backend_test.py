@@ -180,16 +180,17 @@ def test_zip_endpoint():
     print_separator("Testing /api/geographic/zip/{zip_code} endpoint")
     
     results = {
-        "valid_zip": False,
-        "valid_zip_2": False,
+        "tiburon_zip": False,  # 94920 (Tiburon, CA) - specifically requested
+        "manhattan_zip": False,  # 10001 (Manhattan, NY)
+        "beverly_hills_zip": False,  # 90210 (Beverly Hills, CA)
         "invalid_zip": False,
         "nonexistent_zip": False
     }
     
-    # Test with valid ZIP code (Manhattan, NY)
-    print("\n--- Testing with valid ZIP code (10001) ---")
+    # Test with Tiburon, CA ZIP code (94920) - specifically requested
+    print("\n--- Testing with Tiburon, CA ZIP code (94920) ---")
     try:
-        response = requests.get(f"{API_BASE_URL}/geographic/zip/10001")
+        response = requests.get(f"{API_BASE_URL}/geographic/zip/94920")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code != 200:
@@ -240,13 +241,48 @@ def test_zip_endpoint():
                     valid_structure = False
             
             if valid_structure:
-                print(f"✅ Test passed for valid ZIP code 10001 (Source: {data.get('source')})")
-                results["valid_zip"] = True
+                print(f"✅ Test passed for Tiburon, CA ZIP code 94920 (Source: {data.get('source')})")
+                results["tiburon_zip"] = True
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+    
+    # Test with valid ZIP code (Manhattan, NY)
+    print("\n--- Testing with Manhattan, NY ZIP code (10001) ---")
+    try:
+        response = requests.get(f"{API_BASE_URL}/geographic/zip/10001")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+        else:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Validate response structure
+            required_fields = ["id", "name", "source", "demographics", "lastUpdated"]
+            valid_structure = True
+            for field in required_fields:
+                if field not in data:
+                    print(f"❌ Test failed: Response missing required field '{field}'")
+                    valid_structure = False
+                    break
+            
+            if valid_structure:
+                # Check source field - should be either "DATAUSA_IO" or "FALLBACK_REALISTIC"
+                source = data.get("source", "")
+                if source not in ["DATAUSA_IO", "FALLBACK_REALISTIC"]:
+                    print(f"❌ Test failed: Invalid source value: {source}")
+                    valid_structure = False
+                
+                if valid_structure:
+                    print(f"✅ Test passed for Manhattan, NY ZIP code 10001 (Source: {data.get('source')})")
+                    results["manhattan_zip"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
     # Test with another valid ZIP code (Beverly Hills, CA)
-    print("\n--- Testing with valid ZIP code (90210) ---")
+    print("\n--- Testing with Beverly Hills, CA ZIP code (90210) ---")
     try:
         response = requests.get(f"{API_BASE_URL}/geographic/zip/90210")
         print(f"Status Code: {response.status_code}")
@@ -263,8 +299,8 @@ def test_zip_endpoint():
             if source not in ["DATAUSA_IO", "FALLBACK_REALISTIC"]:
                 print(f"❌ Test failed: Invalid source value: {source}")
             else:
-                print(f"✅ Test passed for valid ZIP code 90210 (Source: {source})")
-                results["valid_zip_2"] = True
+                print(f"✅ Test passed for Beverly Hills, CA ZIP code 90210 (Source: {source})")
+                results["beverly_hills_zip"] = True
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
     
