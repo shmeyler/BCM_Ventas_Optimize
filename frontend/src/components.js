@@ -1675,6 +1675,13 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
         </div>
       </div>
     </section>
+
+    <CSVUploadModal
+      isOpen={showCSVUpload}
+      onClose={() => setShowCSVUpload(false)}
+      onUpload={handleCSVUpload}
+    />
+  </>
   );
 };
 
