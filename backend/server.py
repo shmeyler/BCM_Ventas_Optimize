@@ -290,6 +290,11 @@ async def get_multiple_zip_demographics(zip_codes: str):
         # Process each ZIP code
         for zip_code in zip_list:
             try:
+                # Validate ZIP code format before processing
+                if not zip_code.isdigit() or len(zip_code) not in [4, 5]:
+                    logger.warning(f"Skipping invalid ZIP code format: {zip_code}")
+                    continue
+                    
                 datausa_data = await DataUSAService.get_zip_demographics(zip_code)
                 if datausa_data:
                     region = DataUSAService.transform_datausa_to_demographics(datausa_data, zip_code)
@@ -302,9 +307,8 @@ async def get_multiple_zip_demographics(zip_codes: str):
                     regions.append(region)
             except Exception as e:
                 logger.warning(f"Failed to get data for ZIP {zip_code}: {e}")
-                # Still add fallback data for failed requests
-                region = create_fallback_zip_data(zip_code)
-                regions.append(region)
+                # Skip invalid ZIP codes rather than adding fallback data
+                continue
         
         return GeographicResponse(
             regions=regions,
