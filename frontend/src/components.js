@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
@@ -19,7 +20,11 @@ import {
   UserIcon,
   LockClosedIcon,
   BookOpenIcon,
-  QuestionMarkCircleIcon
+  QuestionMarkCircleIcon,
+  MagnifyingGlassIcon,
+  MapIcon,
+  BuildingOfficeIcon,
+  HomeIcon
 } from '@heroicons/react/24/outline';
 
 // Mock data for various components
