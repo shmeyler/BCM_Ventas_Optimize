@@ -218,90 +218,74 @@ const mockDMAs = [
   }
 ];
 
-// Initialize the demographic matching model
+// Initialize the demographic matching model and real API service
 const matchingModel = new DemographicMatchingModel({
   threshold: 0.7,
   maxResults: 10
 });
 
-// Geographic API Service with advanced demographic matching
+const realAPIService = new RealAPIService();
+
+// Enhanced Geographic API Service with real data integration
 const GeographicAPI = {
-  // Mock API call for ZIP code data with enhanced demographics
+  // Get ZIP code data from real APIs with fallback
   async getZipCodeData(zipCode) {
     try {
-      // In production, this would call actual APIs like:
-      // - USPS ZIP Code API
-      // - Census ACS API
-      // - Zippopotam.us API
-      // - American Community Survey
+      console.log(`📍 Fetching real data for ZIP code: ${zipCode}`);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Try real Census API first
+      const realData = await realAPIService.getRealZipCodeData(zipCode);
       
-      // Check if we have enhanced data for this ZIP code
-      const enhancedData = matchingModel.data.zipCodes.find(zip => zip.id === zipCode);
-      
-      if (enhancedData) {
+      if (realData && realData.source !== 'MOCK_FALLBACK') {
+        console.log(`✅ Real Census data retrieved for ${zipCode}`);
         return {
-          ...enhancedData,
+          ...realData,
           selected: false,
           type: null
         };
       }
       
-      // Generate realistic demographic data for unknown ZIP codes
-      const generatedData = {
-        id: zipCode,
-        name: `${zipCode} Area`,
-        demographics: this.generateRealisticDemographics('urban'),
-        selected: false,
-        type: null
-      };
+      // Fallback to enhanced mock data
+      console.log(`🔄 Using enhanced mock data for ${zipCode}`);
+      return this.getEnhancedMockZipData(zipCode);
       
-      return generatedData;
     } catch (error) {
       console.error('Error fetching ZIP code data:', error);
-      return null;
+      return this.getEnhancedMockZipData(zipCode);
     }
   },
 
-  // Mock API call for DMA data with enhanced demographics
+  // Get DMA data from real APIs with fallback
   async getDMAData(dmaId) {
     try {
-      // In production, this would call Nielsen DMA API or similar
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log(`📺 Fetching real data for DMA: ${dmaId}`);
       
-      // Check if we have enhanced data for this DMA
-      const enhancedData = matchingModel.data.dmas.find(dma => dma.id === dmaId);
+      // Try premium Nielsen API if available
+      const realData = await realAPIService.getPremiumDMAData(dmaId);
       
-      if (enhancedData) {
+      if (realData && realData.source !== 'MOCK_FALLBACK') {
+        console.log(`✅ Real Nielsen data retrieved for ${dmaId}`);
         return {
-          ...enhancedData,
+          ...realData,
           selected: false,
           type: null
         };
       }
       
-      // Generate realistic DMA data
-      const generatedData = {
-        id: dmaId,
-        name: `DMA ${dmaId}`,
-        demographics: this.generateRealisticDemographics('suburban'),
-        selected: false,
-        type: null
-      };
+      // Fallback to enhanced mock data
+      console.log(`🔄 Using enhanced mock data for ${dmaId}`);
+      return this.getEnhancedMockDMAData(dmaId);
       
-      return generatedData;
     } catch (error) {
       console.error('Error fetching DMA data:', error);
-      return null;
+      return this.getEnhancedMockDMAData(dmaId);
     }
   },
 
-  // Advanced geographic matching using demographic model
+  // Enhanced similar regions finding with real data
   async findSimilarRegions(selectedRegion, regionType, criteria = {}) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      console.log(`🔍 Finding similar regions for: ${selectedRegion.name}`);
       
       const {
         algorithm = 'weighted_euclidean',
@@ -311,23 +295,55 @@ const GeographicAPI = {
         includeValidation = true
       } = criteria;
       
+      // Get enhanced demographic data if we have real APIs
+      let enhancedRegion = selectedRegion;
+      if (regionType === 'zip') {
+        try {
+          const realData = await realAPIService.getEnhancedDemographics(selectedRegion.id, 'zip');
+          if (realData.source !== 'MOCK_FALLBACK') {
+            enhancedRegion = realData;
+            console.log(`📊 Enhanced demographic data loaded for ${selectedRegion.name}`);
+          }
+        } catch (error) {
+          console.log('Using standard demographic data');
+        }
+      }
+      
       // Map region type to data source
       const dataSource = regionType === 'zip' ? 'zipCodes' : 
                         regionType === 'dma' ? 'dmas' : 'zipCodes';
       
       // Use the advanced matching model
-      const similarRegions = matchingModel.findSimilarRegions(selectedRegion, dataSource, {
+      const similarRegions = matchingModel.findSimilarRegions(enhancedRegion, dataSource, {
         algorithm,
         customWeights,
         minSimilarity,
         maxResults
       });
       
+      // Enhance similar regions with real data if available
+      const enhancedSimilarRegions = await Promise.all(
+        similarRegions.map(async (region) => {
+          try {
+            let enhancedData = region;
+            if (regionType === 'zip') {
+              const realRegionData = await realAPIService.getEnhancedDemographics(region.id, 'zip');
+              if (realRegionData.source !== 'MOCK_FALLBACK') {
+                enhancedData = { ...region, ...realRegionData };
+              }
+            }
+            return enhancedData;
+          } catch (error) {
+            return region;
+          }
+        })
+      );
+      
       // Add statistical validation if requested
-      if (includeValidation && similarRegions.length > 0) {
+      if (includeValidation && enhancedSimilarRegions.length > 0) {
         const validatedRegions = matchingModel.validateMatchSignificance(
-          selectedRegion, 
-          similarRegions,
+          enhancedRegion, 
+          enhancedSimilarRegions,
           {
             expectedLift: 0.15, // 15% expected lift
             alpha: 0.05,
@@ -336,86 +352,40 @@ const GeographicAPI = {
           }
         );
         
+        console.log(`✅ Found ${validatedRegions.length} statistically validated matches`);
         return validatedRegions;
       }
       
-      return similarRegions;
+      return enhancedSimilarRegions;
     } catch (error) {
       console.error('Error finding similar regions:', error);
       return [];
     }
   },
 
-  // Generate realistic demographic data for unknown regions
-  generateRealisticDemographics(areaType = 'suburban') {
-    const baseProfiles = {
-      urban: {
-        medianAge: 32 + Math.random() * 8,
-        medianIncome: 55000 + Math.random() * 40000,
-        populationDensity: 20000 + Math.random() * 40000,
-        householdSize: 1.8 + Math.random() * 0.8,
-        collegeEducated: 65 + Math.random() * 20,
-        unemploymentRate: 4 + Math.random() * 4,
-        whiteCollarJobs: 70 + Math.random() * 20,
-        homeOwnership: 30 + Math.random() * 30,
-        urbanizationLevel: 'Urban'
-      },
-      suburban: {
-        medianAge: 35 + Math.random() * 10,
-        medianIncome: 60000 + Math.random() * 50000,
-        populationDensity: 2000 + Math.random() * 8000,
-        householdSize: 2.3 + Math.random() * 0.7,
-        collegeEducated: 70 + Math.random() * 15,
-        unemploymentRate: 3 + Math.random() * 3,
-        whiteCollarJobs: 75 + Math.random() * 15,
-        homeOwnership: 60 + Math.random() * 25,
-        urbanizationLevel: 'Suburban'
-      },
-      rural: {
-        medianAge: 38 + Math.random() * 12,
-        medianIncome: 45000 + Math.random() * 25000,
-        populationDensity: 100 + Math.random() * 1000,
-        householdSize: 2.5 + Math.random() * 0.8,
-        collegeEducated: 45 + Math.random() * 25,
-        unemploymentRate: 4 + Math.random() * 5,
-        whiteCollarJobs: 50 + Math.random() * 25,
-        homeOwnership: 70 + Math.random() * 20,
-        urbanizationLevel: 'Rural'
-      }
-    };
-
-    const baseProfile = baseProfiles[areaType] || baseProfiles.suburban;
-    
-    return {
-      ...baseProfile,
-      medianHomeValue: baseProfile.medianIncome * (2.5 + Math.random() * 3),
-      rentBurden: 30 + Math.random() * 20,
-      internetPenetration: 85 + Math.random() * 12,
-      mobileUsage: 85 + Math.random() * 10,
-      socialMediaUsage: 65 + Math.random() * 20,
-      onlineShoppingIndex: 100 + Math.random() * 60,
-      retailDensity: 200 + Math.random() * 200,
-      competitionIndex: 60 + Math.random() * 30,
-      tvConsumption: 3 + Math.random() * 2,
-      digitalAdReceptivity: 70 + Math.random() * 20,
-      brandLoyalty: 40 + Math.random() * 30
-    };
-  },
-
   // Get detailed demographic analysis
   async getDetailedAnalysis(region1, region2) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log(`📈 Generating detailed analysis for: ${region1.name} vs ${region2.name}`);
       
       const similarity = matchingModel.calculateSimilarity(region1, region2);
       const comparison = matchingModel.generateDemographicComparison(region1, region2);
       const reasons = matchingModel.generateMatchReasons(region1, region2);
       
+      // Add data source quality indicators
+      const dataQuality = {
+        region1Source: region1.source || 'MOCK',
+        region2Source: region2.source || 'MOCK',
+        reliability: region1.reliability?.dataQuality || 'ESTIMATED'
+      };
+      
       return {
         overallSimilarity: similarity,
         detailedComparison: comparison,
         matchReasons: reasons,
-        recommendationStrength: similarity > 0.8 ? 'Strong' : similarity > 0.6 ? 'Moderate' : 'Weak'
+        recommendationStrength: similarity > 0.8 ? 'Strong' : similarity > 0.6 ? 'Moderate' : 'Weak',
+        dataQuality,
+        analysisTimestamp: new Date().toISOString()
       };
     } catch (error) {
       console.error('Error generating detailed analysis:', error);
@@ -423,135 +393,77 @@ const GeographicAPI = {
     }
   },
 
-  // Test design optimization
-  async optimizeTestDesign(testRegions, controlCandidates, testObjectives = {}) {
+  // Enhanced mock data for fallback
+  getEnhancedMockZipData(zipCode) {
+    const areaTypes = ['urban', 'suburban', 'rural'];
+    const areaType = areaTypes[zipCode.length % 3];
+    
+    return {
+      id: zipCode,
+      name: `${zipCode} (Enhanced Mock Data)`,
+      source: 'ENHANCED_MOCK',
+      lastUpdated: new Date().toISOString(),
+      demographics: realAPIService.generateRealisticDemographics(areaType),
+      selected: false,
+      type: null,
+      reliability: {
+        dataQuality: 'ESTIMATED',
+        sourceReliability: 'MODELED',
+        note: 'Enhanced mock data with realistic variations'
+      }
+    };
+  },
+
+  getEnhancedMockDMAData(dmaId) {
+    return {
+      id: dmaId,
+      name: `DMA ${dmaId} (Enhanced Mock Data)`,
+      source: 'ENHANCED_MOCK',
+      lastUpdated: new Date().toISOString(),
+      demographics: realAPIService.generateRealisticDemographics('suburban'),
+      selected: false,
+      type: null,
+      reliability: {
+        dataQuality: 'ESTIMATED',
+        sourceReliability: 'MODELED',
+        note: 'Enhanced mock data - premium APIs not configured'
+      }
+    };
+  },
+
+  // Check API status and availability
+  async checkAPIStatus() {
     try {
-      const {
-        primaryMetric = 'conversion_rate',
-        expectedLift = 0.1,
-        testDuration = 21,
-        budgetConstraints = {},
-        stratificationVars = ['medianIncome', 'urbanizationLevel']
-      } = testObjectives;
-
-      // Calculate optimal control group composition
-      const optimizedDesign = {
-        testRegions: testRegions,
-        recommendedControls: [],
-        stratificationAnalysis: {},
-        powerAnalysis: {},
-        recommendations: []
+      const status = {
+        census: { available: true, type: 'FREE', status: 'Active' },
+        usps: { available: true, type: 'FREE', status: 'Active' },
+        nielsen: { 
+          available: !!realAPIService.apiKeys.nielsen, 
+          type: 'PREMIUM', 
+          status: realAPIService.apiKeys.nielsen ? 'Configured' : 'Not Configured' 
+        },
+        statista: { 
+          available: !!realAPIService.apiKeys.statista, 
+          type: 'PREMIUM', 
+          status: realAPIService.apiKeys.statista ? 'Configured' : 'Not Configured' 
+        },
+        comscore: { 
+          available: !!realAPIService.apiKeys.comscore, 
+          type: 'PREMIUM', 
+          status: realAPIService.apiKeys.comscore ? 'Configured' : 'Not Configured' 
+        }
       };
-
-      // Find best control matches for each test region
-      for (const testRegion of testRegions) {
-        const matches = await this.findSimilarRegions(testRegion, 'zip', {
-          minSimilarity: 0.65,
-          maxResults: 3,
-          includeValidation: true
-        });
-        
-        optimizedDesign.recommendedControls.push(...matches.slice(0, 2));
-      }
-
-      // Perform stratification analysis
-      for (const stratVar of stratificationVars) {
-        optimizedDesign.stratificationAnalysis[stratVar] = this.analyzeStratification(
-          testRegions, 
-          optimizedDesign.recommendedControls, 
-          stratVar
-        );
-      }
-
-      // Calculate overall test power
-      optimizedDesign.powerAnalysis = this.calculateTestPower(
-        testRegions,
-        optimizedDesign.recommendedControls,
-        expectedLift,
-        testDuration
-      );
-
-      // Generate optimization recommendations
-      optimizedDesign.recommendations = this.generateTestRecommendations(optimizedDesign);
-
-      return optimizedDesign;
+      
+      return status;
     } catch (error) {
-      console.error('Error optimizing test design:', error);
-      return null;
+      console.error('Error checking API status:', error);
+      return {};
     }
   },
 
-  // Helper methods for test optimization
-  analyzeStratification(testRegions, controlRegions, variable) {
-    // Analyze balance across stratification variable
-    const testValues = testRegions.map(r => r.demographics[variable]).filter(v => v !== undefined);
-    const controlValues = controlRegions.map(r => r.demographics[variable]).filter(v => v !== undefined);
-    
-    const testMean = testValues.reduce((sum, val) => sum + val, 0) / testValues.length;
-    const controlMean = controlValues.reduce((sum, val) => sum + val, 0) / controlValues.length;
-    
-    return {
-      testMean,
-      controlMean,
-      difference: Math.abs(testMean - controlMean),
-      balanceScore: Math.max(0, 1 - Math.abs(testMean - controlMean) / Math.max(testMean, controlMean)),
-      isBalanced: Math.abs(testMean - controlMean) / Math.max(testMean, controlMean) < 0.1
-    };
-  },
-
-  calculateTestPower(testRegions, controlRegions, expectedLift, duration) {
-    const totalTestPop = testRegions.reduce((sum, r) => sum + (r.demographics.populationDensity || 10000), 0);
-    const totalControlPop = controlRegions.reduce((sum, r) => sum + (r.demographics.populationDensity || 10000), 0);
-    
-    // Simplified power calculation
-    const effectSize = expectedLift / 0.3; // Assuming 30% baseline variation
-    const harmonicMean = 2 / (1/totalTestPop + 1/totalControlPop);
-    const durationFactor = Math.sqrt(duration / 21); // 21 days baseline
-    
-    const power = Math.min(0.95, Math.max(0.05, effectSize * Math.sqrt(harmonicMean / 10000) * durationFactor));
-    
-    return {
-      statisticalPower: power,
-      confidenceLevel: power > 0.8 ? 'High' : power > 0.6 ? 'Medium' : 'Low',
-      recommendedDuration: power < 0.8 ? Math.ceil(21 / Math.pow(power / 0.8, 2)) : duration,
-      sampleSizeAdequacy: power > 0.7 ? 'Adequate' : 'Insufficient'
-    };
-  },
-
-  generateTestRecommendations(designAnalysis) {
-    const recommendations = [];
-    
-    if (designAnalysis.powerAnalysis.statisticalPower < 0.8) {
-      recommendations.push({
-        type: 'power',
-        priority: 'high',
-        message: `Increase test duration to ${designAnalysis.powerAnalysis.recommendedDuration} days for 80% power`,
-        impact: 'Statistical significance'
-      });
-    }
-
-    // Check stratification balance
-    for (const [variable, analysis] of Object.entries(designAnalysis.stratificationAnalysis)) {
-      if (!analysis.isBalanced) {
-        recommendations.push({
-          type: 'balance',
-          priority: 'medium',
-          message: `Test and control groups are imbalanced on ${variable} (${(analysis.difference).toFixed(1)} difference)`,
-          impact: 'Internal validity'
-        });
-      }
-    }
-
-    if (designAnalysis.recommendedControls.length < designAnalysis.testRegions.length) {
-      recommendations.push({
-        type: 'matching',
-        priority: 'medium',
-        message: 'Consider adding more control regions for better statistical power',
-        impact: 'Test reliability'
-      });
-    }
-
-    return recommendations;
+  // Get usage statistics
+  getUsageStatistics() {
+    return realAPIService.getUsageStatistics();
   }
 };
 
