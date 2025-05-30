@@ -1274,7 +1274,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
           // Use selected data source for ZIP code lookup
           switch (dataSource) {
             case 'datausa':
-              newRegion = await realAPIService.getDataUSAZipCodeData(searchValue);
+              newRegion = await GeographicAPI.getZipCodeData(searchValue);
               break;
             case 'census':
               newRegion = await GeographicAPI.getZipCodeData(searchValue);
