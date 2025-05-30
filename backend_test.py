@@ -363,10 +363,10 @@ def test_zips_endpoint():
         "too_many_zips": False
     }
     
-    # Test with multiple valid ZIP codes
-    print("\n--- Testing with multiple valid ZIP codes (10001,90210,12345) ---")
+    # Test with multiple valid ZIP codes including Tiburon (94920)
+    print("\n--- Testing with multiple valid ZIP codes (94920,10001,90210) ---")
     try:
-        response = requests.get(f"{API_BASE_URL}/geographic/zips", params={"zip_codes": "10001,90210,12345"})
+        response = requests.get(f"{API_BASE_URL}/geographic/zips", params={"zip_codes": "94920,10001,90210"})
         print(f"Status Code: {response.status_code}")
         
         if response.status_code != 200:
@@ -391,7 +391,7 @@ def test_zips_endpoint():
                     else:
                         # Check if we got all three ZIP codes
                         zip_codes = [region.get("id") for region in regions]
-                        if not all(zip_code in zip_codes for zip_code in ["10001", "90210", "12345"]):
+                        if not all(zip_code in zip_codes for zip_code in ["94920", "10001", "90210"]):
                             print(f"❌ Test failed: Not all requested ZIP codes were returned. Got: {zip_codes}")
                         else:
                             # Check source field for each region
@@ -421,9 +421,9 @@ def test_zips_endpoint():
         print(f"❌ Test failed with error: {str(e)}")
     
     # Test with mix of valid and invalid ZIP codes
-    print("\n--- Testing with mix of valid and invalid ZIP codes (10001,invalid,90210) ---")
+    print("\n--- Testing with mix of valid and invalid ZIP codes (94920,invalid,90210) ---")
     try:
-        response = requests.get(f"{API_BASE_URL}/geographic/zips", params={"zip_codes": "10001,invalid,90210"})
+        response = requests.get(f"{API_BASE_URL}/geographic/zips", params={"zip_codes": "94920,invalid,90210"})
         print(f"Status Code: {response.status_code}")
         
         if response.status_code != 200:
@@ -440,7 +440,7 @@ def test_zips_endpoint():
             else:
                 # Check if we got the valid ZIP codes
                 zip_codes = [region.get("id") for region in regions]
-                if not all(zip_code in zip_codes for zip_code in ["10001", "90210"]):
+                if not all(zip_code in zip_codes for zip_code in ["94920", "90210"]):
                     print(f"❌ Test failed: Not all valid ZIP codes were returned. Got: {zip_codes}")
                 else:
                     print("✅ Test passed for mix of valid and invalid ZIP codes")
