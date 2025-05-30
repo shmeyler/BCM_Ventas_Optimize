@@ -21,7 +21,7 @@ const {
 function App() {
   const [currentView, setCurrentView] = useState('home');
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // Start logged in for testing
   const [testData, setTestData] = useState({
     selectedRegions: [],
     testConfiguration: {},
