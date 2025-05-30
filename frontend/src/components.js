@@ -1006,7 +1006,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
     }
   };
 
-  // Handle search for ZIP codes or DMAs
+  // Handle search for ZIP codes or DMAs with selected data source
   const handleSearch = async (searchValue) => {
     setSearchTerm(searchValue);
     
@@ -1016,7 +1016,17 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
       try {
         let newRegion;
         if (regionType === 'zip' && /^\d{5}$/.test(searchValue)) {
-          newRegion = await GeographicAPI.getZipCodeData(searchValue);
+          // Use selected data source for ZIP code lookup
+          switch (dataSource) {
+            case 'datausa':
+              newRegion = await realAPIService.getDataUSAZipCodeData(searchValue);
+              break;
+            case 'census':
+              newRegion = await realAPIService.getRealZipCodeData(searchValue);
+              break;
+            default:
+              newRegion = await GeographicAPI.getEnhancedMockZipData(searchValue);
+          }
         } else if (regionType === 'dma') {
           newRegion = await GeographicAPI.getDMAData(searchValue);
         }
