@@ -91,7 +91,7 @@ const Header = ({ currentView, setCurrentView }) => {
             <button className="text-gray-600 hover:text-gray-900 text-sm font-medium">
               Login
             </button>
-            <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button className="bg-blue-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               Request a demo
             </button>
           </div>
@@ -220,7 +220,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
             <div className="flex space-x-4">
               <button
                 onClick={() => setCurrentView('setup')}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               >
                 Configure Test
               </button>
@@ -275,7 +275,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
               <div className="bg-white rounded-lg p-6">
                 <h4 className="font-semibold text-gray-900 mb-4">Estimated Test Power</h4>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-600 h-2 rounded-full" style={{ width: '85%' }}></div>
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '85%' }}></div>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">85% statistical power detected</p>
               </div>
@@ -326,14 +326,14 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
           {steps.map((step, index) => (
             <div key={step.id} className="flex flex-col items-center">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                currentStep >= step.id ? 'bg-purple-600 text-white' : 'bg-gray-300 text-gray-600'
+                currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
               }`}>
                 <step.icon className="w-6 h-6" />
               </div>
               <span className="mt-2 text-sm font-medium text-gray-700">{step.title}</span>
               {index < steps.length - 1 && (
                 <div className={`w-24 h-1 mt-4 ${
-                  currentStep > step.id ? 'bg-purple-600' : 'bg-gray-300'
+                  currentStep > step.id ? 'bg-blue-600' : 'bg-gray-300'
                 }`}></div>
               )}
             </div>
@@ -381,7 +381,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
                   <label key={channel} className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-purple-500"
                       onChange={(e) => {
                         if (e.target.checked) {
                           setFormData({...formData, channels: [...formData.channels, channel]});
@@ -451,7 +451,7 @@ const TestSetupWizard = ({ testData, setTestData, setCurrentView }) => {
             </button>
             <button
               onClick={handleNext}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              className="px-6 py-3 bg-blue-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
             >
               {currentStep === 4 ? 'Launch Test' : 'Next'}
             </button>
@@ -524,8 +524,8 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
           
           <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-2xl">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-purple-600">Statistical Confidence</h3>
-              <CheckCircleIcon className="w-5 h-5 text-purple-600" />
+              <h3 className="text-sm font-medium text-blue-600">Statistical Confidence</h3>
+              <CheckCircleIcon className="w-5 h-5 text-blue-600" />
             </div>
             <p className="text-3xl font-bold text-purple-900">95%</p>
             <p className="text-sm text-purple-700">confidence level</p>
@@ -576,7 +576,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
         <div className="flex justify-center space-x-4">
           <button
             onClick={() => setCurrentView('attribution')}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            className="bg-blue-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
           >
             View Attribution Analysis
           </button>
@@ -760,7 +760,7 @@ const ResultsAnalysis = ({ testData }) => {
                 'Integrate findings with MMM model'
               ].map((step, index) => (
                 <div key={index} className="flex items-center space-x-3">
-                  <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
                     {index + 1}
                   </div>
                   <span className="text-gray-700">{step}</span>
@@ -772,7 +772,7 @@ const ResultsAnalysis = ({ testData }) => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Export Options</h3>
             <div className="space-y-3">
-              <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors">
+              <button className="w-full bg-blue-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors">
                 Download Full Report
               </button>
               <button className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg font-semibold transition-colors">
@@ -843,7 +843,7 @@ const ProcessSection = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
               <p className="text-gray-600 mb-2">{step.description}</p>
-              <span className="text-sm text-purple-600 font-medium">{step.time}</span>
+              <span className="text-sm text-blue-600 font-medium">{step.time}</span>
             </motion.div>
           ))}
         </div>
@@ -921,7 +921,7 @@ const CaseStudies = () => {
 // Final CTA Component
 const FinalCTA = () => {
   return (
-    <section className="py-16 bg-gradient-to-r from-purple-600 to-purple-800">
+    <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-800">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -935,10 +935,10 @@ const FinalCTA = () => {
             Start your first geo-incrementality test today and discover your true marketing impact
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-purple-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors">
               Book a Demo
             </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors">
+            <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
               Start Free Trial
             </button>
           </div>
