@@ -499,7 +499,7 @@ def create_fallback_zip_data(zip_code: str) -> GeographicRegion:
     
     return GeographicRegion(
         id=zip_code,
-        name=f"{zip_code} (Fallback Data)",
+        name=f"{location_name} ({zip_code})",
         source="FALLBACK_REALISTIC",
         demographics=demographics,
         lastUpdated=datetime.utcnow().isoformat()
