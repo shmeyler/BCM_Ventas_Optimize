@@ -929,7 +929,7 @@ const FinalCTA = () => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl font-bold text-white mb-6">
-            Upgrade your measurement with WorkMagic
+            Upgrade your measurement with BCM VentasAI
           </h2>
           <p className="text-xl text-purple-100 mb-8">
             Start your first geo-incrementality test today and discover your true marketing impact
