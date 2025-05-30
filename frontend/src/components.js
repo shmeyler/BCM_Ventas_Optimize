@@ -37,6 +37,182 @@ const mockRegions = [
   { id: 'pa', name: 'Pennsylvania', population: '12.8M', selected: false, type: null }
 ];
 
+// Mock ZIP code data with demographics
+const mockZipCodes = [
+  { 
+    id: '10001', 
+    name: 'New York, NY 10001', 
+    population: '21,102', 
+    medianIncome: '$67,000',
+    avgAge: '34.2',
+    density: 'High',
+    selected: false, 
+    type: null,
+    demographics: { urban: 95, suburban: 5, rural: 0 },
+    similarity: 0.95
+  },
+  { 
+    id: '90210', 
+    name: 'Beverly Hills, CA 90210', 
+    population: '23,040', 
+    medianIncome: '$125,000',
+    avgAge: '45.1',
+    density: 'High',
+    selected: false, 
+    type: null,
+    demographics: { urban: 85, suburban: 15, rural: 0 },
+    similarity: 0.92
+  },
+  { 
+    id: '60601', 
+    name: 'Chicago, IL 60601', 
+    population: '18,500', 
+    medianIncome: '$72,000',
+    avgAge: '32.8',
+    density: 'High',
+    selected: false, 
+    type: null,
+    demographics: { urban: 90, suburban: 10, rural: 0 },
+    similarity: 0.88
+  },
+  { 
+    id: '33101', 
+    name: 'Miami Beach, FL 33101', 
+    population: '12,900', 
+    medianIncome: '$58,000',
+    avgAge: '38.5',
+    density: 'High',
+    selected: false, 
+    type: null,
+    demographics: { urban: 80, suburban: 20, rural: 0 },
+    similarity: 0.85
+  },
+  { 
+    id: '75201', 
+    name: 'Dallas, TX 75201', 
+    population: '15,600', 
+    medianIncome: '$65,000',
+    avgAge: '31.2',
+    density: 'High',
+    selected: false, 
+    type: null,
+    demographics: { urban: 88, suburban: 12, rural: 0 },
+    similarity: 0.90
+  },
+  { 
+    id: '19101', 
+    name: 'Philadelphia, PA 19101', 
+    population: '17,800', 
+    medianIncome: '$61,000',
+    avgAge: '33.7',
+    density: 'High',
+    selected: false, 
+    type: null,
+    demographics: { urban: 92, suburban: 8, rural: 0 },
+    similarity: 0.87
+  }
+];
+
+// Mock DMA data with market characteristics
+const mockDMAs = [
+  { 
+    id: 'dma-501', 
+    name: 'New York, NY DMA', 
+    population: '7.4M', 
+    households: '2.8M',
+    medianIncome: '$73,000',
+    tvHouseholds: '2.6M',
+    selected: false, 
+    type: null,
+    characteristics: { 
+      competitiveness: 'High', 
+      digitalAdoption: 'Very High',
+      retailDensity: 'High'
+    },
+    similarity: 0.94
+  },
+  { 
+    id: 'dma-803', 
+    name: 'Los Angeles, CA DMA', 
+    population: '5.2M', 
+    households: '1.9M',
+    medianIncome: '$68,000',
+    tvHouseholds: '1.8M',
+    selected: false, 
+    type: null,
+    characteristics: { 
+      competitiveness: 'Very High', 
+      digitalAdoption: 'High',
+      retailDensity: 'High'
+    },
+    similarity: 0.91
+  },
+  { 
+    id: 'dma-602', 
+    name: 'Chicago, IL DMA', 
+    population: '3.5M', 
+    households: '1.3M',
+    medianIncome: '$64,000',
+    tvHouseholds: '1.2M',
+    selected: false, 
+    type: null,
+    characteristics: { 
+      competitiveness: 'High', 
+      digitalAdoption: 'High',
+      retailDensity: 'Medium'
+    },
+    similarity: 0.88
+  },
+  { 
+    id: 'dma-528', 
+    name: 'Miami-Ft. Lauderdale, FL DMA', 
+    population: '2.8M', 
+    households: '1.1M',
+    medianIncome: '$56,000',
+    tvHouseholds: '1.0M',
+    selected: false, 
+    type: null,
+    characteristics: { 
+      competitiveness: 'Medium', 
+      digitalAdoption: 'Medium',
+      retailDensity: 'Medium'
+    },
+    similarity: 0.82
+  },
+  { 
+    id: 'dma-623', 
+    name: 'Dallas-Ft. Worth, TX DMA', 
+    population: '2.9M', 
+    households: '1.1M',
+    medianIncome: '$61,000',
+    tvHouseholds: '1.0M',
+    selected: false, 
+    type: null,
+    characteristics: { 
+      competitiveness: 'Medium', 
+      digitalAdoption: 'High',
+      retailDensity: 'Medium'
+    },
+    similarity: 0.86
+  },
+  { 
+    id: 'dma-504', 
+    name: 'Philadelphia, PA DMA', 
+    population: '2.2M', 
+    households: '900K',
+    medianIncome: '$59,000',
+    tvHouseholds: '850K',
+    selected: false, 
+    type: null,
+    characteristics: { 
+      competitiveness: 'Medium', 
+      digitalAdoption: 'Medium',
+      retailDensity: 'Medium'
+    },
+    similarity: 0.84
+  }
+];
+
 const mockTestResults = [
   { date: '2024-01-01', testGroup: 4200, controlGroup: 3800, lift: 10.5 },
   { date: '2024-01-02', testGroup: 4400, controlGroup: 3750, lift: 17.3 },
