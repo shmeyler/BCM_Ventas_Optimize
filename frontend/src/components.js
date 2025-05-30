@@ -750,6 +750,12 @@ const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, on
                 <div className="flex items-center space-x-3">
                   <UserIcon className="h-5 w-5 text-gray-600" />
                   <span className="text-sm text-gray-600">Welcome back</span>
+                  <button 
+                    onClick={onLogout}
+                    className="text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                  >
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
