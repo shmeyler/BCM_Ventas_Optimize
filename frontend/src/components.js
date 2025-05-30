@@ -1373,20 +1373,32 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                   Select {regionType === 'state' ? 'States' : regionType === 'zip' ? 'ZIP Codes' : 'DMAs'}
                 </h3>
                 
-                {/* Search Bar */}
-                <div className="relative w-64">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange focus:border-transparent"
-                    placeholder={
-                      regionType === 'zip' ? 'Search ZIP codes...' :
-                      regionType === 'dma' ? 'Search DMAs...' :
-                      'Search states...'
-                    }
-                  />
+                {/* Search Bar and CSV Upload */}
+                <div className="relative w-64 flex space-x-2">
+                  <div className="flex-1 relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange focus:border-transparent"
+                      placeholder={
+                        regionType === 'zip' ? 'Search ZIP codes...' :
+                        regionType === 'dma' ? 'Search DMAs...' :
+                        'Search states...'
+                      }
+                    />
+                  </div>
+                  
+                  {regionType === 'zip' && (
+                    <button
+                      onClick={() => setShowCSVUpload(true)}
+                      className="px-3 py-2 bg-bcm-orange text-white rounded-lg hover:bg-bcm-orange-dark transition-colors text-sm"
+                      title="Upload CSV of ZIP codes"
+                    >
+                      📄 CSV
+                    </button>
+                  )}
                 </div>
               </div>
               
