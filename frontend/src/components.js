@@ -731,137 +731,370 @@ const KnowledgeBase = () => {
   );
 };
 
-// Geo Testing Dashboard Component (updated colors)
+// Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
+  const [regionType, setRegionType] = useState('state'); // 'state', 'zip', 'dma'
   const [regions, setRegions] = useState(mockRegions);
-  const [isTestRunning, setIsTestRunning] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [similarRegions, setSimilarRegions] = useState([]);
+  const [showSimilarityAnalysis, setShowSimilarityAnalysis] = useState(false);
+  const [selectedRegionForAnalysis, setSelectedRegionForAnalysis] = useState(null);
 
-  const selectRegion = (regionId, type) => {
-    setRegions(prev => prev.map(region => 
+  // Update regions when region type changes
+  useEffect(() => {
+    switch (regionType) {
+      case 'zip':
+        setRegions(mockZipCodes);
+        break;
+      case 'dma':
+        setRegions(mockDMAs);
+        break;
+      default:
+        setRegions(mockRegions);
+    }
+  }, [regionType]);
+
+  // Handle region selection
+  const selectRegion = async (regionId, type) => {
+    const updatedRegions = regions.map(region => 
       region.id === regionId 
         ? { ...region, selected: true, type }
         : region
-    ));
+    );
+    setRegions(updatedRegions);
+
+    // Find similar regions for control group suggestions
+    if (type === 'test') {
+      const selectedRegion = updatedRegions.find(r => r.id === regionId);
+      setSelectedRegionForAnalysis(selectedRegion);
+      setIsLoading(true);
+      
+      try {
+        const similar = await GeographicAPI.findSimilarRegions(selectedRegion, regionType);
+        setSimilarRegions(similar);
+        setShowSimilarityAnalysis(true);
+      } catch (error) {
+        console.error('Error finding similar regions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
-  const startTest = () => {
-    setIsTestRunning(true);
-    setCurrentView('analytics');
+  // Handle search for ZIP codes or DMAs
+  const handleSearch = async (searchValue) => {
+    setSearchTerm(searchValue);
+    
+    if (searchValue.length >= 3 && (regionType === 'zip' || regionType === 'dma')) {
+      setIsLoading(true);
+      
+      try {
+        let newRegion;
+        if (regionType === 'zip' && /^\d{5}$/.test(searchValue)) {
+          newRegion = await GeographicAPI.getZipCodeData(searchValue);
+        } else if (regionType === 'dma') {
+          newRegion = await GeographicAPI.getDMAData(searchValue);
+        }
+        
+        if (newRegion && !regions.find(r => r.id === newRegion.id)) {
+          setRegions(prev => [newRegion, ...prev]);
+        }
+      } catch (error) {
+        console.error('Error searching:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
+
+  const filteredRegions = regions.filter(region =>
+    region.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const testRegions = regions.filter(r => r.type === 'test');
+  const controlRegions = regions.filter(r => r.type === 'control');
 
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Interactive Geo-Testing Dashboard
+            Enhanced Geo-Testing Dashboard
           </h2>
           <p className="text-xl text-gray-600">
-            Select test and control regions to configure your incrementality experiment
+            Select States, ZIP codes, or DMAs for advanced geo-incrementality testing
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* Region Selection */}
-          <div className="bg-gray-50 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Select Test Regions</h3>
-            
-            <div className="space-y-4 mb-8">
-              {regions.map((region) => (
-                <div key={region.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{region.name}</h4>
-                    <p className="text-sm text-gray-600">Population: {region.population}</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => selectRegion(region.id, 'test')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        region.type === 'test'
-                          ? 'bg-bcm-orange text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-orange-100'
-                      }`}
-                    >
-                      Test
-                    </button>
-                    <button
-                      onClick={() => selectRegion(region.id, 'control')}
-                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        region.type === 'control'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-green-100'
-                      }`}
-                    >
-                      Control
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Region Type Selector */}
+        <div className="mb-8">
+          <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+            <button
+              onClick={() => setRegionType('state')}
+              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                regionType === 'state'
+                  ? 'bg-white text-bcm-orange shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <MapIcon className="w-4 h-4 mr-2" />
+              States
+            </button>
+            <button
+              onClick={() => setRegionType('zip')}
+              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                regionType === 'zip'
+                  ? 'bg-white text-bcm-orange shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <HomeIcon className="w-4 h-4 mr-2" />
+              ZIP Codes
+            </button>
+            <button
+              onClick={() => setRegionType('dma')}
+              className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                regionType === 'dma'
+                  ? 'bg-white text-bcm-orange shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <BuildingOfficeIcon className="w-4 h-4 mr-2" />
+              DMAs
+            </button>
+          </div>
+        </div>
 
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setCurrentView('setup')}
-                className="flex-1 bg-bcm-orange hover:bg-bcm-orange-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-              >
-                Configure Test
-              </button>
-              <button
-                onClick={startTest}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-              >
-                Start Test
-              </button>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Region Selection Panel */}
+          <div className="lg:col-span-2">
+            <div className="bg-gray-50 rounded-2xl p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Select {regionType === 'state' ? 'States' : regionType === 'zip' ? 'ZIP Codes' : 'DMAs'}
+                </h3>
+                
+                {/* Search Bar */}
+                <div className="relative w-64">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bcm-orange focus:border-transparent"
+                    placeholder={
+                      regionType === 'zip' ? 'Search ZIP codes...' :
+                      regionType === 'dma' ? 'Search DMAs...' :
+                      'Search states...'
+                    }
+                  />
+                </div>
+              </div>
+              
+              {isLoading && (
+                <div className="text-center py-4">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-bcm-orange"></div>
+                  <p className="text-sm text-gray-600 mt-2">Loading geographic data...</p>
+                </div>
+              )}
+
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {filteredRegions.map((region) => (
+                  <motion.div 
+                    key={region.id} 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-between p-4 bg-white rounded-lg border hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{region.name}</h4>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {regionType === 'state' && (
+                          <span>Population: {region.population}</span>
+                        )}
+                        {regionType === 'zip' && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <span>Population: {region.population}</span>
+                            <span>Median Income: {region.medianIncome}</span>
+                            <span>Avg Age: {region.avgAge}</span>
+                            <span>Density: {region.density}</span>
+                          </div>
+                        )}
+                        {regionType === 'dma' && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <span>Population: {region.population}</span>
+                            <span>Households: {region.households}</span>
+                            <span>Median Income: {region.medianIncome}</span>
+                            <span>TV HH: {region.tvHouseholds}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {region.similarity && (
+                        <div className="mt-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">Similarity Score:</span>
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-bcm-orange h-2 rounded-full" 
+                                style={{ width: `${region.similarity * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs font-medium text-bcm-orange">
+                              {(region.similarity * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex space-x-2 ml-4">
+                      <button
+                        onClick={() => selectRegion(region.id, 'test')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          region.type === 'test'
+                            ? 'bg-bcm-orange text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-orange-100'
+                        }`}
+                      >
+                        Test
+                      </button>
+                      <button
+                        onClick={() => selectRegion(region.id, 'control')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          region.type === 'control'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-green-100'
+                        }`}
+                      >
+                        Control
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="flex space-x-4 mt-8">
+                <button
+                  onClick={() => setCurrentView('setup')}
+                  className="flex-1 bg-bcm-orange hover:bg-bcm-orange-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                >
+                  Configure Test
+                </button>
+                <button
+                  onClick={() => setCurrentView('analytics')}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                >
+                  Start Test
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Live Preview */}
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Test Configuration Preview</h3>
-            
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900">Test Regions</h4>
-                  <span className="bg-orange-100 text-bcm-orange px-3 py-1 rounded-full text-sm">
-                    {regions.filter(r => r.type === 'test').length} selected
-                  </span>
+          {/* Configuration Preview & Similarity Analysis */}
+          <div className="space-y-6">
+            {/* Test Configuration Preview */}
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Test Configuration</h3>
+              
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">Test Regions</h4>
+                    <span className="bg-orange-100 text-bcm-orange px-2 py-1 rounded-full text-sm">
+                      {testRegions.length} selected
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {testRegions.map(region => (
+                      <div key={region.id} className="text-sm">
+                        <span className="font-medium">{region.name}</span>
+                        {regionType !== 'state' && region.similarity && (
+                          <span className="ml-2 text-bcm-orange">
+                            ({(region.similarity * 100).toFixed(0)}% match)
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {regions.filter(r => r.type === 'test').map(region => (
-                    <div key={region.id} className="flex justify-between text-sm">
-                      <span>{region.name}</span>
-                      <span className="text-gray-600">{region.population}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="bg-white rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900">Control Regions</h4>
-                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                    {regions.filter(r => r.type === 'control').length} selected
-                  </span>
+                <div className="bg-white rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">Control Regions</h4>
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+                      {controlRegions.length} selected
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {controlRegions.map(region => (
+                      <div key={region.id} className="text-sm">
+                        <span className="font-medium">{region.name}</span>
+                        {regionType !== 'state' && region.similarity && (
+                          <span className="ml-2 text-green-600">
+                            ({(region.similarity * 100).toFixed(0)}% match)
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {regions.filter(r => r.type === 'control').map(region => (
-                    <div key={region.id} className="flex justify-between text-sm">
-                      <span>{region.name}</span>
-                      <span className="text-gray-600">{region.population}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="bg-white rounded-lg p-6">
-                <h4 className="font-semibold text-gray-900 mb-4">Estimated Test Power</h4>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-bcm-orange h-2 rounded-full" style={{ width: '85%' }}></div>
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Statistical Power</h4>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-bcm-orange h-2 rounded-full" 
+                      style={{ width: `${Math.min(85 + (testRegions.length + controlRegions.length) * 2, 95)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {Math.min(85 + (testRegions.length + controlRegions.length) * 2, 95)}% statistical power
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600 mt-2">85% statistical power detected</p>
               </div>
             </div>
+
+            {/* Similarity Analysis Panel */}
+            {showSimilarityAnalysis && selectedRegionForAnalysis && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 rounded-2xl p-6"
+              >
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Recommended Control Regions
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Based on your test selection: <strong>{selectedRegionForAnalysis.name}</strong>
+                </p>
+                
+                <div className="space-y-3">
+                  {similarRegions.map((region, index) => (
+                    <div key={region.id} className="bg-white rounded-lg p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-gray-900 text-sm">{region.name}</h4>
+                        <span className="text-xs font-medium text-blue-600">
+                          {(region.similarity * 100).toFixed(0)}% match
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {region.matchReasons && region.matchReasons.slice(0, 2).map((reason, idx) => (
+                          <div key={idx}>• {reason}</div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => selectRegion(region.id, 'control')}
+                        className="mt-2 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                      >
+                        Add as Control
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
