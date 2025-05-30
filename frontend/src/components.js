@@ -506,7 +506,7 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-2xl">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-blue-600">Incremental Lift</h3>
-              <TrendingUpIcon className="w-5 h-5 text-blue-600" />
+              <ArrowTrendingUpIcon className="w-5 h-5 text-blue-600" />
             </div>
             <p className="text-3xl font-bold text-blue-900">+28.6%</p>
             <p className="text-sm text-blue-700">vs control group</p>
