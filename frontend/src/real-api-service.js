@@ -18,29 +18,20 @@ import axios from 'axios';
 const API_CONFIG = {
   // Free Government APIs
   census: {
-    baseUrl: 'https://api.census.gov/data/2021/acs/acs5',
-    variables: [
-      'B01003_001E', // Total Population
-      'B19013_001E', // Median Household Income
-      'B25003_002E', // Owner Occupied Housing Units
-      'B25003_003E', // Renter Occupied Housing Units
-      'B08303_001E', // Total Commuters
-      'B15003_022E', // Bachelor's Degree
-      'B15003_023E', // Master's Degree
-      'B15003_024E', // Professional Degree
-      'B15003_025E', // Doctorate Degree
-      'B23025_005E', // Unemployed
-      'B23025_002E', // Labor Force
-      'B25077_001E', // Median Home Value
-      'B25064_001E', // Median Gross Rent
-      'B01002_001E', // Median Age
-      'B25010_001E'  // Average Household Size
-    ],
+    name: 'US Census Bureau ACS',
+    cost: 'Free',
+    baseUrl: 'https://api.census.gov/data/2022/acs/acs5',
+    estimatedCost: '$0',
+    monthlyMinimum: '$0',
     rateLimit: {
       requestsPerSecond: 1,
-      requestsPerDay: 500
+      requestsPerDay: 500,
+      requestsPerMonth: 15000
     },
-    cost: 'FREE'
+    validation: {
+      endpoint: '/get?get=NAME&for=state:*&key=',
+      method: 'GET'
+    }
   },
 
   datausa: {
