@@ -111,7 +111,7 @@ const APIKeyManager = ({ isOpen, onClose }) => {
   };
 
   const premiumServices = ['nielsen', 'statista', 'comscore'];
-  const freeServices = ['census', 'usps'];
+  const freeServices = ['census', 'datausa', 'usps'];
 
   return (
     <AnimatePresence>
