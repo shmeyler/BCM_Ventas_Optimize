@@ -343,9 +343,9 @@ class DemographicMatchingModel {
   }
 
   /**
-   * Find similar regions using multiple algorithms
+   * Find similar regions using real API data and multiple algorithms
    */
-  findSimilarRegions(targetRegion, regionType = 'zipCodes', options = {}) {
+  async findSimilarRegionsWithRealData(targetRegion, regionType = 'zipCodes', options = {}) {
     const {
       algorithm = 'weighted_euclidean',
       customWeights = {},
@@ -354,7 +354,37 @@ class DemographicMatchingModel {
       excludeIds = []
     } = options;
 
-    const candidates = this.data[regionType] || [];
+    let candidates = [];
+
+    try {
+      // Fetch real candidate regions from backend API
+      if (regionType === 'zipCodes') {
+        // Get a diverse set of ZIP codes for comparison
+        const testZips = ['10001', '90210', '60601', '33101', '75201', '19101', '02101', '30309', '78701', '94102'];
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/geographic/zips?zip_codes=${testZips.join(',')}`);
+        if (response.ok) {
+          const data = await response.json();
+          candidates = data.regions;
+          console.log(`✅ Using real demographic data for ${candidates.length} ZIP codes`);
+        }
+      } else if (regionType === 'dmas') {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/geographic/dmas`);
+        if (response.ok) {
+          const data = await response.json();
+          candidates = data.regions;
+          console.log(`✅ Using real demographic data for ${candidates.length} DMAs`);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching real demographic data for matching:', error);
+    }
+
+    // Fallback to mock data if API fails
+    if (candidates.length === 0) {
+      console.warn('🔄 Falling back to mock data for demographic matching');
+      candidates = this.data[regionType] || [];
+    }
+
     const similarities = [];
 
     for (const candidate of candidates) {
