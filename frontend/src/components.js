@@ -1105,6 +1105,45 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [similarRegions, setSimilarRegions] = useState([]);
   const [showSimilarityAnalysis, setShowSimilarityAnalysis] = useState(false);
   const [selectedRegionForAnalysis, setSelectedRegionForAnalysis] = useState(null);
+  const [showCSVUpload, setShowCSVUpload] = useState(false);
+
+  // CSV upload handling
+  const handleCSVUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csv = e.target.result;
+        const lines = csv.split('\n');
+        const newRegions = [];
+        
+        lines.forEach((line, index) => {
+          if (index === 0) return; // Skip header
+          const code = line.trim();
+          if (code && /^\d{5}$/.test(code)) {
+            newRegions.push({
+              id: code,
+              name: `${code} (Uploaded)`,
+              source: 'CSV_UPLOAD',
+              selected: false,
+              type: null,
+              demographics: {
+                medianAge: 35 + Math.random() * 10,
+                medianIncome: 50000 + Math.random() * 30000,
+                populationDensity: Math.floor(Math.random() * 5000),
+                householdSize: 2.2 + Math.random() * 0.6
+              }
+            });
+          }
+        });
+        
+        setRegions(prev => [...newRegions, ...prev]);
+        setShowCSVUpload(false);
+        alert(`Uploaded ${newRegions.length} ZIP codes successfully!`);
+      };
+      reader.readAsText(file);
+    }
+  };
 
   // Data source options
   const dataSourceOptions = [
