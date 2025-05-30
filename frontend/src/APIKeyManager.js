@@ -188,11 +188,15 @@ const APIKeyManager = ({ isOpen, onClose }) => {
                           <span className="text-2xl mr-3">{getServiceIcon(service)}</span>
                           <div>
                             <h4 className="text-lg font-semibold text-gray-900 capitalize">
-                              {service === 'census' ? 'US Census Bureau' : 'USPS ZIP Code API'}
+                              {service === 'census' ? 'US Census Bureau' : 
+                               service === 'datausa' ? 'DataUSA.io' :
+                               'USPS ZIP Code API'}
                             </h4>
                             <p className="text-sm text-gray-600">
                               {service === 'census' 
                                 ? 'Comprehensive demographic and economic data' 
+                                : service === 'datausa'
+                                ? 'Government data aggregation from Census, BLS, and federal sources'
                                 : 'ZIP code validation and geographic data'
                               }
                             </p>
