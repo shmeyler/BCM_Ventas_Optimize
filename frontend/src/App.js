@@ -19,7 +19,7 @@ const {
 } = Components;
 
 function App() {
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState('dashboard'); // Start on dashboard for testing
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true); // Start logged in for testing
   const [testData, setTestData] = useState({
