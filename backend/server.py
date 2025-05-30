@@ -293,15 +293,23 @@ async def get_multiple_zip_demographics(zip_codes: str):
                 datausa_data = await DataUSAService.get_zip_demographics(zip_code)
                 if datausa_data:
                     region = DataUSAService.transform_datausa_to_demographics(datausa_data, zip_code)
+                    logger.info(f"Got real DataUSA data for ZIP {zip_code}")
+                    regions.append(region)
+                else:
+                    # Use fallback data when DataUSA.io doesn't have data
+                    region = create_fallback_zip_data(zip_code)
+                    logger.warning(f"Using fallback data for ZIP {zip_code}")
                     regions.append(region)
             except Exception as e:
                 logger.warning(f"Failed to get data for ZIP {zip_code}: {e}")
-                continue
+                # Still add fallback data for failed requests
+                region = create_fallback_zip_data(zip_code)
+                regions.append(region)
         
         return GeographicResponse(
             regions=regions,
             count=len(regions),
-            source="DATAUSA_IO"
+            source="DATAUSA_IO_WITH_FALLBACK"
         )
         
     except HTTPException:
