@@ -1,10 +1,10 @@
 import requests
 import sys
-from datetime import datetime
+import json
 import time
-import uuid
+from datetime import datetime
 
-class WorkMagicAPITester:
+class VentasAIAPITester:
     def __init__(self, base_url="https://db56f08e-9e9a-409a-8d04-cfba074684c0.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
@@ -28,12 +28,15 @@ class WorkMagicAPITester:
             if success:
                 self.tests_passed += 1
                 print(f"✅ Passed - Status: {response.status_code}")
-                print(f"Response: {response.json()}")
+                try:
+                    print(f"Response: {json.dumps(response.json(), indent=2)}")
+                except:
+                    print(f"Response: {response.text}")
             else:
                 print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
                 print(f"Response: {response.text}")
 
-            return success, response.json() if success else {}
+            return success, response.json() if success and response.text else {}
 
         except Exception as e:
             print(f"❌ Failed - Error: {str(e)}")
@@ -48,6 +51,15 @@ class WorkMagicAPITester:
             200
         )
 
+    def test_status_endpoint(self):
+        """Test the status endpoint"""
+        return self.run_test(
+            "Status Endpoint",
+            "GET",
+            "api/status",
+            200
+        )
+
     def test_create_status_check(self, client_name):
         """Test creating a status check"""
         return self.run_test(
@@ -58,31 +70,81 @@ class WorkMagicAPITester:
             data={"client_name": client_name}
         )
 
-    def test_get_status_checks(self):
-        """Test getting status checks"""
+    def test_api_status(self):
+        """Test the API status endpoint"""
         return self.run_test(
-            "Get Status Checks",
+            "API Status",
             "GET",
-            "api/status",
+            "api/api-status",
+            200
+        )
+
+    def test_zip_code_data(self, zip_code="10001"):
+        """Test getting ZIP code data"""
+        return self.run_test(
+            f"ZIP Code Data for {zip_code}",
+            "GET",
+            f"api/geo/zip/{zip_code}",
+            200
+        )
+
+    def test_dma_data(self, dma_id="501"):
+        """Test getting DMA data"""
+        return self.run_test(
+            f"DMA Data for {dma_id}",
+            "GET",
+            f"api/geo/dma/{dma_id}",
+            200
+        )
+
+    def test_validate_api_key(self, api_name="census", api_key="test_key"):
+        """Test validating an API key"""
+        return self.run_test(
+            f"Validate {api_name} API Key",
+            "POST",
+            "api/validate-key",
+            200,
+            data={"api_name": api_name, "api_key": api_key}
+        )
+
+    def test_usage_statistics(self):
+        """Test getting usage statistics"""
+        return self.run_test(
+            "Usage Statistics",
+            "GET",
+            "api/usage-stats",
             200
         )
 
 def main():
     # Setup
-    tester = WorkMagicAPITester()
-    test_client = f"test_client_{uuid.uuid4()}"
+    tester = VentasAIAPITester()
+    test_client = f"test_client_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
     # Run tests
-    print("🚀 Starting WorkMagic API Tests...")
+    print("🚀 Starting VentasAI API Tests...")
     
     # Test root endpoint
     tester.test_root_endpoint()
     
-    # Test creating a status check
+    # Test status endpoints
+    tester.test_status_endpoint()
     tester.test_create_status_check(test_client)
     
-    # Test getting status checks
-    tester.test_get_status_checks()
+    # Test API status
+    tester.test_api_status()
+    
+    # Test geographic data endpoints
+    tester.test_zip_code_data("10001")
+    tester.test_zip_code_data("90210")
+    tester.test_dma_data("501")
+    
+    # Test API key validation
+    tester.test_validate_api_key("census", "test_census_key")
+    tester.test_validate_api_key("nielsen", "test_nielsen_key")
+    
+    # Test usage statistics
+    tester.test_usage_statistics()
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
