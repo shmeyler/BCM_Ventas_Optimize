@@ -435,12 +435,18 @@ const GeographicAPI = {
       
       // Add statistical validation if requested
       if (includeValidation && enhancedSimilarRegions.length > 0) {
-        const validatedRegions = matchingModel.validateMatchSignificance(
+        const validatedRegions = matchingModel.validateMatchSignificanceWithRealMetrics(
           enhancedRegion, 
           enhancedSimilarRegions,
           {
-            expectedLift: 0.15, // 15% expected lift
-            alpha: 0.05,
+            expectedLift: 0.1, // 10% lift target
+            alpha: 0.05, // 95% confidence
+            beta: 0.2, // 80% power
+            baselineConversionRate: 0.05, // 5% baseline
+            weeklyTraffic: null, // Will be estimated
+            dailySpend: null, // Will be estimated  
+            kpi: 'conversions',
+            minimumDetectableEffect: 0.05 // 5% minimum
             beta: 0.2,
             baselineConversionRate: 0.03
           }
