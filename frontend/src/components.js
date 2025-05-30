@@ -1037,6 +1037,19 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
     }
   };
 
+  const handleDetailedAnalysis = async (region1, region2) => {
+    try {
+      const analysis = await GeographicAPI.getDetailedAnalysis(region1, region2);
+      if (analysis) {
+        // You could show this in a modal or expanded view
+        console.log('Detailed Analysis:', analysis);
+        alert(`Detailed Analysis: ${analysis.recommendationStrength} match with ${(analysis.overallSimilarity * 100).toFixed(1)}% similarity`);
+      }
+    } catch (error) {
+      console.error('Error getting detailed analysis:', error);
+    }
+  };
+
   const filteredRegions = regions.filter(region =>
     region.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
