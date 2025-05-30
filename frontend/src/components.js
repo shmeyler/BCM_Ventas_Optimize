@@ -2375,6 +2375,7 @@ const Components = {
   LoginModal,
   HeroSection,
   GeoTestingDashboard,
+  CSVUploadModal,
   TestSetupWizard,
   LiveAnalytics,
   AttributionModeling,
