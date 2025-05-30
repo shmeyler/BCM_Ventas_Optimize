@@ -661,7 +661,7 @@ const knowledgeBaseData = [
 ];
 
 // Header Component with BCM branding and API management
-const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn }) => {
+const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, onLogout }) => {
   const [showAPIManager, setShowAPIManager] = useState(false);
 
   const handleDataSourcesClick = () => {
