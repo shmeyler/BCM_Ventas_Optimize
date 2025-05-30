@@ -1113,6 +1113,45 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
           </div>
         </div>
 
+        {/* Data Source Selector */}
+        {(regionType === 'zip' || regionType === 'dma') && (
+          <div className="mb-8">
+            <label className="block text-lg font-bold text-gray-900 mb-4">
+              Select Data Source
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {dataSourceOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setDataSource(option.value)}
+                  className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    dataSource === option.value
+                      ? 'border-bcm-orange bg-orange-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl">{option.icon}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      option.type === 'FREE' ? 'bg-green-100 text-green-800' :
+                      option.type === 'PAID' ? 'bg-orange-100 text-orange-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {option.type}
+                    </span>
+                  </div>
+                  <h3 className={`font-semibold mb-1 ${
+                    dataSource === option.value ? 'text-bcm-orange' : 'text-gray-900'
+                  }`}>
+                    {option.label}
+                  </h3>
+                  <p className="text-sm text-gray-600">{option.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Region Selection Panel */}
           <div className="lg:col-span-2">
