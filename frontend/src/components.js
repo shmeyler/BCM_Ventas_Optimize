@@ -1847,13 +1847,13 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                     <div className="flex justify-between">
                       <span>Recommended Test Duration:</span>
                       <span className="font-medium">
-                        {regions.length > 0 ? calculateTestDuration(regions) : 'Select regions first'}
+                        {calculateTestDuration(regions)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Expected Statistical Power:</span>
                       <span className={`font-medium ${regions.length > 0 ? 'text-green-600' : 'text-gray-500'}`}>
-                        {regions.length > 0 ? calculateStatisticalPower(regions) : 'N/A'}
+                        {calculateStatisticalPower(regions)}
                       </span>
                     </div>
                     <div className="flex justify-between">
