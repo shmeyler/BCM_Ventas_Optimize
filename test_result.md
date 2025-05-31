@@ -288,6 +288,7 @@ test_plan:
     - "Geographic States Endpoint"
     - "Geographic DMAs Endpoint"
     - "Complete Geographic Functionality"
+    - "State Search Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
