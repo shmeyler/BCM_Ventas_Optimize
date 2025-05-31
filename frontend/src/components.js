@@ -1443,6 +1443,43 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
         setIsLoading(false);
       }
     }
+    // Trigger search for States when 2+ characters are entered
+    else if (regionType === 'state' && searchValue.length >= 2) {
+      setIsLoading(true);
+      
+      try {
+        console.log(`🔍 Searching for State: ${searchValue}`);
+        
+        // Get the list of states to find a match
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/states`);
+        if (response.ok) {
+          const data = await response.json();
+          const states = data.regions || [];
+          
+          // Find matching state by name or code
+          const matchingState = states.find(state => 
+            state.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            state.id === searchValue
+          );
+          
+          if (matchingState) {
+            // Get detailed state data
+            const newRegion = await GeographicAPI.getStateData(matchingState.id);
+            
+            if (newRegion && !regions.find(r => r.id === newRegion.id)) {
+              setRegions(prev => [newRegion, ...prev]);
+              console.log(`✅ Added new State: ${searchValue}`);
+            }
+          } else {
+            console.log(`❌ No State found matching: ${searchValue}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error searching for State:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
     // Trigger search for DMAs when 3+ characters are entered
     else if (regionType === 'dma' && searchValue.length >= 3) {
       setIsLoading(true);
