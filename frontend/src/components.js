@@ -294,7 +294,7 @@ const GeographicAPI = {
     try {
       console.log(`📺 Fetching DMA data from backend`);
       
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/dmas`);
+      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL}/api/geographic/dmas`);
       
       if (response.ok) {
         const data = await response.json();
