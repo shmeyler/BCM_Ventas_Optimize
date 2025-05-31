@@ -2198,6 +2198,7 @@ const LiftTestConfigModal = ({ isOpen, onClose, selectedRegions, onCreateTest })
 };
 
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
+  const [activeTab, setActiveTab] = useState('regions');
   const [regionType, setRegionType] = useState('state'); // 'state', 'zip', 'dma'
   const [dataSource, setDataSource] = useState('datausa'); // 'census', 'datausa', 'enhanced_mock'
   const [regions, setRegions] = useState(mockRegions);
