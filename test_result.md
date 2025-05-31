@@ -182,15 +182,18 @@ backend:
   
   - task: "Geographic Multiple ZIP Codes Endpoint"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "The GET /api/geographic/zips endpoint is implemented but not working correctly. Like the single ZIP endpoint, it's trying to fetch data from DataUSA.io API, but the API is not returning any data for the ZIP codes tested."
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/geographic/zips endpoint is now working correctly with the Census Bureau API integration. Successfully tested with multiple ZIP codes (94920, 10001, 90210) and it returns real demographic data from the Census Bureau API for all valid ZIP codes. The endpoint also handles a mix of valid and invalid ZIP codes correctly, and properly enforces the maximum limit of 50 ZIP codes."
 
 frontend:
   - task: "Data Sources Button Functionality"
