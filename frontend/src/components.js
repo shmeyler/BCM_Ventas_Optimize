@@ -2275,6 +2275,16 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
       onClose={() => setShowCSVUpload(false)}
       onUpload={handleCSVUpload}
     />
+
+    <LiftTestConfigModal
+      isOpen={showLiftTestConfig}
+      onClose={() => setShowLiftTestConfig(false)}
+      selectedRegions={regions}
+      onCreateTest={(liftTest) => {
+        console.log('Lift test created:', liftTest);
+        setLiftTestResults(liftTest);
+      }}
+    />
   </>
   );
 };
