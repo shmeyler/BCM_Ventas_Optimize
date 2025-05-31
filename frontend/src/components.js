@@ -2896,11 +2896,15 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
       onCreateTest={(liftTest) => {
         console.log('Lift test created:', liftTest);
         setLiftTestResults(liftTest);
-        // Trigger a refresh of the lift tests list
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        setShowLiftTestConfig(false); // Close the config modal
+        setSelectedTestId(liftTest.id); // Open the detailed view automatically
       }}
+    />
+
+    <LiftTestDetailModal
+      isOpen={!!selectedTestId}
+      onClose={() => setSelectedTestId(null)}
+      testId={selectedTestId}
     />
   </>
   );
