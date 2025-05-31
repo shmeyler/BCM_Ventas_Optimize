@@ -2123,6 +2123,12 @@ const LiftTestDetailModal = ({ isOpen, onClose, testId }) => {
           </button>
         </div>
       </div>
+
+      <MetaCampaignLaunchModal
+        isOpen={showMetaCampaignModal}
+        onClose={() => setShowMetaCampaignModal(false)}
+        testDetails={testDetails}
+      />
     </div>
   );
 };
