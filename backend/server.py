@@ -1180,6 +1180,96 @@ async def update_test_status(test_id: str, status: str):
         logger.error(f"Error updating test status {test_id}: {e}")
         raise HTTPException(status_code=500, detail="Error updating test status")
 
+# Initialize Meta Ads Service
+meta_ads_service = MetaAdsService()
+
+# Meta Ads API Endpoints
+@app.get("/api/meta/validate")
+async def validate_meta_credentials():
+    """Validate Meta API credentials and get account info"""
+    try:
+        is_valid = await meta_ads_service.validate_credentials()
+        
+        if is_valid:
+            return {
+                "status": "valid",
+                "message": "Meta API credentials are valid",
+                "has_access_token": bool(meta_ads_service.access_token),
+                "has_ad_account": bool(meta_ads_service.ad_account_id)
+            }
+        else:
+            return {
+                "status": "invalid",
+                "message": "Meta API credentials validation failed",
+                "has_access_token": bool(meta_ads_service.access_token),
+                "has_ad_account": bool(meta_ads_service.ad_account_id),
+                "note": "Business Manager ID and Ad Account ID may be needed"
+            }
+    except Exception as e:
+        logger.error(f"Error validating Meta credentials: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "has_access_token": bool(meta_ads_service.access_token)
+        }
+
+@app.post("/api/meta/campaign/create", response_model=MetaCampaignResponse)
+async def create_meta_campaign(request: MetaAdsCampaignRequest):
+    """Create a Meta Ads campaign for lift testing"""
+    try:
+        logger.info(f"Creating Meta campaign: {request.campaign_name}")
+        
+        campaign = await meta_ads_service.create_campaign(request)
+        
+        # Update the lift test with Meta campaign info
+        await db.lift_tests.update_one(
+            {"id": request.test_id},
+            {"$set": {
+                "meta_campaign_id": campaign.campaign_id,
+                "meta_campaign_status": campaign.status
+            }}
+        )
+        
+        return campaign
+        
+    except Exception as e:
+        logger.error(f"Error creating Meta campaign: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/meta/campaign/{campaign_id}/performance")
+async def get_campaign_performance(campaign_id: str):
+    """Get Meta campaign performance metrics"""
+    try:
+        performance = await meta_ads_service.get_campaign_performance(campaign_id)
+        return performance
+        
+    except Exception as e:
+        logger.error(f"Error getting campaign performance: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/meta/accounts")
+async def get_meta_ad_accounts():
+    """Get available Meta Ad Accounts for the user"""
+    try:
+        if not meta_ads_service.api:
+            return {
+                "error": "Meta API not initialized",
+                "accounts": [],
+                "note": "Provide complete credentials to access ad accounts"
+            }
+        
+        # This would typically fetch user's ad accounts
+        # For now, return placeholder info
+        return {
+            "accounts": [],
+            "message": "Provide Business Manager ID and Ad Account ID to access specific accounts",
+            "status": "needs_account_info"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting ad accounts: {e}")
+        return {"error": str(e), "accounts": []}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
