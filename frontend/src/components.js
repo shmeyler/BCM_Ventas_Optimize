@@ -1667,10 +1667,10 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                         )}
                         {regionType === 'dma' && (
                           <div className="grid grid-cols-2 gap-4">
-                            <span>Population: {region.population}</span>
-                            <span>Households: {region.households}</span>
-                            <span>Median Income: {region.medianIncome}</span>
-                            <span>TV HH: {region.tvHouseholds}</span>
+                            <span>Population: {region.demographics?.population?.toLocaleString() || 'N/A'}</span>
+                            <span>Median Income: ${region.demographics?.medianHouseholdIncome?.toLocaleString() || 'N/A'}</span>
+                            <span>Median Age: {region.demographics?.medianAge || 'N/A'}</span>
+                            <span>Labor Force: {region.demographics?.laborForce?.toLocaleString() || 'N/A'}</span>
                           </div>
                         )}
                       </div>
