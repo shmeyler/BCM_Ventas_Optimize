@@ -2209,6 +2209,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [showCSVUpload, setShowCSVUpload] = useState(false);
   const [showLiftTestConfig, setShowLiftTestConfig] = useState(false);
   const [liftTestResults, setLiftTestResults] = useState(null);
+  const [selectedTestId, setSelectedTestId] = useState(null);
 
   // CSV upload handling
   const handleCSVUpload = (event) => {
