@@ -1765,15 +1765,21 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>Recommended Test Duration:</span>
-                      <span className="font-medium">21-28 days</span>
+                      <span className="font-medium">
+                        {regions.length > 0 ? calculateTestDuration(regions) : 'Select regions first'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Expected Statistical Power:</span>
-                      <span className="font-medium text-green-600">85%</span>
+                      <span className={`font-medium ${regions.length > 0 ? 'text-green-600' : 'text-gray-500'}`}>
+                        {regions.length > 0 ? calculateStatisticalPower(regions) : 'N/A'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Demographic Balance Score:</span>
-                      <span className="font-medium text-blue-600">92%</span>
+                      <span className={`font-medium ${regions.length > 0 ? 'text-blue-600' : 'text-gray-500'}`}>
+                        {regions.length > 0 ? calculateDemographicBalance(regions) : 'N/A'}
+                      </span>
                     </div>
                   </div>
                 </div>
