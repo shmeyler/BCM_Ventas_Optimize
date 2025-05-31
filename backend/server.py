@@ -188,8 +188,6 @@ class CensusService:
             logger.error(f"Error fetching Census data for ZIP {zip_code}: {e}")
             return None
 
-import hmac
-import hashlib
 
 class MetaAdsService:
     """Service for managing Meta (Facebook/Instagram) ad campaigns"""
