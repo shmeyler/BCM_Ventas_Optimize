@@ -57,6 +57,36 @@ class GeographicRegion(BaseModel):
     demographics: Demographics
     lastUpdated: str
 
+class LiftTestRequest(BaseModel):
+    test_name: str
+    test_regions: List[str]
+    control_regions: List[str]
+    start_date: str
+    end_date: str
+    platform: str  # meta, google, pinterest, tiktok
+    test_type: str  # brand_lift, conversion_lift, sales_lift
+    budget: Optional[float] = None
+    metrics: List[str]  # impressions, clicks, conversions, sales
+
+class LiftTestAnalysisRequest(BaseModel):
+    test_id: str
+    data: List[Dict[str, Any]]  # Historical performance data
+
+class LiftTestExperiment(BaseModel):
+    id: str
+    test_name: str
+    test_regions: List[str]
+    control_regions: List[str]
+    start_date: str
+    end_date: str
+    platform: str
+    test_type: str
+    budget: Optional[float]
+    metrics: List[str]
+    status: str  # draft, active, completed, cancelled
+    created_at: str
+    results: Optional[Dict[str, Any]] = None
+
 class CensusService:
     """Service for fetching demographic data from U.S. Census Bureau API"""
     
