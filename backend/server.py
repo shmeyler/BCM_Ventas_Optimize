@@ -227,7 +227,77 @@ def get_zip_location_name(zip_code: str) -> str:
     
     # Common ZIP code patterns with their corresponding city/state
     zip_locations = {
-        # New York
+        # Connecticut
+        '060': 'Hartford, CT',
+        '061': 'Hartford, CT',
+        '062': 'Waterbury, CT',
+        '063': 'New Haven, CT',
+        '064': 'New Haven, CT',
+        '065': 'New Haven, CT',
+        '066': 'Bridgeport, CT',
+        '067': 'Waterbury, CT',
+        '068': 'Ridgefield, CT',  # This covers 06877!
+        '069': 'Stamford, CT',
+        
+        # Massachusetts
+        '010': 'Springfield, MA',
+        '011': 'Springfield, MA',
+        '012': 'Pittsfield, MA',
+        '013': 'Springfield, MA',
+        '014': 'Fitchburg, MA',
+        '015': 'Worcester, MA',
+        '016': 'Worcester, MA',
+        '017': 'Framingham, MA',
+        '018': 'Woburn, MA',
+        '019': 'Lynn, MA',
+        '020': 'Boston, MA',
+        '021': 'Boston, MA',
+        '022': 'Boston, MA',
+        '023': 'Boston, MA',
+        '024': 'Lowell, MA',
+        '025': 'Cape Cod, MA',
+        '026': 'Hyannis, MA',
+        '027': 'New Bedford, MA',
+        
+        # Rhode Island
+        '028': 'Providence, RI',
+        '029': 'Providence, RI',
+        
+        # New Hampshire
+        '030': 'Manchester, NH',
+        '031': 'Manchester, NH',
+        '032': 'Manchester, NH',
+        '033': 'Concord, NH',
+        '034': 'Keene, NH',
+        '035': 'Littleton, NH',
+        '036': 'Charlestown, NH',
+        '037': 'Claremont, NH',
+        '038': 'Portsmouth, NH',
+        
+        # Maine
+        '039': 'Portsmouth, ME',
+        '040': 'Portland, ME',
+        '041': 'Portland, ME',
+        '042': 'Lewiston, ME',
+        '043': 'Augusta, ME',
+        '044': 'Bangor, ME',
+        '045': 'Bath, ME',
+        '046': 'Machias, ME',
+        '047': 'Houlton, ME',
+        '048': 'Rockland, ME',
+        '049': 'Waterville, ME',
+        
+        # Vermont
+        '050': 'Bellows Falls, VT',
+        '051': 'Bellows Falls, VT',
+        '052': 'Bennington, VT',
+        '053': 'Brattleboro, VT',
+        '054': 'Burlington, VT',
+        '055': 'Montpelier, VT',
+        '056': 'Montpelier, VT',
+        '057': 'Rutland, VT',
+        '058': 'St. Johnsbury, VT',
+        '059': 'White River Junction, VT',
         '100': 'New York, NY',
         '101': 'New York, NY', 
         '102': 'New York, NY',
