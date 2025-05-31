@@ -58,6 +58,12 @@ class CensusService:
     async def get_zip_demographics(cls, zip_code: str) -> Optional[Dict[str, Any]]:
         """Fetch demographic data from Census Bureau API for a ZIP code"""
         try:
+            # Get API key from environment
+            api_key = os.environ.get('CENSUS_API_KEY')
+            if not api_key:
+                logger.warning("Census API key not found in environment variables")
+                return None
+            
             # Convert ZIP to ZCTA format
             zcta = zip_code.zfill(5)
             
@@ -78,9 +84,9 @@ class CensusService:
             ]
             
             # Use Census API for ACS 5-year estimates (most recent available)
-            url = f"https://api.census.gov/data/2022/acs/acs5?get={','.join(variables)}&for=zip%20code%20tabulation%20area:{zcta}"
+            url = f"https://api.census.gov/data/2022/acs/acs5?get={','.join(variables)}&for=zip%20code%20tabulation%20area:{zcta}&key={api_key}"
             
-            logger.info(f"Fetching Census data for ZIP {zip_code}: {url}")
+            logger.info(f"Fetching Census data for ZIP {zip_code}")
             
             # Make async request
             loop = asyncio.get_event_loop()
