@@ -2263,6 +2263,9 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                     </div>
                   </div>
                 </div>
+
+                {/* Created Lift Tests */}
+                <LiftTestsList />
               </motion.div>
             )}
           </div>
