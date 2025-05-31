@@ -96,6 +96,26 @@ class LiftTestExperiment(BaseModel):
     created_at: str
     results: Optional[Dict[str, Any]] = None
 
+class MetaAdsCampaignRequest(BaseModel):
+    test_id: str
+    campaign_name: str
+    daily_budget: float
+    targeting_type: str  # "geographic", "audience", "custom"
+    test_regions: List[str]
+    control_regions: List[str]
+    start_date: str
+    end_date: str
+    creative_id: Optional[str] = None
+    optimization_goal: str = "IMPRESSIONS"  # IMPRESSIONS, REACH, CLICKS, CONVERSIONS
+
+class MetaCampaignResponse(BaseModel):
+    campaign_id: str
+    campaign_name: str
+    status: str
+    daily_budget: float
+    targeting_summary: Dict[str, Any]
+    created_time: str
+
 class CensusService:
     """Service for fetching demographic data from U.S. Census Bureau API"""
     
