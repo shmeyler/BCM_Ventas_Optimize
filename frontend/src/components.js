@@ -1272,6 +1272,72 @@ const APIKeyManager = ({ isOpen, onClose }) => {
   );
 };
 
+// Lift Test API
+const LiftTestAPI = {
+  async createLiftTest(testConfig) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testConfig)
+      });
+      
+      if (response.ok) {
+        const liftTest = await response.json();
+        console.log('✅ Lift test created:', liftTest.id);
+        return liftTest;
+      } else {
+        throw new Error(`Failed to create lift test: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error creating lift test:', error);
+      return null;
+    }
+  },
+
+  async getLiftTests() {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.tests || [];
+      }
+    } catch (error) {
+      console.error('Error getting lift tests:', error);
+    }
+    return [];
+  },
+
+  async calculatePowerAnalysis(testId, testRegions, controlRegions) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/${testId}/power-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_regions: testRegions, control_regions: controlRegions })
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('Error calculating power analysis:', error);
+    }
+    return null;
+  },
+
+  async getRecommendations(testId) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/${testId}/recommendations`);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error('Error getting recommendations:', error);
+    }
+    return null;
+  }
+};
+
 // Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [regionType, setRegionType] = useState('state'); // 'state', 'zip', 'dma'
