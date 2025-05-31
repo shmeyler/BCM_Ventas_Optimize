@@ -1650,7 +1650,12 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                       <h4 className="font-semibold text-gray-900">{region.name}</h4>
                       <div className="text-sm text-gray-600 mt-1">
                         {regionType === 'state' && (
-                          <span>Population: {region.population}</span>
+                          <div className="grid grid-cols-2 gap-4">
+                            <span>Population: {region.demographics?.population?.toLocaleString() || 'N/A'}</span>
+                            <span>Median Income: ${region.demographics?.medianHouseholdIncome?.toLocaleString() || 'N/A'}</span>
+                            <span>Median Age: {region.demographics?.medianAge || 'N/A'}</span>
+                            <span>Unemployment: {region.demographics?.unemploymentRate?.toFixed(1) || 'N/A'}%</span>
+                          </div>
                         )}
                         {regionType === 'zip' && (
                           <div className="grid grid-cols-2 gap-4">
