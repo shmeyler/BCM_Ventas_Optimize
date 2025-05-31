@@ -382,24 +382,61 @@ async def get_us_states():
     
     return {"regions": states, "source": "STATIC"}
 
+import csv
+import os
+from pathlib import Path
+
+# Get DMA data from CSV
+def load_dma_data():
+    """Load DMA data from CSV file"""
+    dma_data = []
+    csv_path = Path(__file__).parent / "dma_names.csv"
+    
+    try:
+        with open(csv_path, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                dma_data.append({
+                    "id": str(row['dma_code']),
+                    "name": row['geo_dma'],
+                    "code": int(row['dma_code'])
+                })
+    except Exception as e:
+        logger.error(f"Error loading DMA data: {e}")
+        return []
+    
+    return dma_data
+
 @app.get("/api/geographic/dmas")
 async def get_dmas():
-    """Get list of Designated Market Areas (DMAs)"""
-    # Sample DMA data - in production this would come from a proper source
-    dmas = [
-        {"id": "501", "name": "New York, NY"},
-        {"id": "803", "name": "Los Angeles, CA"},
-        {"id": "602", "name": "Chicago, IL"},
-        {"id": "504", "name": "Philadelphia, PA"},
-        {"id": "623", "name": "Dallas-Ft. Worth, TX"},
-        {"id": "506", "name": "Boston, MA"},
-        {"id": "511", "name": "Washington, DC"},
-        {"id": "539", "name": "Tampa-St. Petersburg, FL"},
-        {"id": "618", "name": "Houston, TX"},
-        {"id": "505", "name": "Detroit, MI"}
-    ]
+    """Get list of Designated Market Areas (DMAs) from Nielsen data"""
+    try:
+        dma_data = load_dma_data()
+        
+        if not dma_data:
+            # Fallback data if CSV fails to load
+            dma_data = [
+                {"id": "501", "name": "New York", "code": 501},
+                {"id": "803", "name": "Los Angeles", "code": 803},
+                {"id": "602", "name": "Chicago", "code": 602},
+                {"id": "504", "name": "Philadelphia", "code": 504},
+                {"id": "623", "name": "Dallas-Ft. Worth", "code": 623},
+                {"id": "506", "name": "Boston (Manchester)", "code": 506},
+                {"id": "511", "name": "Washington, DC (Hagrstwn)", "code": 511},
+                {"id": "539", "name": "Tampa-St. Pete (Sarasota)", "code": 539},
+                {"id": "618", "name": "Houston", "code": 618},
+                {"id": "505", "name": "Detroit", "code": 505}
+            ]
+        
+        return {
+            "regions": dma_data, 
+            "source": "NIELSEN_DMA_RESEARCH",
+            "total": len(dma_data)
+        }
     
-    return {"regions": dmas, "source": "STATIC"}
+    except Exception as e:
+        logger.error(f"Error getting DMA data: {e}")
+        raise HTTPException(status_code=500, detail="Error loading DMA data")
 
 if __name__ == "__main__":
     import uvicorn
