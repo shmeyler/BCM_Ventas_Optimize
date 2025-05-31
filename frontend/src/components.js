@@ -461,31 +461,20 @@ const GeographicAPI = {
     }
   },
       
-  async getDMAData(dmaId) {
+  // Get DMA data from our backend API
+  async getDMAData(dmaCode) {
     try {
-      console.log(`📺 Fetching DMA data from backend`);
-      
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/dmas`);
-      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/dma/${dmaCode}`);
       if (response.ok) {
-        const data = await response.json();
-        console.log(`✅ Backend DMA data retrieved (Source: ${data.source})`);
-        
-        // Find the specific DMA requested or return the first one
-        const dma = data.regions.find(region => region.id === dmaId) || data.regions[0];
-        return {
-          ...dma,
-          selected: false,
-          type: null
-        };
+        const region = await response.json();
+        console.log(`✅ DMA data retrieved: ${region.name}`);
+        return region;
       } else {
-        console.error(`❌ Backend API error for DMA data: ${response.status}`);
         throw new Error(`Backend API error: ${response.status}`);
       }
-      
     } catch (error) {
       console.error('Error fetching DMA data:', error);
-      return this.getEnhancedMockDMAData(dmaId);
+      return null;
     }
   },
 
