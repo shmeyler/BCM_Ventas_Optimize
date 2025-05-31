@@ -186,6 +186,221 @@ class CensusService:
             logger.error(f"Error fetching Census data for ZIP {zip_code}: {e}")
             return None
 
+class MetaAdsService:
+    """Service for managing Meta (Facebook/Instagram) ad campaigns"""
+    
+    def __init__(self):
+        self.app_id = os.environ.get('META_APP_ID')
+        self.app_secret = os.environ.get('META_APP_SECRET')
+        self.access_token = os.environ.get('META_ACCESS_TOKEN')
+        self.ad_account_id = os.environ.get('META_AD_ACCOUNT_ID')
+        self.business_id = os.environ.get('META_BUSINESS_ID')
+        
+        # Initialize API only if we have required credentials
+        if self.app_id and self.app_secret and self.access_token:
+            try:
+                FacebookAdsApi.init(self.app_id, self.app_secret, self.access_token)
+                self.api = FacebookAdsApi.get_default_api()
+                logger.info("Meta Ads API initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize Meta Ads API: {e}")
+                self.api = None
+        else:
+            logger.warning("Meta Ads API credentials not found - campaigns will be simulated")
+            self.api = None
+    
+    async def validate_credentials(self) -> bool:
+        """Validate Meta API credentials"""
+        if not self.api:
+            return False
+        
+        try:
+            # Test API access by getting ad account info
+            if self.ad_account_id:
+                ad_account = AdAccount(self.ad_account_id)
+                ad_account.api_get(fields=[AdAccount.Field.name, AdAccount.Field.account_status])
+                logger.info("Meta API credentials validated successfully")
+                return True
+        except Exception as e:
+            logger.error(f"Meta API credential validation failed: {e}")
+            return False
+        
+        return False
+    
+    def create_geographic_targeting(self, regions: List[str], region_type: str = "zip") -> Dict:
+        """Create geographic targeting configuration for Meta campaigns"""
+        geo_locations = []
+        
+        for region in regions:
+            if region_type == "zip":
+                # ZIP code targeting
+                geo_locations.append({
+                    'location_types': ['home'],
+                    'zips': [{'key': region, 'name': region}]
+                })
+            elif region_type == "state":
+                # State targeting - need to map state codes to Meta's format
+                state_mapping = {
+                    '06': 'California', '36': 'New York', '48': 'Texas', 
+                    '12': 'Florida', '17': 'Illinois', '42': 'Pennsylvania'
+                    # Add more state mappings as needed
+                }
+                if region in state_mapping:
+                    geo_locations.append({
+                        'location_types': ['home'],
+                        'regions': [{'key': region, 'name': state_mapping[region]}]
+                    })
+            elif region_type == "dma":
+                # DMA targeting
+                geo_locations.append({
+                    'location_types': ['home'],
+                    'dmas': [{'key': region, 'name': f"DMA {region}"}]
+                })
+        
+        return {
+            'geo_locations': geo_locations,
+            'location_types': ['home'],
+            'excluded_geo_locations': []  # Control regions will be added here
+        }
+    
+    async def create_campaign(self, request: MetaAdsCampaignRequest) -> MetaCampaignResponse:
+        """Create a Meta Ads campaign for lift testing"""
+        
+        if not self.api or not self.ad_account_id:
+            # Simulate campaign creation for testing
+            return self._simulate_campaign_creation(request)
+        
+        try:
+            # Create campaign
+            campaign_data = {
+                Campaign.Field.name: request.campaign_name,
+                Campaign.Field.objective: Campaign.Objective.brand_awareness,
+                Campaign.Field.status: Campaign.Status.paused,  # Start paused for review
+                Campaign.Field.daily_budget: int(request.daily_budget * 100),  # Convert to cents
+            }
+            
+            ad_account = AdAccount(self.ad_account_id)
+            campaign = ad_account.create_campaign(params=campaign_data)
+            
+            # Create geographic targeting
+            test_targeting = self.create_geographic_targeting(request.test_regions, "zip")
+            control_targeting = self.create_geographic_targeting(request.control_regions, "zip")
+            
+            # Create ad sets for test and control groups
+            test_adset = await self._create_adset(
+                campaign.get_id(), 
+                f"{request.campaign_name} - Test Group",
+                test_targeting,
+                request.daily_budget / 2
+            )
+            
+            control_adset = await self._create_adset(
+                campaign.get_id(),
+                f"{request.campaign_name} - Control Group", 
+                control_targeting,
+                request.daily_budget / 2
+            )
+            
+            # Store campaign info in database
+            campaign_info = {
+                "test_id": request.test_id,
+                "meta_campaign_id": campaign.get_id(),
+                "test_adset_id": test_adset.get_id() if test_adset else None,
+                "control_adset_id": control_adset.get_id() if control_adset else None,
+                "status": "created",
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            await db.meta_campaigns.insert_one(campaign_info)
+            
+            return MetaCampaignResponse(
+                campaign_id=campaign.get_id(),
+                campaign_name=request.campaign_name,
+                status="created",
+                daily_budget=request.daily_budget,
+                targeting_summary={
+                    "test_regions": len(request.test_regions),
+                    "control_regions": len(request.control_regions)
+                },
+                created_time=datetime.utcnow().isoformat()
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating Meta campaign: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to create Meta campaign: {str(e)}")
+    
+    async def _create_adset(self, campaign_id: str, name: str, targeting: Dict, daily_budget: float):
+        """Create an ad set with geographic targeting"""
+        try:
+            adset_data = {
+                AdSet.Field.name: name,
+                AdSet.Field.campaign_id: campaign_id,
+                AdSet.Field.daily_budget: int(daily_budget * 100),  # Convert to cents
+                AdSet.Field.billing_event: AdSet.BillingEvent.impressions,
+                AdSet.Field.optimization_goal: AdSet.OptimizationGoal.impressions,
+                AdSet.Field.targeting: targeting,
+                AdSet.Field.status: AdSet.Status.paused,
+            }
+            
+            campaign = Campaign(campaign_id)
+            adset = campaign.create_ad_set(params=adset_data)
+            return adset
+            
+        except Exception as e:
+            logger.error(f"Error creating ad set: {e}")
+            return None
+    
+    def _simulate_campaign_creation(self, request: MetaAdsCampaignRequest) -> MetaCampaignResponse:
+        """Simulate campaign creation when API is not available"""
+        logger.info(f"Simulating Meta campaign creation for: {request.campaign_name}")
+        
+        # Generate mock campaign ID
+        campaign_id = f"mock_campaign_{int(datetime.utcnow().timestamp())}"
+        
+        return MetaCampaignResponse(
+            campaign_id=campaign_id,
+            campaign_name=request.campaign_name,
+            status="simulated",
+            daily_budget=request.daily_budget,
+            targeting_summary={
+                "test_regions": len(request.test_regions),
+                "control_regions": len(request.control_regions),
+                "note": "Campaign simulated - provide API credentials for real campaigns"
+            },
+            created_time=datetime.utcnow().isoformat()
+        )
+    
+    async def get_campaign_performance(self, campaign_id: str) -> Dict[str, Any]:
+        """Get campaign performance metrics"""
+        if not self.api:
+            # Return mock performance data
+            return {
+                "campaign_id": campaign_id,
+                "impressions": 125000,
+                "reach": 85000,
+                "clicks": 3200,
+                "spend": 2450.50,
+                "cpm": 19.60,
+                "ctr": 2.56,
+                "status": "simulated",
+                "note": "Mock data - provide API credentials for real metrics"
+            }
+        
+        try:
+            campaign = Campaign(campaign_id)
+            insights = campaign.get_insights(fields=[
+                'impressions', 'reach', 'clicks', 'spend', 'cpm', 'ctr'
+            ])
+            
+            if insights:
+                return dict(insights[0])
+            else:
+                return {"error": "No performance data available"}
+                
+        except Exception as e:
+            logger.error(f"Error getting campaign performance: {e}")
+            return {"error": str(e)}
+
 def transform_census_to_demographics(zip_code: str, census_data: Dict[str, Any]) -> GeographicRegion:
     """Transform Census Bureau API response to our standard format"""
     try:
