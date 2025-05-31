@@ -405,6 +405,48 @@ def load_dma_data():
     
     return dma_data
 
+@app.get("/api/geographic/dma/{dma_code}")
+async def get_dma_data(dma_code: str):
+    """Get demographic data for a specific DMA"""
+    try:
+        # Load DMA data to find the name
+        dma_data = load_dma_data()
+        dma_info = next((dma for dma in dma_data if dma['id'] == dma_code), None)
+        
+        if not dma_info:
+            raise HTTPException(status_code=404, detail=f"DMA {dma_code} not found")
+        
+        # For now, return mock demographic data for DMAs
+        # In a real implementation, this would come from Nielsen or other data sources
+        demographics = Demographics(
+            population=int(dma_code) * 1000 + 50000,  # Mock based on DMA code
+            medianAge=35.0 + (int(dma_code) % 20),
+            medianHouseholdIncome=45000 + (int(dma_code) * 100),
+            medianPropertyValue=250000 + (int(dma_code) * 1000),
+            medianRent=1200 + (int(dma_code) % 800),
+            ownerOccupied=int((int(dma_code) * 1000 + 50000) * 0.65),
+            renterOccupied=int((int(dma_code) * 1000 + 50000) * 0.35),
+            bachelorsDegreeOrHigher=25.0 + (int(dma_code) % 30),
+            unemploymentRate=3.5 + (int(dma_code) % 10),
+            laborForce=int((int(dma_code) * 1000 + 50000) * 0.6)
+        )
+        
+        region = GeographicRegion(
+            id=dma_code,
+            name=f"{dma_info['name']} (DMA {dma_code})",
+            source="NIELSEN_DMA_MOCK",
+            demographics=demographics,
+            lastUpdated=datetime.utcnow().isoformat()
+        )
+        
+        return region
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing DMA {dma_code}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/geographic/dmas")
 async def get_dmas():
     """Get list of Designated Market Areas (DMAs) from Nielsen data"""
