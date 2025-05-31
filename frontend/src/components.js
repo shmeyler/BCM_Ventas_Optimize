@@ -235,7 +235,7 @@ const GeographicAPI = {
     try {
       console.log(`📍 Fetching data for ZIP code: ${zipCode} from backend`);
       
-      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL}/api/geographic/zip/${zipCode}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/zip/${zipCode}`);
       
       if (response.ok) {
         const data = await response.json();
