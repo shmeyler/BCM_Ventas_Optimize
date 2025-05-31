@@ -894,6 +894,48 @@ async def get_test_recommendations(test_id: str):
         logger.error(f"Error getting recommendations for {test_id}: {e}")
         raise HTTPException(status_code=500, detail="Error getting recommendations")
 
+@app.delete("/api/lift-test/{test_id}")
+async def delete_lift_test(test_id: str):
+    """Delete a lift test"""
+    try:
+        result = await db.lift_tests.delete_one({"id": test_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Lift test not found")
+        
+        logger.info(f"Deleted lift test: {test_id}")
+        return {"message": f"Lift test {test_id} deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting lift test {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting lift test")
+
+@app.put("/api/lift-test/{test_id}/status")
+async def update_test_status(test_id: str, status: str):
+    """Update lift test status"""
+    try:
+        valid_statuses = ["draft", "active", "completed", "cancelled"]
+        if status not in valid_statuses:
+            raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+        
+        result = await db.lift_tests.update_one(
+            {"id": test_id},
+            {"$set": {"status": status}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Lift test not found or status unchanged")
+        
+        return {"message": f"Test status updated to {status}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating test status {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error updating test status")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
