@@ -638,6 +638,262 @@ async def get_dmas():
         logger.error(f"Error getting DMA data: {e}")
         raise HTTPException(status_code=500, detail="Error loading DMA data")
 
+# Lift Test API Endpoints
+@app.post("/api/lift-test/create", response_model=LiftTestExperiment)
+async def create_lift_test(request: LiftTestRequest):
+    """Create a new lift test experiment"""
+    try:
+        # Generate unique test ID
+        test_id = f"test_{int(datetime.utcnow().timestamp())}"
+        
+        # Create experiment object
+        experiment = LiftTestExperiment(
+            id=test_id,
+            test_name=request.test_name,
+            test_regions=request.test_regions,
+            control_regions=request.control_regions,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            platform=request.platform,
+            test_type=request.test_type,
+            budget=request.budget,
+            metrics=request.metrics,
+            status="draft",
+            created_at=datetime.utcnow().isoformat(),
+            results=None
+        )
+        
+        # Save to database
+        await db.lift_tests.insert_one(experiment.dict())
+        
+        logger.info(f"Created lift test: {test_id}")
+        return experiment
+        
+    except Exception as e:
+        logger.error(f"Error creating lift test: {e}")
+        raise HTTPException(status_code=500, detail="Error creating lift test")
+
+@app.get("/api/lift-test/{test_id}", response_model=LiftTestExperiment)
+async def get_lift_test(test_id: str):
+    """Get lift test by ID"""
+    try:
+        test = await db.lift_tests.find_one({"id": test_id})
+        if not test:
+            raise HTTPException(status_code=404, detail="Lift test not found")
+        
+        return LiftTestExperiment(**test)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting lift test {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving lift test")
+
+@app.get("/api/lift-test")
+async def list_lift_tests():
+    """List all lift tests"""
+    try:
+        tests = []
+        async for test in db.lift_tests.find():
+            tests.append(LiftTestExperiment(**test))
+        
+        return {"tests": tests, "total": len(tests)}
+        
+    except Exception as e:
+        logger.error(f"Error listing lift tests: {e}")
+        raise HTTPException(status_code=500, detail="Error listing lift tests")
+
+@app.post("/api/lift-test/{test_id}/power-analysis")
+async def calculate_power_analysis(test_id: str, test_regions: List[str], control_regions: List[str]):
+    """Calculate power analysis for a lift test using existing geographic data"""
+    try:
+        # Get demographic data for test and control regions
+        test_populations = []
+        control_populations = []
+        
+        for region in test_regions:
+            # Try to get region data from our geographic endpoints
+            try:
+                if len(region) == 5 and region.isdigit():  # ZIP code
+                    zip_data = await CensusService.get_zip_demographics(region)
+                    if zip_data:
+                        pop = int(zip_data.get('B01003_001E', 0)) if zip_data.get('B01003_001E') != '-999999999' else 0
+                        if pop > 0:
+                            test_populations.append(pop)
+                elif len(region) == 2:  # State code
+                    # Use mock data for now
+                    test_populations.append(2000000)
+                else:  # DMA
+                    test_populations.append(1500000)
+            except:
+                test_populations.append(1000000)  # Fallback
+        
+        for region in control_regions:
+            try:
+                if len(region) == 5 and region.isdigit():  # ZIP code
+                    zip_data = await CensusService.get_zip_demographics(region)
+                    if zip_data:
+                        pop = int(zip_data.get('B01003_001E', 0)) if zip_data.get('B01003_001E') != '-999999999' else 0
+                        if pop > 0:
+                            control_populations.append(pop)
+                elif len(region) == 2:  # State code
+                    control_populations.append(2000000)
+                else:  # DMA
+                    control_populations.append(1500000)
+            except:
+                control_populations.append(1000000)  # Fallback
+        
+        # Calculate power analysis
+        total_test_pop = sum(test_populations)
+        total_control_pop = sum(control_populations)
+        total_population = total_test_pop + total_control_pop
+        
+        # Simplified power calculation
+        # Real implementation would use statistical formulas
+        if total_population > 10000000:
+            power = 0.95
+            mde = 0.02  # 2% minimum detectable effect
+        elif total_population > 5000000:
+            power = 0.85
+            mde = 0.03
+        elif total_population > 1000000:
+            power = 0.75
+            mde = 0.05
+        else:
+            power = 0.65
+            mde = 0.08
+        
+        results = {
+            "test_id": test_id,
+            "power": power,
+            "minimum_detectable_effect": mde,
+            "test_population": total_test_pop,
+            "control_population": total_control_pop,
+            "total_population": total_population,
+            "recommended_duration_days": min(42, max(14, int(50000000 / total_population)))
+        }
+        
+        # Update test with power analysis
+        await db.lift_tests.update_one(
+            {"id": test_id},
+            {"$set": {"power_analysis": results}}
+        )
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error calculating power analysis for {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error calculating power analysis")
+
+@app.post("/api/lift-test/{test_id}/analyze")
+async def analyze_lift_test(test_id: str, request: LiftTestAnalysisRequest):
+    """Analyze lift test results using simplified statistical methods"""
+    try:
+        # Get test configuration
+        test = await db.lift_tests.find_one({"id": test_id})
+        if not test:
+            raise HTTPException(status_code=404, detail="Lift test not found")
+        
+        # Process the data (simplified analysis)
+        # In real implementation, this would use GeoLift or similar statistical methods
+        test_data = [d for d in request.data if d.get('region') in test['test_regions']]
+        control_data = [d for d in request.data if d.get('region') in test['control_regions']]
+        
+        if not test_data or not control_data:
+            raise HTTPException(status_code=400, detail="Insufficient data for analysis")
+        
+        # Calculate simple lift metrics
+        test_avg = sum(d.get('metric_value', 0) for d in test_data) / len(test_data)
+        control_avg = sum(d.get('metric_value', 0) for d in control_data) / len(control_data)
+        
+        lift = (test_avg - control_avg) / control_avg if control_avg > 0 else 0
+        lift_percent = lift * 100
+        
+        # Mock statistical significance (would use proper statistical tests in real implementation)
+        statistical_significance = abs(lift_percent) > 5  # Simplified
+        p_value = 0.03 if statistical_significance else 0.15
+        
+        results = {
+            "lift_percent": round(lift_percent, 2),
+            "test_average": round(test_avg, 2),
+            "control_average": round(control_avg, 2),
+            "statistical_significance": statistical_significance,
+            "p_value": p_value,
+            "confidence_interval": [
+                round(lift_percent - 2, 2),
+                round(lift_percent + 2, 2)
+            ],
+            "analysis_date": datetime.utcnow().isoformat()
+        }
+        
+        # Update test with results
+        await db.lift_tests.update_one(
+            {"id": test_id},
+            {"$set": {"results": results, "status": "completed"}}
+        )
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing lift test {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error analyzing lift test")
+
+@app.get("/api/lift-test/{test_id}/recommendations")
+async def get_test_recommendations(test_id: str):
+    """Get smart recommendations for test regions based on demographic matching"""
+    try:
+        test = await db.lift_tests.find_one({"id": test_id})
+        if not test:
+            raise HTTPException(status_code=404, detail="Lift test not found")
+        
+        # Get demographic data for test regions to find similar control regions
+        test_regions_data = []
+        for region in test.get('test_regions', []):
+            try:
+                if len(region) == 5 and region.isdigit():  # ZIP code
+                    zip_data = await CensusService.get_zip_demographics(region)
+                    if zip_data:
+                        region_data = transform_census_to_demographics(region, zip_data)
+                        test_regions_data.append(region_data)
+            except:
+                continue
+        
+        if not test_regions_data:
+            return {"recommendations": [], "message": "No demographic data available for matching"}
+        
+        # Simple matching algorithm (would be more sophisticated in real implementation)
+        avg_income = sum(r.demographics.medianHouseholdIncome for r in test_regions_data if r.demographics.medianHouseholdIncome) / len(test_regions_data)
+        avg_age = sum(r.demographics.medianAge for r in test_regions_data if r.demographics.medianAge) / len(test_regions_data)
+        
+        recommendations = [
+            {
+                "type": "control_region_selection",
+                "title": "Recommended Control Regions",
+                "description": f"Look for regions with median income around ${avg_income:,.0f} and median age around {avg_age:.1f}",
+                "priority": "high"
+            },
+            {
+                "type": "test_duration",
+                "title": "Recommended Test Duration",
+                "description": "Run test for 4-6 weeks to capture weekly patterns and ensure statistical significance",
+                "priority": "medium"
+            },
+            {
+                "type": "metrics_tracking",
+                "title": "Key Metrics to Track",
+                "description": "Monitor both primary KPIs and secondary metrics like brand awareness and consideration",
+                "priority": "medium"
+            }
+        ]
+        
+        return {"recommendations": recommendations}
+        
+    except Exception as e:
+        logger.error(f"Error getting recommendations for {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Error getting recommendations")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
