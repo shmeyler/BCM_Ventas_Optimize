@@ -1339,10 +1339,396 @@ const LiftTestAPI = {
 };
 
 // Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
+// Detailed Lift Test View Modal
+const LiftTestDetailModal = ({ isOpen, onClose, testId }) => {
+  const [testDetails, setTestDetails] = useState(null);
+  const [powerAnalysis, setPowerAnalysis] = useState(null);
+  const [recommendations, setRecommendations] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [testRegionDetails, setTestRegionDetails] = useState([]);
+  const [controlRegionDetails, setControlRegionDetails] = useState([]);
+
+  useEffect(() => {
+    if (isOpen && testId) {
+      loadTestDetails();
+    }
+  }, [isOpen, testId]);
+
+  const loadTestDetails = async () => {
+    setLoading(true);
+    try {
+      // Get test details
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/${testId}`);
+      if (response.ok) {
+        const test = await response.json();
+        setTestDetails(test);
+
+        // Load region details
+        await loadRegionDetails(test.test_regions, test.control_regions);
+
+        // Get power analysis
+        const power = await LiftTestAPI.calculatePowerAnalysis(testId, test.test_regions, test.control_regions);
+        setPowerAnalysis(power);
+
+        // Get recommendations
+        const recs = await LiftTestAPI.getRecommendations(testId);
+        setRecommendations(recs);
+      }
+    } catch (error) {
+      console.error('Error loading test details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRegionDetails = async (testRegions, controlRegions) => {
+    try {
+      const testDetails = [];
+      const controlDetails = [];
+
+      // Load test region details
+      for (const regionId of testRegions) {
+        try {
+          if (regionId.length === 5 && regionId.match(/^\d+$/)) {
+            // ZIP code
+            const regionData = await GeographicAPI.getZipCodeData(regionId);
+            if (regionData) testDetails.push(regionData);
+          } else if (regionId.length === 2 || regionId.match(/^\d{1,2}$/)) {
+            // State
+            const regionData = await GeographicAPI.getStateData(regionId);
+            if (regionData) testDetails.push(regionData);
+          } else {
+            // DMA
+            const regionData = await GeographicAPI.getDMAData(regionId);
+            if (regionData) testDetails.push(regionData);
+          }
+        } catch (error) {
+          console.warn(`Failed to load region ${regionId}:`, error);
+        }
+      }
+
+      // Load control region details
+      for (const regionId of controlRegions) {
+        try {
+          if (regionId.length === 5 && regionId.match(/^\d+$/)) {
+            const regionData = await GeographicAPI.getZipCodeData(regionId);
+            if (regionData) controlDetails.push(regionData);
+          } else if (regionId.length === 2 || regionId.match(/^\d{1,2}$/)) {
+            const regionData = await GeographicAPI.getStateData(regionId);
+            if (regionData) controlDetails.push(regionData);
+          } else {
+            const regionData = await GeographicAPI.getDMAData(regionId);
+            if (regionData) controlDetails.push(regionData);
+          }
+        } catch (error) {
+          console.warn(`Failed to load region ${regionId}:`, error);
+        }
+      }
+
+      setTestRegionDetails(testDetails);
+      setControlRegionDetails(controlDetails);
+    } catch (error) {
+      console.error('Error loading region details:', error);
+    }
+  };
+
+  const getPlatformInfo = (platform) => {
+    switch (platform) {
+      case 'meta':
+        return { name: 'Meta (Facebook/Instagram)', icon: '📘', color: 'bg-blue-100 text-blue-800' };
+      case 'google':
+        return { name: 'Google Ads', icon: '🔍', color: 'bg-green-100 text-green-800' };
+      case 'pinterest':
+        return { name: 'Pinterest Ads', icon: '📌', color: 'bg-red-100 text-red-800' };
+      case 'tiktok':
+        return { name: 'TikTok Ads', icon: '🎵', color: 'bg-gray-100 text-gray-800' };
+      default:
+        return { name: platform, icon: '📊', color: 'bg-gray-100 text-gray-800' };
+    }
+  };
+
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case 'draft':
+        return { color: 'bg-gray-100 text-gray-800', description: 'Test is being configured' };
+      case 'active':
+        return { color: 'bg-green-100 text-green-800', description: 'Test is currently running' };
+      case 'completed':
+        return { color: 'bg-blue-100 text-blue-800', description: 'Test has finished running' };
+      case 'cancelled':
+        return { color: 'bg-red-100 text-red-800', description: 'Test was cancelled' };
+      default:
+        return { color: 'bg-gray-100 text-gray-800', description: 'Unknown status' };
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              {testDetails?.test_name || 'Loading...'}
+            </h2>
+            {testDetails && (
+              <div className="flex items-center space-x-4 mt-2">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPlatformInfo(testDetails.platform).color}`}>
+                  {getPlatformInfo(testDetails.platform).icon} {getPlatformInfo(testDetails.platform).name}
+                </span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusInfo(testDetails.status).color}`}>
+                  {testDetails.status.toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bcm-orange mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading test details...</p>
+          </div>
+        ) : testDetails ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Test Configuration */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Information */}
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Test Configuration</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Test Type</label>
+                    <p className="text-gray-900 capitalize">{testDetails.test_type.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Budget</label>
+                    <p className="text-gray-900">{testDetails.budget ? `$${testDetails.budget.toLocaleString()}` : 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Start Date</label>
+                    <p className="text-gray-900">{testDetails.start_date ? new Date(testDetails.start_date).toLocaleDateString() : 'Not set'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">End Date</label>
+                    <p className="text-gray-900">{testDetails.end_date ? new Date(testDetails.end_date).toLocaleDateString() : 'Not set'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-500">Metrics</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {testDetails.metrics.map((metric) => (
+                        <span key={metric} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                          {metric}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Regions */}
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
+                  Test Regions ({testDetails.test_regions.length})
+                </h3>
+                <div className="space-y-3">
+                  {testRegionDetails.map((region) => (
+                    <div key={region.id} className="flex justify-between items-center bg-white p-3 rounded">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{region.name}</h4>
+                        <p className="text-sm text-gray-600">Population: {region.demographics?.population?.toLocaleString() || 'N/A'}</p>
+                      </div>
+                      <div className="text-right text-sm text-gray-600">
+                        <p>Median Income: ${region.demographics?.medianHouseholdIncome?.toLocaleString() || 'N/A'}</p>
+                        <p>Median Age: {region.demographics?.medianAge || 'N/A'}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {testDetails.test_regions.filter(id => !testRegionDetails.find(r => r.id === id)).map((regionId) => (
+                    <div key={regionId} className="flex justify-between items-center bg-white p-3 rounded">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{regionId}</h4>
+                        <p className="text-sm text-gray-600">Loading details...</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Control Regions */}
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Control Regions ({testDetails.control_regions.length})
+                </h3>
+                <div className="space-y-3">
+                  {controlRegionDetails.map((region) => (
+                    <div key={region.id} className="flex justify-between items-center bg-white p-3 rounded">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{region.name}</h4>
+                        <p className="text-sm text-gray-600">Population: {region.demographics?.population?.toLocaleString() || 'N/A'}</p>
+                      </div>
+                      <div className="text-right text-sm text-gray-600">
+                        <p>Median Income: ${region.demographics?.medianHouseholdIncome?.toLocaleString() || 'N/A'}</p>
+                        <p>Median Age: {region.demographics?.medianAge || 'N/A'}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {testDetails.control_regions.filter(id => !controlRegionDetails.find(r => r.id === id)).map((regionId) => (
+                    <div key={regionId} className="flex justify-between items-center bg-white p-3 rounded">
+                      <div>
+                        <h4 className="font-medium text-gray-900">{regionId}</h4>
+                        <p className="text-sm text-gray-600">Loading details...</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Results Section */}
+              {testDetails.results && (
+                <div className="bg-green-50 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-green-900 mb-4">Test Results</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-900">{testDetails.results.lift_percent}%</div>
+                      <div className="text-sm text-green-700">Measured Lift</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-900">{testDetails.results.p_value}</div>
+                      <div className="text-sm text-green-700">P-Value</div>
+                    </div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${testDetails.results.statistical_significance ? 'text-green-900' : 'text-red-600'}`}>
+                        {testDetails.results.statistical_significance ? 'Significant' : 'Not Significant'}
+                      </div>
+                      <div className="text-sm text-green-700">Statistical Result</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-sm text-green-800">
+                    <p><strong>Confidence Interval:</strong> [{testDetails.results.confidence_interval[0]}%, {testDetails.results.confidence_interval[1]}%]</p>
+                    <p><strong>Analysis Date:</strong> {new Date(testDetails.results.analysis_date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Analytics & Actions */}
+            <div className="space-y-6">
+              {/* Power Analysis */}
+              {powerAnalysis && (
+                <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Power Analysis</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Statistical Power:</span>
+                      <span className="font-medium">{(powerAnalysis.power * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Min Detectable Effect:</span>
+                      <span className="font-medium">{(powerAnalysis.minimum_detectable_effect * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Total Population:</span>
+                      <span className="font-medium">{powerAnalysis.total_population?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Recommended Duration:</span>
+                      <span className="font-medium">{powerAnalysis.recommended_duration_days} days</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {recommendations && recommendations.recommendations && (
+                <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-4">Recommendations</h3>
+                  <div className="space-y-3">
+                    {recommendations.recommendations.map((rec, index) => (
+                      <div key={index} className="border-l-4 border-yellow-400 pl-3">
+                        <h4 className="font-medium text-yellow-900 text-sm">{rec.title}</h4>
+                        <p className="text-yellow-800 text-xs mt-1">{rec.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Test Metadata */}
+              <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Test Information</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Test ID:</span>
+                    <span className="font-mono text-xs">{testDetails.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Created:</span>
+                    <span>{new Date(testDetails.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Status:</span>
+                    <span className="capitalize">{testDetails.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+                <div className="space-y-3">
+                  {testDetails.status === 'draft' && (
+                    <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                      Launch Test Campaign
+                    </button>
+                  )}
+                  {testDetails.status === 'active' && (
+                    <button className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                      Stop Test
+                    </button>
+                  )}
+                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                    Export Test Data
+                  </button>
+                  <button className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm">
+                    Duplicate Test
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            Failed to load test details
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex justify-end mt-8 pt-6 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Lift Tests List Component
 const LiftTestsList = () => {
   const [liftTests, setLiftTests] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState(null);
 
   useEffect(() => {
     loadLiftTests();
