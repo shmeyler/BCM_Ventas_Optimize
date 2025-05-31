@@ -1258,13 +1258,51 @@ async def get_meta_ad_accounts():
                 "note": "Provide complete credentials to access ad accounts"
             }
         
-        # This would typically fetch user's ad accounts
-        # For now, return placeholder info
-        return {
-            "accounts": [],
-            "message": "Provide Business Manager ID and Ad Account ID to access specific accounts",
-            "status": "needs_account_info"
-        }
+        # Try to fetch ad accounts from Business Manager
+        if meta_ads_service.business_id:
+            try:
+                from facebook_business.adobjects.business import Business
+                
+                business = Business(meta_ads_service.business_id)
+                ad_accounts = business.get_ad_accounts(fields=[
+                    AdAccount.Field.account_id,
+                    AdAccount.Field.name,
+                    AdAccount.Field.account_status,
+                    AdAccount.Field.currency,
+                    AdAccount.Field.timezone_name
+                ])
+                
+                accounts_list = []
+                for account in ad_accounts:
+                    accounts_list.append({
+                        "id": account.get(AdAccount.Field.account_id),
+                        "name": account.get(AdAccount.Field.name),
+                        "status": account.get(AdAccount.Field.account_status),
+                        "currency": account.get(AdAccount.Field.currency),
+                        "timezone": account.get(AdAccount.Field.timezone_name)
+                    })
+                
+                return {
+                    "accounts": accounts_list,
+                    "business_id": meta_ads_service.business_id,
+                    "message": f"Found {len(accounts_list)} ad accounts",
+                    "status": "success"
+                }
+                
+            except Exception as e:
+                logger.error(f"Error fetching ad accounts from Business Manager: {e}")
+                return {
+                    "error": f"Failed to fetch ad accounts: {str(e)}",
+                    "accounts": [],
+                    "business_id": meta_ads_service.business_id,
+                    "note": "Check Business Manager permissions and account access"
+                }
+        else:
+            return {
+                "accounts": [],
+                "message": "Business Manager ID needed to fetch ad accounts",
+                "status": "needs_business_id"
+            }
         
     except Exception as e:
         logger.error(f"Error getting ad accounts: {e}")
