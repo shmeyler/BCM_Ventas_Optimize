@@ -1723,13 +1723,29 @@ const LiftTestDetailModal = ({ isOpen, onClose, testId }) => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
                 <div className="space-y-3">
                   {testDetails.status === 'draft' && (
-                    <button className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                    <button 
+                      onClick={async () => {
+                        const success = await LiftTestAPI.updateTestStatus(testId, 'active');
+                        if (success) {
+                          setTestDetails({...testDetails, status: 'active'});
+                        }
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
+                    >
                       Launch Test Campaign
                     </button>
                   )}
                   {testDetails.status === 'active' && (
-                    <button className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
-                      Stop Test
+                    <button 
+                      onClick={async () => {
+                        const success = await LiftTestAPI.updateTestStatus(testId, 'completed');
+                        if (success) {
+                          setTestDetails({...testDetails, status: 'completed'});
+                        }
+                      }}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+                    >
+                      Complete Test
                     </button>
                   )}
                   <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
@@ -1737,6 +1753,22 @@ const LiftTestDetailModal = ({ isOpen, onClose, testId }) => {
                   </button>
                   <button className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm">
                     Duplicate Test
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (window.confirm('Are you sure you want to delete this test? This action cannot be undone.')) {
+                        const success = await LiftTestAPI.deleteTest(testId);
+                        if (success) {
+                          onClose();
+                          window.location.reload(); // Refresh to update the list
+                        } else {
+                          alert('Failed to delete test. Please try again.');
+                        }
+                      }
+                    }}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm border-t border-red-500 mt-4"
+                  >
+                    🗑️ Delete Test
                   </button>
                 </div>
               </div>
