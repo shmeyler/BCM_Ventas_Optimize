@@ -244,7 +244,7 @@ frontend:
         agent: "testing"
         comment: "Verified that the ZIP code city names are now correct after the fix with the Zippopotam.us API integration. Successfully tested the specific ZIP codes mentioned: 06854 now correctly shows as 'Norwalk, CT (06854)' instead of 'Ridgefield, CT', 06877 correctly shows as 'Ridgefield, CT (06877)', and 94920 correctly shows as 'Belvedere Tiburon, CA (94920)'. For each ZIP code, real demographic data is displayed including population, median income, median age, and property value. The Test Design Recommendations also update with real calculated values when a ZIP code is selected as a test region."
 
-  - task: "Complete Geographic Functionality"
+  - task: "State Search Functionality"
     implemented: true
     working: true
     file: "/app/frontend/src/components.js"
@@ -252,9 +252,15 @@ frontend:
     priority: "high"
     needs_retesting: false
     status_history:
+      - working: false
+        agent: "user"
+        comment: "State search wasn't working when trying to search for 'Maine'."
+      - working: true
+        agent: "main"
+        comment: "Fixed the handleSearch function to properly search for states."
       - working: true
         agent: "testing"
-        comment: "Successfully tested all geographic functionality. The tab switching between ZIP codes, DMAs, and States works properly. ZIP codes tab shows real data for 06854 (Norwalk, CT). DMAs tab successfully displays New York (DMA 501) with demographic data. States tab shows New York with real Census Bureau demographic data. Test Design Recommendations update properly with real calculated values across all region types. There are some console errors related to Census API calls, but they don't affect the core functionality."
+        comment: "Successfully tested the state search functionality. The search for 'Maine' now works correctly, finding and displaying Maine with real Census Bureau demographic data (population: 1,366,949, median income: $68,251, median age: 44.8, unemployment: 4.0%). Also tested searching for other states including 'California', 'Texas', and 'New York', all of which were found successfully with their respective demographic data. When selecting Maine as a test region, the Test Design Recommendations section updates with statistical power calculations. There are some non-critical console errors related to React key warnings, but they don't affect the core functionality."
 
 metadata:
   created_by: "testing_agent"
