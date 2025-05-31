@@ -325,7 +325,7 @@ const GeographicAPI = {
     try {
       console.log(`🏛️ Fetching states data from backend`);
       
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/states`);
+      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL}/api/geographic/states`);
       
       if (response.ok) {
         const data = await response.json();
