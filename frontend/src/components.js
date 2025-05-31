@@ -1722,6 +1722,7 @@ const LiftTestDetailModal = ({ isOpen, onClose, testId }) => {
   const [loading, setLoading] = useState(false);
   const [testRegionDetails, setTestRegionDetails] = useState([]);
   const [controlRegionDetails, setControlRegionDetails] = useState([]);
+  const [showMetaCampaignModal, setShowMetaCampaignModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && testId) {
