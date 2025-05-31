@@ -13,6 +13,15 @@ import json
 import csv
 from pathlib import Path
 
+# Meta Ads API imports
+from facebook_business.api import FacebookAdsApi
+from facebook_business.adobjects.adaccount import AdAccount
+from facebook_business.adobjects.campaign import Campaign
+from facebook_business.adobjects.adset import AdSet
+from facebook_business.adobjects.ad import Ad
+from facebook_business.adobjects.targeting import Targeting
+from facebook_business.adobjects.targetinggeolocation import TargetingGeoLocation
+
 # Load environment variables from .env file
 load_dotenv()
 
