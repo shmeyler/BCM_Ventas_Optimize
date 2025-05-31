@@ -231,6 +231,18 @@ frontend:
       - working: true
         agent: "testing"
         comment: "The CSV upload functionality works as expected. After switching to the ZIP Codes view, the CSV button is visible. Clicking it opens the CSV upload modal with a file input field and cancel button. The modal can be closed properly using the Cancel button."
+        
+  - task: "ZIP Code City Names Accuracy"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Verified that the ZIP code city names are now correct after the fix with the Zippopotam.us API integration. Successfully tested the specific ZIP codes mentioned: 06854 now correctly shows as 'Norwalk, CT (06854)' instead of 'Ridgefield, CT', 06877 correctly shows as 'Ridgefield, CT (06877)', and 94920 correctly shows as 'Belvedere Tiburon, CA (94920)'. For each ZIP code, real demographic data is displayed including population, median income, median age, and property value. The Test Design Recommendations also update with real calculated values when a ZIP code is selected as a test region."
 
 metadata:
   created_by: "testing_agent"
