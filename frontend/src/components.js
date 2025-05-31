@@ -338,58 +338,8 @@ const calculateDemographicBalance = (regions) => {
   return `${Math.round(balanceScore)}%`;
 };
 
-// Lift Test API functions
-const createLiftTest = async (testConfig) => {
-  try {
-    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(testConfig)
-    });
-    
-    if (response.ok) {
-      const liftTest = await response.json();
-      console.log('✅ Lift test created:', liftTest.id);
-      return liftTest;
-    } else {
-      throw new Error(`Failed to create lift test: ${response.status}`);
-    }
-  } catch (error) {
-    console.error('Error creating lift test:', error);
-    return null;
-  }
-};
-
-const getLiftTests = async () => {
-  try {
-    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test`);
-    if (response.ok) {
-      const data = await response.json();
-      setLiftTests(data.tests || []);
-      return data.tests;
-    }
-  } catch (error) {
-    console.error('Error getting lift tests:', error);
-  }
-  return [];
-};
-
-const calculatePowerAnalysis = async (testId, testRegions, controlRegions) => {
-  try {
-    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/${testId}/power-analysis`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test_regions: testRegions, control_regions: controlRegions })
-    });
-    
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.error('Error calculating power analysis:', error);
-  }
-  return null;
-};
+// GeographicAPI object
+const GeographicAPI = {
   // Get ZIP code data from our backend API
   async getZipCodeData(zipCode) {
     try {
