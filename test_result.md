@@ -167,15 +167,18 @@ backend:
   
   - task: "Geographic ZIP Code Endpoint"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "The GET /api/geographic/zip/{zip_code} endpoint is implemented but not working correctly. The endpoint is trying to fetch data from DataUSA.io API, but the API is not returning any data for the ZIP codes tested (10001, 90210). The DataUSA.io API appears to be having issues or the API endpoint format may have changed."
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/geographic/zip/{zip_code} endpoint is now working correctly with the Census Bureau API integration. Successfully tested with ZIP codes 06877 (Ridgefield, CT), 94920 (Tiburon, CA), and 10001 (New York, NY). All ZIP codes return real demographic data from the Census Bureau API with the correct source 'US_CENSUS_BUREAU'. The 06877 ZIP code correctly shows Connecticut, not Massachusetts. The endpoint also handles invalid ZIP code formats and non-existent ZIP codes correctly."
   
   - task: "Geographic Multiple ZIP Codes Endpoint"
     implemented: true
