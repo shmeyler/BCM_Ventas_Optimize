@@ -269,6 +269,7 @@ test_plan:
     - "CSV Upload Functionality"
     - "Geographic States Endpoint"
     - "Geographic DMAs Endpoint"
+    - "Complete Geographic Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
