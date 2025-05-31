@@ -1859,7 +1859,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                     <div className="flex justify-between">
                       <span>Demographic Balance Score:</span>
                       <span className={`font-medium ${regions.length > 0 ? 'text-blue-600' : 'text-gray-500'}`}>
-                        {regions.length > 0 ? calculateDemographicBalance(regions) : 'N/A'}
+                        {calculateDemographicBalance(regions)}
                       </span>
                     </div>
                   </div>
