@@ -1339,6 +1339,255 @@ const LiftTestAPI = {
 };
 
 // Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
+// Lift Test Configuration Modal
+const LiftTestConfigModal = ({ isOpen, onClose, selectedRegions, onCreateTest }) => {
+  const [testConfig, setTestConfig] = useState({
+    test_name: '',
+    platform: 'meta',
+    test_type: 'conversion_lift',
+    budget: '',
+    start_date: '',
+    end_date: '',
+    metrics: ['impressions', 'clicks', 'conversions']
+  });
+  const [testRegions, setTestRegions] = useState([]);
+  const [controlRegions, setControlRegions] = useState([]);
+  const [powerAnalysis, setPowerAnalysis] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && selectedRegions.length > 0) {
+      // Auto-assign first half to test, second half to control
+      const midpoint = Math.ceil(selectedRegions.length / 2);
+      setTestRegions(selectedRegions.slice(0, midpoint).map(r => r.id));
+      setControlRegions(selectedRegions.slice(midpoint).map(r => r.id));
+    }
+  }, [isOpen, selectedRegions]);
+
+  const handleCreateTest = async () => {
+    if (!testConfig.test_name || testRegions.length === 0 || controlRegions.length === 0) {
+      alert('Please fill in all required fields and assign regions');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const liftTest = await LiftTestAPI.createLiftTest({
+        test_name: testConfig.test_name,
+        test_regions: testRegions,
+        control_regions: controlRegions,
+        start_date: testConfig.start_date,
+        end_date: testConfig.end_date,
+        platform: testConfig.platform,
+        test_type: testConfig.test_type,
+        budget: parseFloat(testConfig.budget) || null,
+        metrics: testConfig.metrics
+      });
+
+      if (liftTest) {
+        // Calculate power analysis
+        const power = await LiftTestAPI.calculatePowerAnalysis(liftTest.id, testRegions, controlRegions);
+        setPowerAnalysis(power);
+        onCreateTest(liftTest);
+        alert('Lift test created successfully!');
+        onClose();
+      } else {
+        alert('Failed to create lift test');
+      }
+    } catch (error) {
+      console.error('Error creating lift test:', error);
+      alert('Error creating lift test');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-900">Configure Lift Test</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column - Test Configuration */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Test Name *
+              </label>
+              <input
+                type="text"
+                value={testConfig.test_name}
+                onChange={(e) => setTestConfig({...testConfig, test_name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bcm-orange"
+                placeholder="Q2 2025 Brand Lift Test"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Platform *
+              </label>
+              <select
+                value={testConfig.platform}
+                onChange={(e) => setTestConfig({...testConfig, platform: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bcm-orange"
+              >
+                <option value="meta">Meta (Facebook/Instagram)</option>
+                <option value="google">Google Ads</option>
+                <option value="pinterest">Pinterest</option>
+                <option value="tiktok">TikTok</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Test Type *
+              </label>
+              <select
+                value={testConfig.test_type}
+                onChange={(e) => setTestConfig({...testConfig, test_type: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bcm-orange"
+              >
+                <option value="brand_lift">Brand Lift</option>
+                <option value="conversion_lift">Conversion Lift</option>
+                <option value="sales_lift">Sales Lift</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={testConfig.start_date}
+                  onChange={(e) => setTestConfig({...testConfig, start_date: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bcm-orange"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={testConfig.end_date}
+                  onChange={(e) => setTestConfig({...testConfig, end_date: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bcm-orange"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Budget (Optional)
+              </label>
+              <input
+                type="number"
+                value={testConfig.budget}
+                onChange={(e) => setTestConfig({...testConfig, budget: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bcm-orange"
+                placeholder="50000"
+              />
+            </div>
+          </div>
+
+          {/* Right Column - Region Assignment */}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Region Assignment</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Test Regions ({testRegions.length})</h4>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {testRegions.map(regionId => {
+                      const region = selectedRegions.find(r => r.id === regionId);
+                      return (
+                        <div key={regionId} className="text-sm text-blue-800">
+                          {region?.name || regionId}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Control Regions ({controlRegions.length})</h4>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {controlRegions.map(regionId => {
+                      const region = selectedRegions.find(r => r.id === regionId);
+                      return (
+                        <div key={regionId} className="text-sm text-gray-800">
+                          {region?.name || regionId}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {powerAnalysis && (
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h4 className="font-medium text-green-900 mb-2">Power Analysis</h4>
+                <div className="space-y-1 text-sm text-green-800">
+                  <div>Statistical Power: {(powerAnalysis.power * 100).toFixed(0)}%</div>
+                  <div>Min Detectable Effect: {(powerAnalysis.minimum_detectable_effect * 100).toFixed(1)}%</div>
+                  <div>Total Population: {powerAnalysis.total_population?.toLocaleString()}</div>
+                  <div>Recommended Duration: {powerAnalysis.recommended_duration_days} days</div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="font-medium text-yellow-900 mb-2">💡 Recommendations</h4>
+              <ul className="text-sm text-yellow-800 space-y-1">
+                <li>• Ensure control regions match test regions demographically</li>
+                <li>• Run test for at least 4 weeks for statistical significance</li>
+                <li>• Monitor for external factors that could impact results</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+          <div className="text-sm text-gray-600">
+            {selectedRegions.length} regions selected • {testRegions.length} test • {controlRegions.length} control
+          </div>
+          <div className="flex space-x-4">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateTest}
+              disabled={isCreating || !testConfig.test_name}
+              className="px-6 py-2 bg-bcm-orange hover:bg-bcm-orange-dark text-white rounded-lg disabled:opacity-50"
+            >
+              {isCreating ? 'Creating...' : 'Create Lift Test'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [regionType, setRegionType] = useState('state'); // 'state', 'zip', 'dma'
   const [dataSource, setDataSource] = useState('datausa'); // 'census', 'datausa', 'enhanced_mock'
