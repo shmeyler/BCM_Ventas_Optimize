@@ -186,6 +186,9 @@ class CensusService:
             logger.error(f"Error fetching Census data for ZIP {zip_code}: {e}")
             return None
 
+import hmac
+import hashlib
+
 class MetaAdsService:
     """Service for managing Meta (Facebook/Instagram) ad campaigns"""
     
@@ -199,9 +202,20 @@ class MetaAdsService:
         # Initialize API only if we have required credentials
         if self.app_id and self.app_secret and self.access_token:
             try:
+                # Generate app secret proof for enhanced security
+                app_secret_proof = hmac.new(
+                    self.app_secret.encode('utf-8'),
+                    self.access_token.encode('utf-8'),
+                    hashlib.sha256
+                ).hexdigest()
+                
                 FacebookAdsApi.init(self.app_id, self.app_secret, self.access_token)
                 self.api = FacebookAdsApi.get_default_api()
-                logger.info("Meta Ads API initialized successfully")
+                
+                # Set app secret proof for all requests
+                self.api.app_secret_proof = app_secret_proof
+                
+                logger.info("Meta Ads API initialized successfully with app secret proof")
             except Exception as e:
                 logger.error(f"Failed to initialize Meta Ads API: {e}")
                 self.api = None
