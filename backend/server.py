@@ -188,12 +188,25 @@ def transform_census_to_demographics(zip_code: str, census_data: Dict[str, Any])
         raise
 
 def get_zip_location_name(zip_code: str) -> str:
-    """Get city and state name for a ZIP code based on known patterns"""
+    """Get city and state name for a ZIP code using Zippopotam.us API"""
+    try:
+        # Try to get city name from free Zippopotam.us API
+        import requests
+        response = requests.get(f"http://api.zippopotam.us/us/{zip_code}", timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('places') and len(data['places']) > 0:
+                place = data['places'][0]
+                city = place.get('place name', '')
+                state = place.get('state abbreviation', '')
+                if city and state:
+                    return f"{city}, {state}"
     
-    # For now, use state-level mapping until we have accurate city data
-    # TODO: Integrate with a proper ZIP code to city database
+    except Exception as e:
+        logger.warning(f"Failed to get city name for ZIP {zip_code} from Zippopotam.us: {e}")
     
-    # More accurate state mapping based on ZIP code patterns  
+    # Fall back to state-level mapping if API fails
     first_two = zip_code[:2] if len(zip_code) >= 2 else zip_code[0]
     
     if first_two == '06':
