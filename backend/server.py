@@ -1264,7 +1264,7 @@ async def get_meta_ad_accounts():
                 from facebook_business.adobjects.business import Business
                 
                 business = Business(meta_ads_service.business_id)
-                ad_accounts = business.get_ad_accounts(fields=[
+                ad_accounts = business.get_owned_ad_accounts(fields=[
                     AdAccount.Field.account_id,
                     AdAccount.Field.name,
                     AdAccount.Field.account_status,
@@ -1291,12 +1291,44 @@ async def get_meta_ad_accounts():
                 
             except Exception as e:
                 logger.error(f"Error fetching ad accounts from Business Manager: {e}")
-                return {
-                    "error": f"Failed to fetch ad accounts: {str(e)}",
-                    "accounts": [],
-                    "business_id": meta_ads_service.business_id,
-                    "note": "Check Business Manager permissions and account access"
-                }
+                
+                # Try alternative method - get accounts associated with the user
+                try:
+                    from facebook_business.adobjects.user import User
+                    
+                    user = User(fbid='me')
+                    ad_accounts = user.get_ad_accounts(fields=[
+                        AdAccount.Field.account_id,
+                        AdAccount.Field.name,
+                        AdAccount.Field.account_status,
+                        AdAccount.Field.currency
+                    ])
+                    
+                    accounts_list = []
+                    for account in ad_accounts:
+                        accounts_list.append({
+                            "id": account.get(AdAccount.Field.account_id),
+                            "name": account.get(AdAccount.Field.name),
+                            "status": account.get(AdAccount.Field.account_status),
+                            "currency": account.get(AdAccount.Field.currency),
+                            "source": "user_accounts"
+                        })
+                    
+                    return {
+                        "accounts": accounts_list,
+                        "business_id": meta_ads_service.business_id,
+                        "message": f"Found {len(accounts_list)} ad accounts via user method",
+                        "status": "success"
+                    }
+                    
+                except Exception as e2:
+                    logger.error(f"Error with alternative method: {e2}")
+                    return {
+                        "error": f"Failed to fetch ad accounts: {str(e)} | Alternative: {str(e2)}",
+                        "accounts": [],
+                        "business_id": meta_ads_service.business_id,
+                        "note": "Provide specific Ad Account ID to proceed with campaign creation"
+                    }
         else:
             return {
                 "accounts": [],
