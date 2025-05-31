@@ -263,7 +263,7 @@ const GeographicAPI = {
     try {
       console.log(`📍 Fetching data for multiple ZIP codes: ${zipCodes.join(',')} from backend`);
       
-      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL}/api/geographic/zips?zip_codes=${zipCodes.join(',')}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/zips?zip_codes=${zipCodes.join(',')}`);
       
       if (response.ok) {
         const data = await response.json();
