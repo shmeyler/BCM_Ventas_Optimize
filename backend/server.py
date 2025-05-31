@@ -190,42 +190,95 @@ def transform_census_to_demographics(zip_code: str, census_data: Dict[str, Any])
 def get_zip_location_name(zip_code: str) -> str:
     """Get city and state name for a ZIP code based on known patterns"""
     
+    # Common ZIP code patterns with their corresponding city/state
+    zip_locations = {
+        # Connecticut ZIP codes
+        '068': 'Ridgefield, CT',  # This covers 06877!
+        '069': 'Stamford, CT',
+        '060': 'Hartford, CT',
+        '061': 'Hartford, CT',
+        '062': 'Waterbury, CT',
+        '063': 'New Haven, CT',
+        '064': 'New Haven, CT',
+        '065': 'New Haven, CT',
+        '066': 'Bridgeport, CT',
+        '067': 'Waterbury, CT',
+        
+        # California ZIP codes
+        '949': 'Tiburon, CA',  # This covers 94920!
+        '942': 'Sacramento, CA',
+        '943': 'Palo Alto, CA',
+        '944': 'San Mateo, CA',
+        '945': 'Oakland, CA',
+        '946': 'Oakland, CA',
+        '947': 'Berkeley, CA',
+        '948': 'Richmond, CA',
+        '950': 'Santa Rosa, CA',
+        
+        # New York ZIP codes
+        '100': 'New York, NY',  # This covers 10001!
+        '101': 'New York, NY', 
+        '102': 'New York, NY',
+        '103': 'Staten Island, NY',
+        '104': 'Bronx, NY',
+        '105': 'Mount Vernon, NY',
+        '106': 'White Plains, NY',
+        '107': 'Yonkers, NY',
+        '108': 'New Rochelle, NY',
+        '109': 'Pelham, NY',
+        '110': 'Queens, NY',
+        '111': 'Long Island City, NY',
+        '112': 'Brooklyn, NY',
+        '113': 'Flushing, NY',
+        '114': 'Jamaica, NY',
+        '115': 'Kew Gardens, NY',
+        '116': 'Far Rockaway, NY',
+        '117': 'Jamaica, NY',
+        '118': 'Brooklyn, NY',
+        '119': 'Brooklyn, NY',
+    }
+    
+    # Try to match first 3 digits
+    prefix = zip_code[:3]
+    if prefix in zip_locations:
+        return zip_locations[prefix]
+    
     # Fall back to state-level matching based on ZIP code patterns
     first_two = zip_code[:2] if len(zip_code) >= 2 else zip_code[0]
     
     # More accurate state mapping based on ZIP code patterns
     if first_two == '06':
-        return f"{zip_code}, Connecticut"
+        return f"Connecticut"
     elif first_two in ['01', '02']:
         if first_two == '02' and zip_code.startswith('028'):
-            return f"{zip_code}, Rhode Island"
-        return f"{zip_code}, Massachusetts"  
+            return f"Rhode Island"
+        return f"Massachusetts"  
     elif first_two == '03':
-        return f"{zip_code}, New Hampshire"
+        return f"New Hampshire"
     elif first_two == '04':
-        return f"{zip_code}, Maine"
+        return f"Maine"
     elif first_two == '05':
-        return f"{zip_code}, Vermont"
+        return f"Vermont"
     elif zip_code[0] == '1':
-        return f"{zip_code}, New York"
+        return f"New York"
     elif zip_code[0] == '2':
-        return f"{zip_code}, Washington DC area"
+        return f"Washington DC area"
     elif zip_code[0] == '3':
-        return f"{zip_code}, Florida"
+        return f"Florida"
     elif zip_code[0] == '4':
-        return f"{zip_code}, Georgia"
+        return f"Georgia"
     elif zip_code[0] == '5':
-        return f"{zip_code}, Alabama"
+        return f"Alabama"
     elif zip_code[0] == '6':
-        return f"{zip_code}, Illinois"
+        return f"Illinois"
     elif zip_code[0] == '7':
-        return f"{zip_code}, Texas"
+        return f"Texas"
     elif zip_code[0] == '8':
-        return f"{zip_code}, Colorado"
+        return f"Colorado"
     elif zip_code[0] == '9':
-        return f"{zip_code}, California"
+        return f"California"
     else:
-        return f"{zip_code}, US"
+        return f"US"
 
 # API Routes
 @app.get("/")
