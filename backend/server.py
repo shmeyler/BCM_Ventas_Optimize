@@ -83,57 +83,38 @@ class DataUSAService:
     async def get_zip_demographics(cls, zip_code: str) -> Optional[Dict[str, Any]]:
         """Fetch demographic data from DataUSA.io for a ZIP code"""
         try:
-            # Convert ZIP to ZCTA (ZIP Code Tabulation Area)
+            # Convert ZIP to ZCTA format (86000US + 5-digit ZIP)
             zcta = zip_code.zfill(5)
+            zcta_geo = f"86000US{zcta}"
             
-            # Define measures to fetch
-            measures = [
-                'Population',
-                'Median Age',
-                'Median Household Income',
-                'Total Population 25 Years And Over',
-                'Bachelor Degree Or Higher',
-                'Unemployment Rate',
-                'Median Property Value',
-                'Owner Occupied',
-                'Renter Occupied',
-                'Labor Force'
-            ]
+            # Use the current DataUSA.io API format
+            url = f"https://api.datausa.io/api/?geo={zcta_geo}&year=latest"
             
-            # Try different years starting with the most recent available
-            years_to_try = ['2022', '2021', '2020', '2019']
+            logger.info(f"Fetching DataUSA.io data for ZIP {zip_code}: {url}")
             
-            for year in years_to_try:
-                url = f"{cls.BASE_URL}?drilldowns=ZCTA&measures={','.join(measures)}&year={year}&geo={zcta}"
-                
-                logger.info(f"Trying DataUSA.io for ZIP {zip_code} with year {year}: {url}")
-                
-                # Make async request using requests in thread pool
-                loop = asyncio.get_event_loop()
-                response = await loop.run_in_executor(
-                    None, 
-                    lambda: requests.get(url, timeout=10)
-                )
-                
-                if response.status_code != 200:
-                    logger.error(f"DataUSA API error: {response.status_code}")
-                    continue
-                    
-                data = response.json()
-                
-                if data.get('data') and len(data['data']) > 0:
-                    logger.info(f"Successfully got DataUSA data for ZIP {zip_code} using year {year}")
-                    return data['data'][0]
-                else:
-                    logger.warning(f"No DataUSA data found for ZIP {zip_code} in year {year}")
-                    continue
+            # Make async request
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None, 
+                lambda: requests.get(url, timeout=15)
+            )
             
-            # If no data found for any year, log the issue
-            logger.error(f"No DataUSA data found for ZIP {zip_code} in any available year")
-            return None
+            if response.status_code != 200:
+                logger.error(f"DataUSA API error: {response.status_code} - {response.text}")
+                return None
+                
+            data = response.json()
+            logger.info(f"DataUSA.io response for {zip_code}: {len(data) if isinstance(data, list) else 'object'}")
+            
+            # Check if we have valid data
+            if not data or (isinstance(data, dict) and not data.get('data')):
+                logger.warning(f"No data returned from DataUSA.io for ZIP {zip_code}")
+                return None
+                
+            return data
             
         except Exception as e:
-            logger.error(f"Error fetching DataUSA data for ZIP {zip_code}: {e}")
+            logger.error(f"Error fetching DataUSA.io data for ZIP {zip_code}: {e}")
             return None
     
     @classmethod
