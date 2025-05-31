@@ -1,96 +1,86 @@
-from fastapi import FastAPI, APIRouter, HTTPException
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-import uuid
-from datetime import datetime
-import requests
 import asyncio
-from functools import lru_cache
+import requests
+import logging
+from datetime import datetime
+import os
+from motor.motor_asyncio import AsyncIOMotorClient
+import json
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+# Database setup
+MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+client = AsyncIOMotorClient(MONGO_URL)
+db = client.geo_testing_db
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# FastAPI app
+app = FastAPI(title="Geographic Testing API", version="1.0.0")
 
-# Create the main app without a prefix
-app = FastAPI()
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
-
-
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Geographic Data Models
+# Pydantic models
 class Demographics(BaseModel):
-    medianAge: float
-    medianIncome: int
-    populationDensity: int
-    householdSize: float
-    collegeEducated: float
-    unemploymentRate: float
-    whiteCollarJobs: float
-    homeOwnership: float
-    medianHomeValue: int
-    rentBurden: float
-    internetPenetration: float
-    mobileUsage: float
-    socialMediaUsage: float
-    onlineShoppingIndex: float
-    urbanizationLevel: str
-    retailDensity: int
-    competitionIndex: float
-    tvConsumption: float
-    digitalAdReceptivity: float
-    brandLoyalty: float
+    population: Optional[int] = None
+    medianAge: Optional[float] = None
+    medianHouseholdIncome: Optional[int] = None
+    medianPropertyValue: Optional[int] = None
+    medianRent: Optional[int] = None
+    ownerOccupied: Optional[int] = None
+    renterOccupied: Optional[int] = None
+    bachelorsDegreeOrHigher: Optional[float] = None
+    unemploymentRate: Optional[float] = None
+    laborForce: Optional[int] = None
 
 class GeographicRegion(BaseModel):
     id: str
     name: str
     source: str
-    selected: bool = False
-    type: Optional[str] = None
     demographics: Demographics
     lastUpdated: str
 
-class GeographicResponse(BaseModel):
-    regions: List[GeographicRegion]
-    count: int
-    source: str
-
-# DataUSA.io API Integration
-class DataUSAService:
-    BASE_URL = "https://datausa.io/api/data"
+class CensusService:
+    """Service for fetching demographic data from U.S. Census Bureau API"""
     
     @classmethod
     async def get_zip_demographics(cls, zip_code: str) -> Optional[Dict[str, Any]]:
-        """Fetch demographic data from DataUSA.io for a ZIP code"""
+        """Fetch demographic data from Census Bureau API for a ZIP code"""
         try:
-            # Convert ZIP to ZCTA format (86000US + 5-digit ZIP)
+            # Convert ZIP to ZCTA format
             zcta = zip_code.zfill(5)
-            zcta_geo = f"86000US{zcta}"
             
-            # Use the current DataUSA.io API format
-            url = f"https://api.datausa.io/api/?geo={zcta_geo}&year=latest"
+            # Define variables to fetch from American Community Survey 5-year estimates
+            variables = [
+                'B01003_001E',  # Total Population
+                'B25064_001E',  # Median Gross Rent
+                'B19013_001E',  # Median Household Income
+                'B25077_001E',  # Median Property Value
+                'B08303_001E',  # Total Commuters
+                'B15003_022E',  # Bachelor's Degree
+                'B15003_001E',  # Total Education Population
+                'B01002_001E',  # Median Age
+                'B25003_002E',  # Owner Occupied Housing
+                'B25003_003E',  # Renter Occupied Housing
+                'B23025_005E',  # Unemployed
+                'B23025_002E'   # Labor Force
+            ]
             
-            logger.info(f"Fetching DataUSA.io data for ZIP {zip_code}: {url}")
+            # Use Census API for ACS 5-year estimates (most recent available)
+            url = f"https://api.census.gov/data/2022/acs/acs5?get={','.join(variables)}&for=zip%20code%20tabulation%20area:{zcta}"
+            
+            logger.info(f"Fetching Census data for ZIP {zip_code}: {url}")
             
             # Make async request
             loop = asyncio.get_event_loop()
@@ -100,687 +90,292 @@ class DataUSAService:
             )
             
             if response.status_code != 200:
-                logger.error(f"DataUSA API error: {response.status_code} - {response.text}")
+                logger.error(f"Census API error: {response.status_code} - {response.text}")
                 return None
                 
             data = response.json()
-            logger.info(f"DataUSA.io response for {zip_code}: {len(data) if isinstance(data, list) else 'object'}")
+            logger.info(f"Census API response for {zip_code}: {len(data)} rows")
             
-            # Check if we have valid data
-            if not data or (isinstance(data, dict) and not data.get('data')):
-                logger.warning(f"No data returned from DataUSA.io for ZIP {zip_code}")
+            # Check if we have valid data (should have header row + data row)
+            if not data or len(data) < 2:
+                logger.warning(f"No data returned from Census API for ZIP {zip_code}")
                 return None
                 
-            return data
+            # Parse the response - first row is headers, second row is data
+            headers = data[0]
+            values = data[1]
+            
+            # Create a dictionary mapping headers to values
+            result = dict(zip(headers, values))
+            logger.info(f"Successfully parsed Census data for ZIP {zip_code}")
+            
+            return result
             
         except Exception as e:
-            logger.error(f"Error fetching DataUSA.io data for ZIP {zip_code}: {e}")
+            logger.error(f"Error fetching Census data for ZIP {zip_code}: {e}")
             return None
-    
-    @classmethod
-    def transform_datausa_to_demographics(cls, datausa_data: Dict[str, Any], zip_code: str) -> GeographicRegion:
-        """Transform DataUSA.io response to our Demographics model"""
-        population = int(datausa_data.get('Population', 0))
-        labor_force = int(datausa_data.get('Labor Force', 1))
-        owner_occupied = int(datausa_data.get('Owner Occupied', 0))
-        renter_occupied = int(datausa_data.get('Renter Occupied', 0))
-        total_housing = max(owner_occupied + renter_occupied, 1)
-        population_25_plus = int(datausa_data.get('Total Population 25 Years And Over', 1))
-        bachelors_plus = int(datausa_data.get('Bachelor Degree Or Higher', 0))
+
+def transform_census_to_demographics(zip_code: str, census_data: Dict[str, Any]) -> GeographicRegion:
+    """Transform Census Bureau API response to our standard format"""
+    try:
+        # Helper function to safely convert values
+        def safe_int(value):
+            try:
+                return int(value) if value and value != '-999999999' and value != 'null' else None
+            except (ValueError, TypeError):
+                return None
         
-        # Determine urbanization level based on population
-        if population > 50000:
-            urbanization = "URBAN"
-        elif population > 10000:
-            urbanization = "SUBURBAN"
-        else:
-            urbanization = "RURAL"
+        def safe_float(value):
+            try:
+                return float(value) if value and value != '-999999999' and value != 'null' else None
+            except (ValueError, TypeError):
+                return None
+        
+        # Extract demographic data
+        population = safe_int(census_data.get('B01003_001E'))
+        median_age = safe_float(census_data.get('B01002_001E'))
+        median_income = safe_int(census_data.get('B19013_001E'))
+        median_rent = safe_int(census_data.get('B25064_001E'))
+        median_property_value = safe_int(census_data.get('B25077_001E'))
+        owner_occupied = safe_int(census_data.get('B25003_002E'))
+        renter_occupied = safe_int(census_data.get('B25003_003E'))
+        
+        # Calculate education percentage
+        bachelors = safe_int(census_data.get('B15003_022E'))
+        total_education_pop = safe_int(census_data.get('B15003_001E'))
+        bachelors_percent = (bachelors / total_education_pop * 100) if bachelors and total_education_pop else None
+        
+        # Calculate unemployment rate
+        unemployed = safe_int(census_data.get('B23025_005E'))
+        labor_force = safe_int(census_data.get('B23025_002E'))
+        unemployment_rate = (unemployed / labor_force * 100) if unemployed and labor_force else None
+        
+        # Get city name from ZIP code patterns
+        location_name = get_zip_location_name(zip_code)
         
         demographics = Demographics(
-            medianAge=float(datausa_data.get('Median Age', 35.0)),
-            medianIncome=int(datausa_data.get('Median Household Income', 50000)),
-            populationDensity=population,  # Simplified - would need area for true density
-            householdSize=2.5,  # DataUSA doesn't provide this directly
-            collegeEducated=round((bachelors_plus / population_25_plus) * 100, 1) if population_25_plus > 0 else 0,
-            unemploymentRate=float(datausa_data.get('Unemployment Rate', 5.0)),
-            whiteCollarJobs=65.0,  # Would need occupation data - using average
-            homeOwnership=round((owner_occupied / total_housing) * 100, 1) if total_housing > 0 else 0,
-            medianHomeValue=int(datausa_data.get('Median Property Value', 200000)),
-            rentBurden=30.0,  # Would need detailed rent burden data
-            internetPenetration=90.0,  # Not available in DataUSA
-            mobileUsage=88.0,
-            socialMediaUsage=70.0,
-            onlineShoppingIndex=120.0,
-            urbanizationLevel=urbanization,
-            retailDensity=300,
-            competitionIndex=75.0,
-            tvConsumption=4.0,
-            digitalAdReceptivity=78.0,
-            brandLoyalty=50.0
+            population=population,
+            medianAge=median_age,
+            medianHouseholdIncome=median_income,
+            medianPropertyValue=median_property_value,
+            medianRent=median_rent,
+            ownerOccupied=owner_occupied,
+            renterOccupied=renter_occupied,
+            bachelorsDegreeOrHigher=bachelors_percent,
+            unemploymentRate=unemployment_rate,
+            laborForce=labor_force
         )
-        
-        # Get proper city/state name
-        location_name = get_zip_location_name(zip_code)
         
         return GeographicRegion(
             id=zip_code,
             name=f"{location_name} ({zip_code})",
-            source="DATAUSA_IO",
+            source="US_CENSUS_BUREAU",
             demographics=demographics,
             lastUpdated=datetime.utcnow().isoformat()
         )
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-# Geographic API Endpoints
-@api_router.get("/geographic/zip/{zip_code}", response_model=GeographicRegion)
-async def get_zip_demographics(zip_code: str):
-    """Get demographic data for a specific ZIP code from DataUSA.io"""
-    try:
-        # Validate ZIP code format
-        if not zip_code.isdigit() or len(zip_code) not in [4, 5]:
-            raise HTTPException(status_code=400, detail="Invalid ZIP code format")
-        
-        # Get data from DataUSA.io
-        datausa_data = await DataUSAService.get_zip_demographics(zip_code)
-        
-        if datausa_data:
-            # Transform real data to our format
-            region = DataUSAService.transform_datausa_to_demographics(datausa_data, zip_code)
-            logger.info(f"Returning real DataUSA data for ZIP {zip_code}")
-            return region
-        else:
-            # Fallback to realistic mock data when DataUSA.io doesn't have data
-            logger.warning(f"DataUSA.io has no data for ZIP {zip_code}, using fallback data")
-            return create_fallback_zip_data(zip_code)
-        
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error processing ZIP code {zip_code}: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logger.error(f"Error transforming Census data for ZIP {zip_code}: {e}")
+        raise
 
 def get_zip_location_name(zip_code: str) -> str:
     """Get city and state name for a ZIP code based on known patterns"""
     
-    # Common ZIP code patterns with their corresponding city/state
-    zip_locations = {
-        # Connecticut
-        '060': 'Hartford, CT',
-        '061': 'Hartford, CT',
-        '062': 'Waterbury, CT',
-        '063': 'New Haven, CT',
-        '064': 'New Haven, CT',
-        '065': 'New Haven, CT',
-        '066': 'Bridgeport, CT',
-        '067': 'Waterbury, CT',
-        '068': 'Ridgefield, CT',  # This covers 06877!
-        '069': 'Stamford, CT',
-        
-        # Massachusetts
-        '010': 'Springfield, MA',
-        '011': 'Springfield, MA',
-        '012': 'Pittsfield, MA',
-        '013': 'Springfield, MA',
-        '014': 'Fitchburg, MA',
-        '015': 'Worcester, MA',
-        '016': 'Worcester, MA',
-        '017': 'Framingham, MA',
-        '018': 'Woburn, MA',
-        '019': 'Lynn, MA',
-        '020': 'Boston, MA',
-        '021': 'Boston, MA',
-        '022': 'Boston, MA',
-        '023': 'Boston, MA',
-        '024': 'Lowell, MA',
-        '025': 'Cape Cod, MA',
-        '026': 'Hyannis, MA',
-        '027': 'New Bedford, MA',
-        
-        # Rhode Island
-        '028': 'Providence, RI',
-        '029': 'Providence, RI',
-        
-        # New Hampshire
-        '030': 'Manchester, NH',
-        '031': 'Manchester, NH',
-        '032': 'Manchester, NH',
-        '033': 'Concord, NH',
-        '034': 'Keene, NH',
-        '035': 'Littleton, NH',
-        '036': 'Charlestown, NH',
-        '037': 'Claremont, NH',
-        '038': 'Portsmouth, NH',
-        
-        # Maine
-        '039': 'Portsmouth, ME',
-        '040': 'Portland, ME',
-        '041': 'Portland, ME',
-        '042': 'Lewiston, ME',
-        '043': 'Augusta, ME',
-        '044': 'Bangor, ME',
-        '045': 'Bath, ME',
-        '046': 'Machias, ME',
-        '047': 'Houlton, ME',
-        '048': 'Rockland, ME',
-        '049': 'Waterville, ME',
-        
-        # Vermont
-        '050': 'Bellows Falls, VT',
-        '051': 'Bellows Falls, VT',
-        '052': 'Bennington, VT',
-        '053': 'Brattleboro, VT',
-        '054': 'Burlington, VT',
-        '055': 'Montpelier, VT',
-        '056': 'Montpelier, VT',
-        '057': 'Rutland, VT',
-        '058': 'St. Johnsbury, VT',
-        '059': 'White River Junction, VT',
-        '100': 'New York, NY',
-        '101': 'New York, NY', 
-        '102': 'New York, NY',
-        '103': 'Staten Island, NY',
-        '104': 'Bronx, NY',
-        '105': 'Mount Vernon, NY',
-        '106': 'White Plains, NY',
-        '107': 'Yonkers, NY',
-        '108': 'New Rochelle, NY',
-        '109': 'Pelham, NY',
-        '110': 'Queens, NY',
-        '111': 'Long Island City, NY',
-        '112': 'Brooklyn, NY',
-        '113': 'Flushing, NY',
-        '114': 'Jamaica, NY',
-        '115': 'Kew Gardens, NY',
-        '116': 'Far Rockaway, NY',
-        '117': 'Jamaica, NY',
-        '118': 'Brooklyn, NY',
-        '119': 'Brooklyn, NY',
-        
-        # California
-        '900': 'Los Angeles, CA',
-        '901': 'Los Angeles, CA',
-        '902': 'Beverly Hills, CA',
-        '903': 'Inglewood, CA',
-        '904': 'Santa Monica, CA',
-        '905': 'Torrance, CA',
-        '906': 'Long Beach, CA',
-        '907': 'Long Beach, CA',
-        '908': 'Long Beach, CA',
-        '910': 'Pasadena, CA',
-        '911': 'Pasadena, CA',
-        '912': 'Glendale, CA',
-        '913': 'Beverly Hills, CA',
-        '914': 'Santa Monica, CA',
-        '915': 'Beverly Hills, CA',
-        '916': 'Sacramento, CA',
-        '917': 'Sacramento, CA',
-        '918': 'Sacramento, CA',
-        '919': 'Sacramento, CA',
-        '920': 'Ventura, CA',
-        '921': 'Santa Barbara, CA',
-        '922': 'Santa Barbara, CA',
-        '923': 'Ventura, CA',
-        '924': 'Ventura, CA',
-        '925': 'Walnut Creek, CA',
-        '926': 'Fresno, CA',
-        '927': 'Fresno, CA',
-        '928': 'Fresno, CA',
-        '930': 'Oxnard, CA',
-        '931': 'Santa Barbara, CA',
-        '932': 'Bakersfield, CA',
-        '933': 'Bakersfield, CA',
-        '934': 'Santa Barbara, CA',
-        '935': 'Mojave, CA',
-        '936': 'Fresno, CA',
-        '937': 'Fresno, CA',
-        '938': 'Fresno, CA',
-        '939': 'Salinas, CA',
-        '940': 'San Francisco, CA',
-        '941': 'San Francisco, CA',
-        '942': 'Sacramento, CA',
-        '943': 'Palo Alto, CA',
-        '944': 'San Mateo, CA',
-        '945': 'Oakland, CA',
-        '946': 'Oakland, CA',
-        '947': 'Berkeley, CA',
-        '948': 'Richmond, CA',
-        '949': 'Tiburon, CA',  # This covers 94920!
-        '950': 'Santa Rosa, CA',
-        '951': 'Riverside, CA',
-        '952': 'Riverside, CA',
-        '953': 'Riverside, CA',
-        '954': 'Santa Maria, CA',
-        '955': 'Eureka, CA',
-        '956': 'Fresno, CA',
-        '957': 'San Jose, CA',
-        '958': 'Santa Cruz, CA',
-        '959': 'Stockton, CA',
-        '960': 'Redding, CA',
-        '961': 'Reno, NV',
-        
-        # Texas
-        '750': 'Dallas, TX',
-        '751': 'Dallas, TX',
-        '752': 'Dallas, TX',
-        '753': 'Dallas, TX',
-        '754': 'Greenville, TX',
-        '755': 'Texarkana, TX',
-        '756': 'Longview, TX',
-        '757': 'Tyler, TX',
-        '758': 'Palestine, TX',
-        '759': 'Lufkin, TX',
-        '760': 'Fort Worth, TX',
-        '761': 'Fort Worth, TX',
-        '762': 'Denton, TX',
-        '763': 'Wichita Falls, TX',
-        '764': 'Eastland, TX',
-        '765': 'Temple, TX',
-        '766': 'Waco, TX',
-        '767': 'Waco, TX',
-        '768': 'Brownwood, TX',
-        '769': 'San Angelo, TX',
-        '770': 'Houston, TX',
-        '771': 'Houston, TX',
-        '772': 'Houston, TX',
-        '773': 'Huntsville, TX',
-        '774': 'Conroe, TX',
-        '775': 'Galveston, TX',
-        '776': 'Beaumont, TX',
-        '777': 'Beaumont, TX',
-        '778': 'Bryan, TX',
-        '779': 'Bryan, TX',
-        '780': 'San Antonio, TX',
-        '781': 'San Antonio, TX',
-        '782': 'San Antonio, TX',
-        '783': 'Corpus Christi, TX',
-        '784': 'Corpus Christi, TX',
-        '785': 'McAllen, TX',
-        '786': 'Austin, TX',
-        '787': 'Austin, TX',
-        '788': 'Austin, TX',
-        '789': 'Giddings, TX',
-        '790': 'Amarillo, TX',
-        '791': 'Amarillo, TX',
-        '792': 'Childress, TX',
-        '793': 'Lubbock, TX',
-        '794': 'Lubbock, TX',
-        '795': 'Abilene, TX',
-        '796': 'Abilene, TX',
-        '797': 'Midland, TX',
-        '798': 'El Paso, TX',
-        '799': 'El Paso, TX',
-        
-        # Florida
-        '320': 'Jacksonville, FL',
-        '321': 'Orlando, FL',
-        '322': 'Melbourne, FL',
-        '323': 'Cocoa, FL',
-        '324': 'Gainesville, FL',
-        '325': 'Ocala, FL',
-        '326': 'Gainesville, FL',
-        '327': 'Leesburg, FL',
-        '328': 'Orlando, FL',
-        '329': 'Orlando, FL',
-        '330': 'Miami, FL',
-        '331': 'Miami, FL',
-        '332': 'Miami, FL',
-        '333': 'Miami, FL',
-        '334': 'Fort Lauderdale, FL',
-        '335': 'Fort Lauderdale, FL',
-        '336': 'Tampa, FL',
-        '337': 'Tampa, FL',
-        '338': 'Lakeland, FL',
-        '339': 'Tampa, FL',
-        '340': 'Tallahassee, FL',
-        '341': 'Tallahassee, FL',
-        '342': 'Panama City, FL',
-        '343': 'Tallahassee, FL',
-        '344': 'Gainesville, FL',
-        
-        # Illinois  
-        '600': 'Chicago, IL',
-        '601': 'Chicago, IL',
-        '602': 'Chicago, IL',
-        '603': 'Chicago, IL',
-        '604': 'Chicago, IL',
-        '605': 'Chicago, IL',
-        '606': 'Chicago, IL',
-        '607': 'Chicago, IL',
-        '608': 'Chicago, IL',
-        '609': 'Chicago, IL',
-        '610': 'Rockford, IL',
-        '611': 'Rockford, IL',
-        '612': 'Rock Island, IL',
-        '613': 'La Salle, IL',
-        '614': 'Galesburg, IL',
-        '615': 'Peoria, IL',
-        '616': 'Peoria, IL',
-        '617': 'Bloomington, IL',
-        '618': 'Champaign, IL',
-        '619': 'Champaign, IL',
-        '620': 'East St. Louis, IL',
-        '621': 'East St. Louis, IL',
-        '622': 'East St. Louis, IL',
-        '623': 'Quincy, IL',
-        '624': 'Effingham, IL',
-        '625': 'Springfield, IL',
-        '626': 'Springfield, IL',
-        '627': 'Springfield, IL',
-        '628': 'Centralia, IL',
-        '629': 'Carbondale, IL'
-    }
-    
-    # Try to match first 3 digits
-    prefix = zip_code[:3]
-    if prefix in zip_locations:
-        return zip_locations[prefix]
-    
-    # Fall back to state-level matching based on first digit and patterns
-    first_digit = zip_code[0]
+    # Fall back to state-level matching based on ZIP code patterns
     first_two = zip_code[:2] if len(zip_code) >= 2 else zip_code[0]
     
     # More accurate state mapping based on ZIP code patterns
-    if first_two in ['06']:
+    if first_two == '06':
         return f"{zip_code}, Connecticut"
     elif first_two in ['01', '02']:
+        if first_two == '02' and zip_code.startswith('028'):
+            return f"{zip_code}, Rhode Island"
         return f"{zip_code}, Massachusetts"  
-    elif first_two in ['02']:
-        return f"{zip_code}, Rhode Island"
-    elif first_two in ['03']:
+    elif first_two == '03':
         return f"{zip_code}, New Hampshire"
-    elif first_two in ['04']:
+    elif first_two == '04':
         return f"{zip_code}, Maine"
-    elif first_two in ['05']:
+    elif first_two == '05':
         return f"{zip_code}, Vermont"
-    elif first_digit == '1':
+    elif zip_code[0] == '1':
         return f"{zip_code}, New York"
-    elif first_digit == '2':
+    elif zip_code[0] == '2':
         return f"{zip_code}, Washington DC area"
-    elif first_digit == '3':
+    elif zip_code[0] == '3':
         return f"{zip_code}, Florida"
-    elif first_digit == '4':
+    elif zip_code[0] == '4':
         return f"{zip_code}, Georgia"
-    elif first_digit == '5':
+    elif zip_code[0] == '5':
         return f"{zip_code}, Alabama"
-    elif first_digit == '6':
+    elif zip_code[0] == '6':
         return f"{zip_code}, Illinois"
-    elif first_digit == '7':
+    elif zip_code[0] == '7':
         return f"{zip_code}, Texas"
-    elif first_digit == '8':
+    elif zip_code[0] == '8':
         return f"{zip_code}, Colorado"
-    elif first_digit == '9':
+    elif zip_code[0] == '9':
         return f"{zip_code}, California"
-    
-    return f"{zip_code}, US"
-
-def create_fallback_zip_data(zip_code: str) -> GeographicRegion:
-    """Create realistic fallback demographic data for a ZIP code"""
-    
-    # Generate somewhat realistic data based on ZIP code characteristics
-    zip_int = int(zip_code.zfill(5))
-    
-    # Use ZIP code to create variation in demographics
-    median_income = 35000 + (zip_int % 100000)  # Varies from 35k to 135k
-    median_age = 25 + (zip_int % 40)  # Varies from 25 to 65
-    population = 5000 + (zip_int % 50000)  # Varies from 5k to 55k
-    
-    # Get proper city/state name
-    location_name = get_zip_location_name(zip_code)
-    
-    # Determine urbanization based on ZIP patterns
-    if zip_code.startswith(('100', '101', '102')):  # NYC area
-        urbanization = "URBAN"
-        median_income = max(median_income, 60000)
-    elif zip_code.startswith(('902', '903', '904')):  # CA area  
-        urbanization = "URBAN"
-        median_income = max(median_income, 70000)
-    elif zip_code.startswith(('600', '601', '602')):  # Chicago area
-        urbanization = "URBAN"
-        median_income = max(median_income, 55000)
-    elif int(zip_code[0]) <= 3:  # East coast
-        urbanization = "SUBURBAN"
     else:
-        urbanization = "MIXED"
-    
-    demographics = Demographics(
-        medianAge=float(median_age),
-        medianIncome=int(median_income),
-        populationDensity=population,
-        householdSize=2.3 + (zip_int % 10) / 10,  # 2.3 to 3.2
-        collegeEducated=25.0 + (zip_int % 50),  # 25% to 75%
-        unemploymentRate=3.0 + (zip_int % 8),  # 3% to 11%
-        whiteCollarJobs=50.0 + (zip_int % 40),  # 50% to 90%
-        homeOwnership=40.0 + (zip_int % 50),  # 40% to 90%
-        medianHomeValue=int(median_income * 3.5),  # Roughly 3.5x income
-        rentBurden=25.0 + (zip_int % 20),  # 25% to 45%
-        internetPenetration=85.0 + (zip_int % 15),  # 85% to 100%
-        mobileUsage=80.0 + (zip_int % 20),  # 80% to 100%
-        socialMediaUsage=60.0 + (zip_int % 30),  # 60% to 90%
-        onlineShoppingIndex=100.0 + (zip_int % 50),  # 100 to 150
-        urbanizationLevel=urbanization,
-        retailDensity=200 + (zip_int % 400),  # 200 to 600
-        competitionIndex=50.0 + (zip_int % 50),  # 50% to 100%
-        tvConsumption=2.0 + (zip_int % 40) / 10,  # 2.0 to 6.0 hours
-        digitalAdReceptivity=60.0 + (zip_int % 30),  # 60% to 90%
-        brandLoyalty=30.0 + (zip_int % 50)  # 30% to 80%
-    )
-    
-    return GeographicRegion(
-        id=zip_code,
-        name=f"{location_name} ({zip_code})",
-        source="FALLBACK_REALISTIC",
-        demographics=demographics,
-        lastUpdated=datetime.utcnow().isoformat()
-    )
+        return f"{zip_code}, US"
 
-@api_router.get("/geographic/zips", response_model=GeographicResponse)
-async def get_multiple_zip_demographics(zip_codes: str):
+# API Routes
+@app.get("/")
+async def root():
+    return {"message": "Geographic Testing API", "version": "1.0.0"}
+
+@app.get("/api/geographic/zip/{zip_code}", response_model=GeographicRegion)
+async def get_zip_data(zip_code: str):
+    """Get demographic data for a specific ZIP code"""
+    try:
+        logger.info(f"🔍 Fetching data for ZIP code: {zip_code}")
+        
+        # Validate ZIP code format
+        if not zip_code.isdigit() or len(zip_code) != 5:
+            raise HTTPException(status_code=400, detail="Invalid ZIP code format. Must be 5 digits.")
+        
+        # Try to get data from Census Bureau API
+        census_data = await CensusService.get_zip_demographics(zip_code)
+        
+        if census_data:
+            logger.info(f"✅ Successfully retrieved Census data for ZIP {zip_code}")
+            result = transform_census_to_demographics(zip_code, census_data)
+            
+            # Store in database for caching
+            try:
+                await db.zip_data.update_one(
+                    {"_id": zip_code},
+                    {"$set": result.dict()},
+                    upsert=True
+                )
+                logger.info(f"💾 Cached Census data for ZIP {zip_code}")
+            except Exception as e:
+                logger.warning(f"Failed to cache data for ZIP {zip_code}: {e}")
+            
+            return result
+        else:
+            logger.warning(f"❌ No Census data available for ZIP {zip_code}")
+            raise HTTPException(status_code=404, detail=f"No demographic data found for ZIP code {zip_code}")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error processing ZIP {zip_code}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/geographic/zips")
+async def get_multiple_zip_demographics(zip_codes: str = Query(..., description="Comma-separated ZIP codes")):
     """Get demographic data for multiple ZIP codes (comma-separated)"""
     try:
         zip_list = [zip_code.strip() for zip_code in zip_codes.split(',') if zip_code.strip()]
         
-        if len(zip_list) > 50:  # Limit to prevent abuse
-            raise HTTPException(status_code=400, detail="Too many ZIP codes requested (max 50)")
+        if not zip_list:
+            raise HTTPException(status_code=400, detail="No ZIP codes provided")
         
-        regions = []
+        if len(zip_list) > 50:
+            raise HTTPException(status_code=400, detail="Too many ZIP codes. Maximum 50 allowed.")
         
-        # Process each ZIP code
+        results = []
         for zip_code in zip_list:
             try:
-                # Validate ZIP code format before processing
-                if not zip_code.isdigit() or len(zip_code) not in [4, 5]:
-                    logger.warning(f"Skipping invalid ZIP code format: {zip_code}")
-                    continue
-                    
-                datausa_data = await DataUSAService.get_zip_demographics(zip_code)
-                if datausa_data:
-                    region = DataUSAService.transform_datausa_to_demographics(datausa_data, zip_code)
-                    logger.info(f"Got real DataUSA data for ZIP {zip_code}")
-                    regions.append(region)
-                else:
-                    # Use fallback data when DataUSA.io doesn't have data
-                    region = create_fallback_zip_data(zip_code)
-                    logger.warning(f"Using fallback data for ZIP {zip_code}")
-                    regions.append(region)
+                if zip_code.isdigit() and len(zip_code) == 5:
+                    census_data = await CensusService.get_zip_demographics(zip_code)
+                    if census_data:
+                        result = transform_census_to_demographics(zip_code, census_data)
+                        results.append(result)
             except Exception as e:
                 logger.warning(f"Failed to get data for ZIP {zip_code}: {e}")
-                # Skip invalid ZIP codes rather than adding fallback data
                 continue
         
-        return GeographicResponse(
-            regions=regions,
-            count=len(regions),
-            source="DATAUSA_IO_WITH_FALLBACK"
-        )
+        logger.info(f"📊 Retrieved data for {len(results)} out of {len(zip_list)} ZIP codes")
         
+        return {
+            "regions": results,
+            "source": "US_CENSUS_BUREAU",
+            "message": f"Data retrieved for {len(results)} ZIP codes (Source: US Census Bureau)"
+        }
+    
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error processing multiple ZIP codes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@api_router.get("/geographic/states", response_model=GeographicResponse)
-async def get_states():
-    """Get list of US states with basic demographic data"""
-    try:
-        # For now, return a basic list of major states
-        # In a full implementation, this would fetch state-level data from DataUSA.io
-        states = [
-            {"id": "CA", "name": "California", "code": "CA"},
-            {"id": "TX", "name": "Texas", "code": "TX"},
-            {"id": "FL", "name": "Florida", "code": "FL"},
-            {"id": "NY", "name": "New York", "code": "NY"},
-            {"id": "PA", "name": "Pennsylvania", "code": "PA"},
-            {"id": "IL", "name": "Illinois", "code": "IL"},
-            {"id": "OH", "name": "Ohio", "code": "OH"},
-            {"id": "GA", "name": "Georgia", "code": "GA"},
-            {"id": "NC", "name": "North Carolina", "code": "NC"},
-            {"id": "MI", "name": "Michigan", "code": "MI"}
-        ]
-        
-        # Create basic demographic data for states
-        state_regions = []
-        for state in states:
-            demographics = Demographics(
-                medianAge=38.0,
-                medianIncome=55000,
-                populationDensity=100,
-                householdSize=2.5,
-                collegeEducated=32.0,
-                unemploymentRate=5.5,
-                whiteCollarJobs=65.0,
-                homeOwnership=65.0,
-                medianHomeValue=250000,
-                rentBurden=30.0,
-                internetPenetration=85.0,
-                mobileUsage=88.0,
-                socialMediaUsage=70.0,
-                onlineShoppingIndex=120.0,
-                urbanizationLevel="MIXED",
-                retailDensity=300,
-                competitionIndex=75.0,
-                tvConsumption=4.0,
-                digitalAdReceptivity=78.0,
-                brandLoyalty=50.0
-            )
-            
-            region = GeographicRegion(
-                id=state["code"],
-                name=state["name"],
-                source="STATE_LIST",
-                type="state",
-                demographics=demographics,
-                lastUpdated=datetime.utcnow().isoformat()
-            )
-            state_regions.append(region)
-        
-        return GeographicResponse(
-            regions=state_regions,
-            count=len(state_regions),
-            source="STATE_LIST"
-        )
-        
-    except Exception as e:
-        logger.error(f"Error getting states: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+@app.get("/api/geographic/states")
+async def get_us_states():
+    """Get list of US states for region selection"""
+    states = [
+        {"id": "AL", "name": "Alabama"},
+        {"id": "AK", "name": "Alaska"},
+        {"id": "AZ", "name": "Arizona"},
+        {"id": "AR", "name": "Arkansas"},
+        {"id": "CA", "name": "California"},
+        {"id": "CO", "name": "Colorado"},
+        {"id": "CT", "name": "Connecticut"},
+        {"id": "DE", "name": "Delaware"},
+        {"id": "FL", "name": "Florida"},
+        {"id": "GA", "name": "Georgia"},
+        {"id": "HI", "name": "Hawaii"},
+        {"id": "ID", "name": "Idaho"},
+        {"id": "IL", "name": "Illinois"},
+        {"id": "IN", "name": "Indiana"},
+        {"id": "IA", "name": "Iowa"},
+        {"id": "KS", "name": "Kansas"},
+        {"id": "KY", "name": "Kentucky"},
+        {"id": "LA", "name": "Louisiana"},
+        {"id": "ME", "name": "Maine"},
+        {"id": "MD", "name": "Maryland"},
+        {"id": "MA", "name": "Massachusetts"},
+        {"id": "MI", "name": "Michigan"},
+        {"id": "MN", "name": "Minnesota"},
+        {"id": "MS", "name": "Mississippi"},
+        {"id": "MO", "name": "Missouri"},
+        {"id": "MT", "name": "Montana"},
+        {"id": "NE", "name": "Nebraska"},
+        {"id": "NV", "name": "Nevada"},
+        {"id": "NH", "name": "New Hampshire"},
+        {"id": "NJ", "name": "New Jersey"},
+        {"id": "NM", "name": "New Mexico"},
+        {"id": "NY", "name": "New York"},
+        {"id": "NC", "name": "North Carolina"},
+        {"id": "ND", "name": "North Dakota"},
+        {"id": "OH", "name": "Ohio"},
+        {"id": "OK", "name": "Oklahoma"},
+        {"id": "OR", "name": "Oregon"},
+        {"id": "PA", "name": "Pennsylvania"},
+        {"id": "RI", "name": "Rhode Island"},
+        {"id": "SC", "name": "South Carolina"},
+        {"id": "SD", "name": "South Dakota"},
+        {"id": "TN", "name": "Tennessee"},
+        {"id": "TX", "name": "Texas"},
+        {"id": "UT", "name": "Utah"},
+        {"id": "VT", "name": "Vermont"},
+        {"id": "VA", "name": "Virginia"},
+        {"id": "WA", "name": "Washington"},
+        {"id": "WV", "name": "West Virginia"},
+        {"id": "WI", "name": "Wisconsin"},
+        {"id": "WY", "name": "Wyoming"}
+    ]
+    
+    return {"regions": states, "source": "STATIC"}
 
-@api_router.get("/geographic/dmas", response_model=GeographicResponse) 
+@app.get("/api/geographic/dmas")
 async def get_dmas():
     """Get list of Designated Market Areas (DMAs)"""
-    try:
-        # Major DMAs for testing
-        dmas = [
-            {"id": "501", "name": "New York", "rank": 1},
-            {"id": "803", "name": "Los Angeles", "rank": 2},
-            {"id": "602", "name": "Chicago", "rank": 3},
-            {"id": "504", "name": "Philadelphia", "rank": 4},
-            {"id": "623", "name": "Dallas-Ft. Worth", "rank": 5},
-            {"id": "807", "name": "San Francisco-Oakland-San Jose", "rank": 6},
-            {"id": "539", "name": "Tampa-St. Pete (Sarasota)", "rank": 7},
-            {"id": "511", "name": "Washington, DC (Hagerstown)", "rank": 8},
-            {"id": "618", "name": "Houston", "rank": 9},
-            {"id": "506", "name": "Boston (Manchester)", "rank": 10}
-        ]
-        
-        dma_regions = []
-        for dma in dmas:
-            demographics = Demographics(
-                medianAge=36.0,
-                medianIncome=60000,
-                populationDensity=500,
-                householdSize=2.4,
-                collegeEducated=35.0,
-                unemploymentRate=4.8,
-                whiteCollarJobs=70.0,
-                homeOwnership=60.0,
-                medianHomeValue=300000,
-                rentBurden=32.0,
-                internetPenetration=90.0,
-                mobileUsage=92.0,
-                socialMediaUsage=75.0,
-                onlineShoppingIndex=130.0,
-                urbanizationLevel="URBAN",
-                retailDensity=500,
-                competitionIndex=85.0,
-                tvConsumption=3.5,
-                digitalAdReceptivity=82.0,
-                brandLoyalty=45.0
-            )
-            
-            region = GeographicRegion(
-                id=dma["id"],
-                name=f"DMA {dma['rank']}: {dma['name']}",
-                source="DMA_LIST",
-                type="dma",
-                demographics=demographics,
-                lastUpdated=datetime.utcnow().isoformat()
-            )
-            dma_regions.append(region)
-        
-        return GeographicResponse(
-            regions=dma_regions,
-            count=len(dma_regions),
-            source="DMA_LIST"
-        )
-        
-    except Exception as e:
-        logger.error(f"Error getting DMAs: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    # Sample DMA data - in production this would come from a proper source
+    dmas = [
+        {"id": "501", "name": "New York, NY"},
+        {"id": "803", "name": "Los Angeles, CA"},
+        {"id": "602", "name": "Chicago, IL"},
+        {"id": "504", "name": "Philadelphia, PA"},
+        {"id": "623", "name": "Dallas-Ft. Worth, TX"},
+        {"id": "506", "name": "Boston, MA"},
+        {"id": "511", "name": "Washington, DC"},
+        {"id": "539", "name": "Tampa-St. Petersburg, FL"},
+        {"id": "618", "name": "Houston, TX"},
+        {"id": "505", "name": "Detroit, MI"}
+    ]
+    
+    return {"regions": dmas, "source": "STATIC"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
-
-# Include the router in the main app
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)
