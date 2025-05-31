@@ -8,6 +8,10 @@ import logging
 from datetime import datetime
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 import json
 
 # Set up logging
