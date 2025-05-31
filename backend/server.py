@@ -326,63 +326,193 @@ async def get_multiple_zip_demographics(zip_codes: str = Query(..., description=
         logger.error(f"Error processing multiple ZIP codes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/api/geographic/state/{state_code}")
+async def get_state_data(state_code: str):
+    """Get demographic data for a specific state using Census API"""
+    try:
+        # Get API key from environment
+        api_key = os.environ.get('CENSUS_API_KEY')
+        if not api_key:
+            logger.warning("Census API key not found in environment variables")
+            raise HTTPException(status_code=500, detail="Census API key not configured")
+        
+        # Define variables to fetch from American Community Survey 5-year estimates
+        variables = [
+            'B01003_001E',  # Total Population
+            'B25064_001E',  # Median Gross Rent
+            'B19013_001E',  # Median Household Income
+            'B25077_001E',  # Median Property Value
+            'B15003_022E',  # Bachelor's Degree
+            'B15003_001E',  # Total Education Population
+            'B01002_001E',  # Median Age
+            'B25003_002E',  # Owner Occupied Housing
+            'B25003_003E',  # Renter Occupied Housing
+            'B23025_005E',  # Unemployed
+            'B23025_002E'   # Labor Force
+        ]
+        
+        # Use Census API for ACS 5-year estimates for states
+        url = f"https://api.census.gov/data/2022/acs/acs5?get={','.join(variables)}&for=state:{state_code}&key={api_key}"
+        
+        logger.info(f"Fetching Census data for state {state_code}")
+        
+        # Make async request
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None, 
+            lambda: requests.get(url, timeout=15)
+        )
+        
+        if response.status_code != 200:
+            logger.error(f"Census API error for state {state_code}: {response.status_code}")
+            raise HTTPException(status_code=404, detail=f"No data found for state {state_code}")
+            
+        data = response.json()
+        
+        # Check if we have valid data
+        if not data or len(data) < 2:
+            raise HTTPException(status_code=404, detail=f"No demographic data found for state {state_code}")
+            
+        # Parse the response - first row is headers, second row is data
+        headers = data[0]
+        values = data[1]
+        census_data = dict(zip(headers, values))
+        
+        # Transform Census data to our format
+        def safe_int(value):
+            try:
+                return int(value) if value and value != '-999999999' and value != 'null' else None
+            except (ValueError, TypeError):
+                return None
+        
+        def safe_float(value):
+            try:
+                return float(value) if value and value != '-999999999' and value != 'null' else None
+            except (ValueError, TypeError):
+                return None
+        
+        # Extract demographic data
+        population = safe_int(census_data.get('B01003_001E'))
+        median_age = safe_float(census_data.get('B01002_001E'))
+        median_income = safe_int(census_data.get('B19013_001E'))
+        median_rent = safe_int(census_data.get('B25064_001E'))
+        median_property_value = safe_int(census_data.get('B25077_001E'))
+        owner_occupied = safe_int(census_data.get('B25003_002E'))
+        renter_occupied = safe_int(census_data.get('B25003_003E'))
+        
+        # Calculate education percentage
+        bachelors = safe_int(census_data.get('B15003_022E'))
+        total_education_pop = safe_int(census_data.get('B15003_001E'))
+        bachelors_percent = (bachelors / total_education_pop * 100) if bachelors and total_education_pop else None
+        
+        # Calculate unemployment rate
+        unemployed = safe_int(census_data.get('B23025_005E'))
+        labor_force = safe_int(census_data.get('B23025_002E'))
+        unemployment_rate = (unemployed / labor_force * 100) if unemployed and labor_force else None
+        
+        # Get state name
+        state_names = {
+            "01": "Alabama", "02": "Alaska", "04": "Arizona", "05": "Arkansas", "06": "California",
+            "08": "Colorado", "09": "Connecticut", "10": "Delaware", "11": "District of Columbia",
+            "12": "Florida", "13": "Georgia", "15": "Hawaii", "16": "Idaho", "17": "Illinois",
+            "18": "Indiana", "19": "Iowa", "20": "Kansas", "21": "Kentucky", "22": "Louisiana",
+            "23": "Maine", "24": "Maryland", "25": "Massachusetts", "26": "Michigan", "27": "Minnesota",
+            "28": "Mississippi", "29": "Missouri", "30": "Montana", "31": "Nebraska", "32": "Nevada",
+            "33": "New Hampshire", "34": "New Jersey", "35": "New Mexico", "36": "New York",
+            "37": "North Carolina", "38": "North Dakota", "39": "Ohio", "40": "Oklahoma",
+            "41": "Oregon", "42": "Pennsylvania", "44": "Rhode Island", "45": "South Carolina",
+            "46": "South Dakota", "47": "Tennessee", "48": "Texas", "49": "Utah", "50": "Vermont",
+            "51": "Virginia", "53": "Washington", "54": "West Virginia", "55": "Wisconsin", "56": "Wyoming"
+        }
+        
+        state_name = state_names.get(state_code, f"State {state_code}")
+        
+        demographics = Demographics(
+            population=population,
+            medianAge=median_age,
+            medianHouseholdIncome=median_income,
+            medianPropertyValue=median_property_value,
+            medianRent=median_rent,
+            ownerOccupied=owner_occupied,
+            renterOccupied=renter_occupied,
+            bachelorsDegreeOrHigher=bachelors_percent,
+            unemploymentRate=unemployment_rate,
+            laborForce=labor_force
+        )
+        
+        region = GeographicRegion(
+            id=state_code,
+            name=state_name,
+            source="US_CENSUS_BUREAU",
+            demographics=demographics,
+            lastUpdated=datetime.utcnow().isoformat()
+        )
+        
+        return region
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing state {state_code}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/geographic/states")
 async def get_us_states():
     """Get list of US states for region selection"""
     states = [
-        {"id": "AL", "name": "Alabama"},
-        {"id": "AK", "name": "Alaska"},
-        {"id": "AZ", "name": "Arizona"},
-        {"id": "AR", "name": "Arkansas"},
-        {"id": "CA", "name": "California"},
-        {"id": "CO", "name": "Colorado"},
-        {"id": "CT", "name": "Connecticut"},
-        {"id": "DE", "name": "Delaware"},
-        {"id": "FL", "name": "Florida"},
-        {"id": "GA", "name": "Georgia"},
-        {"id": "HI", "name": "Hawaii"},
-        {"id": "ID", "name": "Idaho"},
-        {"id": "IL", "name": "Illinois"},
-        {"id": "IN", "name": "Indiana"},
-        {"id": "IA", "name": "Iowa"},
-        {"id": "KS", "name": "Kansas"},
-        {"id": "KY", "name": "Kentucky"},
-        {"id": "LA", "name": "Louisiana"},
-        {"id": "ME", "name": "Maine"},
-        {"id": "MD", "name": "Maryland"},
-        {"id": "MA", "name": "Massachusetts"},
-        {"id": "MI", "name": "Michigan"},
-        {"id": "MN", "name": "Minnesota"},
-        {"id": "MS", "name": "Mississippi"},
-        {"id": "MO", "name": "Missouri"},
-        {"id": "MT", "name": "Montana"},
-        {"id": "NE", "name": "Nebraska"},
-        {"id": "NV", "name": "Nevada"},
-        {"id": "NH", "name": "New Hampshire"},
-        {"id": "NJ", "name": "New Jersey"},
-        {"id": "NM", "name": "New Mexico"},
-        {"id": "NY", "name": "New York"},
-        {"id": "NC", "name": "North Carolina"},
-        {"id": "ND", "name": "North Dakota"},
-        {"id": "OH", "name": "Ohio"},
-        {"id": "OK", "name": "Oklahoma"},
-        {"id": "OR", "name": "Oregon"},
-        {"id": "PA", "name": "Pennsylvania"},
-        {"id": "RI", "name": "Rhode Island"},
-        {"id": "SC", "name": "South Carolina"},
-        {"id": "SD", "name": "South Dakota"},
-        {"id": "TN", "name": "Tennessee"},
-        {"id": "TX", "name": "Texas"},
-        {"id": "UT", "name": "Utah"},
-        {"id": "VT", "name": "Vermont"},
-        {"id": "VA", "name": "Virginia"},
-        {"id": "WA", "name": "Washington"},
-        {"id": "WV", "name": "West Virginia"},
-        {"id": "WI", "name": "Wisconsin"},
-        {"id": "WY", "name": "Wyoming"}
+        {"id": "01", "name": "Alabama"},
+        {"id": "02", "name": "Alaska"},
+        {"id": "04", "name": "Arizona"},
+        {"id": "05", "name": "Arkansas"},
+        {"id": "06", "name": "California"},
+        {"id": "08", "name": "Colorado"},
+        {"id": "09", "name": "Connecticut"},
+        {"id": "10", "name": "Delaware"},
+        {"id": "12", "name": "Florida"},
+        {"id": "13", "name": "Georgia"},
+        {"id": "15", "name": "Hawaii"},
+        {"id": "16", "name": "Idaho"},
+        {"id": "17", "name": "Illinois"},
+        {"id": "18", "name": "Indiana"},
+        {"id": "19", "name": "Iowa"},
+        {"id": "20", "name": "Kansas"},
+        {"id": "21", "name": "Kentucky"},
+        {"id": "22", "name": "Louisiana"},
+        {"id": "23", "name": "Maine"},
+        {"id": "24", "name": "Maryland"},
+        {"id": "25", "name": "Massachusetts"},
+        {"id": "26", "name": "Michigan"},
+        {"id": "27", "name": "Minnesota"},
+        {"id": "28", "name": "Mississippi"},
+        {"id": "29", "name": "Missouri"},
+        {"id": "30", "name": "Montana"},
+        {"id": "31", "name": "Nebraska"},
+        {"id": "32", "name": "Nevada"},
+        {"id": "33", "name": "New Hampshire"},
+        {"id": "34", "name": "New Jersey"},
+        {"id": "35", "name": "New Mexico"},
+        {"id": "36", "name": "New York"},
+        {"id": "37", "name": "North Carolina"},
+        {"id": "38", "name": "North Dakota"},
+        {"id": "39", "name": "Ohio"},
+        {"id": "40", "name": "Oklahoma"},
+        {"id": "41", "name": "Oregon"},
+        {"id": "42", "name": "Pennsylvania"},
+        {"id": "44", "name": "Rhode Island"},
+        {"id": "45", "name": "South Carolina"},
+        {"id": "46", "name": "South Dakota"},
+        {"id": "47", "name": "Tennessee"},
+        {"id": "48", "name": "Texas"},
+        {"id": "49", "name": "Utah"},
+        {"id": "50", "name": "Vermont"},
+        {"id": "51", "name": "Virginia"},
+        {"id": "53", "name": "Washington"},
+        {"id": "54", "name": "West Virginia"},
+        {"id": "55", "name": "Wisconsin"},
+        {"id": "56", "name": "Wyoming"}
     ]
     
-    return {"regions": states, "source": "STATIC"}
+    return {"regions": states, "source": "US_CENSUS_BUREAU"}
 
 
 def load_dma_data():
