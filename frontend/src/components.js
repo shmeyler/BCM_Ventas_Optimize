@@ -1826,10 +1826,10 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
 
               <div className="flex space-x-4 mt-8">
                 <button
-                  onClick={() => setCurrentView('setup')}
+                  onClick={() => setShowLiftTestConfig(true)}
                   className="flex-1 bg-bcm-orange hover:bg-bcm-orange-dark text-white px-6 py-3 rounded-lg font-semibold transition-colors"
                 >
-                  Configure Test
+                  Configure Lift Test
                 </button>
                 <button
                   onClick={() => setCurrentView('analytics')}
