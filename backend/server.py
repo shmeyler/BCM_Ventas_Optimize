@@ -190,63 +190,12 @@ def transform_census_to_demographics(zip_code: str, census_data: Dict[str, Any])
 def get_zip_location_name(zip_code: str) -> str:
     """Get city and state name for a ZIP code based on known patterns"""
     
-    # Common ZIP code patterns with their corresponding city/state
-    zip_locations = {
-        # Connecticut ZIP codes
-        '068': 'Ridgefield, CT',  # This covers 06877!
-        '069': 'Stamford, CT',
-        '060': 'Hartford, CT',
-        '061': 'Hartford, CT',
-        '062': 'Waterbury, CT',
-        '063': 'New Haven, CT',
-        '064': 'New Haven, CT',
-        '065': 'New Haven, CT',
-        '066': 'Bridgeport, CT',
-        '067': 'Waterbury, CT',
-        
-        # California ZIP codes
-        '949': 'Tiburon, CA',  # This covers 94920!
-        '942': 'Sacramento, CA',
-        '943': 'Palo Alto, CA',
-        '944': 'San Mateo, CA',
-        '945': 'Oakland, CA',
-        '946': 'Oakland, CA',
-        '947': 'Berkeley, CA',
-        '948': 'Richmond, CA',
-        '950': 'Santa Rosa, CA',
-        
-        # New York ZIP codes
-        '100': 'New York, NY',  # This covers 10001!
-        '101': 'New York, NY', 
-        '102': 'New York, NY',
-        '103': 'Staten Island, NY',
-        '104': 'Bronx, NY',
-        '105': 'Mount Vernon, NY',
-        '106': 'White Plains, NY',
-        '107': 'Yonkers, NY',
-        '108': 'New Rochelle, NY',
-        '109': 'Pelham, NY',
-        '110': 'Queens, NY',
-        '111': 'Long Island City, NY',
-        '112': 'Brooklyn, NY',
-        '113': 'Flushing, NY',
-        '114': 'Jamaica, NY',
-        '115': 'Kew Gardens, NY',
-        '116': 'Far Rockaway, NY',
-        '117': 'Jamaica, NY',
-        '118': 'Brooklyn, NY',
-        '119': 'Brooklyn, NY',
-    }
+    # For now, use state-level mapping until we have accurate city data
+    # TODO: Integrate with a proper ZIP code to city database
     
-    # Try to match first 3 digits
-    prefix = zip_code[:3]
-    if prefix in zip_locations:
-        return zip_locations[prefix]
-    
-    # Fall back to state-level matching based on ZIP code patterns
+    # More accurate state mapping based on ZIP code patterns  
     first_two = zip_code[:2] if len(zip_code) >= 2 else zip_code[0]
     
-    # More accurate state mapping based on ZIP code patterns
     if first_two == '06':
         return f"Connecticut"
     elif first_two in ['01', '02']:
