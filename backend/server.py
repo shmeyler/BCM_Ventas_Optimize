@@ -199,15 +199,9 @@ class MetaAdsService:
         # Initialize API only if we have required credentials
         if self.app_id and self.app_secret and self.access_token:
             try:
-                # Initialize with app secret proof for enhanced security
-                FacebookAdsApi.init(
-                    app_id=self.app_id,
-                    app_secret=self.app_secret,
-                    access_token=self.access_token,
-                    app_secret_proof=True  # Enable app secret proof
-                )
+                FacebookAdsApi.init(self.app_id, self.app_secret, self.access_token)
                 self.api = FacebookAdsApi.get_default_api()
-                logger.info("Meta Ads API initialized successfully with app secret proof")
+                logger.info("Meta Ads API initialized successfully")
             except Exception as e:
                 logger.error(f"Failed to initialize Meta Ads API: {e}")
                 self.api = None
