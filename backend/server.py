@@ -384,11 +384,7 @@ async def get_us_states():
     
     return {"regions": states, "source": "STATIC"}
 
-import csv
-import os
-from pathlib import Path
 
-# Get DMA data from CSV
 def load_dma_data():
     """Load DMA data from CSV file"""
     dma_data = []
