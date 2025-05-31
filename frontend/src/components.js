@@ -1449,11 +1449,30 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
       
       try {
         console.log(`🔍 Searching for DMA: ${searchValue}`);
-        const newRegion = await GeographicAPI.getDMAData(searchValue);
         
-        if (newRegion && !regions.find(r => r.id === newRegion.id)) {
-          setRegions(prev => [newRegion, ...prev]);
-          console.log(`✅ Added new DMA: ${searchValue}`);
+        // First get the list of DMAs to find a match
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/dmas`);
+        if (response.ok) {
+          const data = await response.json();
+          const dmas = data.regions || [];
+          
+          // Find matching DMA by name or code
+          const matchingDMA = dmas.find(dma => 
+            dma.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            dma.id === searchValue || dma.code === parseInt(searchValue)
+          );
+          
+          if (matchingDMA) {
+            // Get detailed DMA data
+            const newRegion = await GeographicAPI.getDMAData(matchingDMA.id);
+            
+            if (newRegion && !regions.find(r => r.id === newRegion.id)) {
+              setRegions(prev => [newRegion, ...prev]);
+              console.log(`✅ Added new DMA: ${searchValue}`);
+            }
+          } else {
+            console.log(`❌ No DMA found matching: ${searchValue}`);
+          }
         }
       } catch (error) {
         console.error('Error searching for DMA:', error);
