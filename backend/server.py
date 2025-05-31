@@ -498,23 +498,41 @@ def get_zip_location_name(zip_code: str) -> str:
     if prefix in zip_locations:
         return zip_locations[prefix]
     
-    # Fall back to state-level matching based on first digit
+    # Fall back to state-level matching based on first digit and patterns
     first_digit = zip_code[0]
-    state_map = {
-        '0': 'Massachusetts',
-        '1': 'New York', 
-        '2': 'Washington DC',
-        '3': 'Florida',
-        '4': 'Georgia',
-        '5': 'Alabama',
-        '6': 'Illinois',
-        '7': 'Texas',
-        '8': 'Colorado',
-        '9': 'California'
-    }
+    first_two = zip_code[:2] if len(zip_code) >= 2 else zip_code[0]
     
-    if first_digit in state_map:
-        return f"{zip_code}, {state_map[first_digit]}"
+    # More accurate state mapping based on ZIP code patterns
+    if first_two in ['06']:
+        return f"{zip_code}, Connecticut"
+    elif first_two in ['01', '02']:
+        return f"{zip_code}, Massachusetts"  
+    elif first_two in ['02']:
+        return f"{zip_code}, Rhode Island"
+    elif first_two in ['03']:
+        return f"{zip_code}, New Hampshire"
+    elif first_two in ['04']:
+        return f"{zip_code}, Maine"
+    elif first_two in ['05']:
+        return f"{zip_code}, Vermont"
+    elif first_digit == '1':
+        return f"{zip_code}, New York"
+    elif first_digit == '2':
+        return f"{zip_code}, Washington DC area"
+    elif first_digit == '3':
+        return f"{zip_code}, Florida"
+    elif first_digit == '4':
+        return f"{zip_code}, Georgia"
+    elif first_digit == '5':
+        return f"{zip_code}, Alabama"
+    elif first_digit == '6':
+        return f"{zip_code}, Illinois"
+    elif first_digit == '7':
+        return f"{zip_code}, Texas"
+    elif first_digit == '8':
+        return f"{zip_code}, Colorado"
+    elif first_digit == '9':
+        return f"{zip_code}, California"
     
     return f"{zip_code}, US"
 
