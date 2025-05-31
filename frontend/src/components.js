@@ -1533,10 +1533,10 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                         )}
                         {regionType === 'zip' && (
                           <div className="grid grid-cols-2 gap-4">
-                            <span>Population: {region.population}</span>
-                            <span>Median Income: {region.medianIncome}</span>
-                            <span>Avg Age: {region.avgAge}</span>
-                            <span>Density: {region.density}</span>
+                            <span>Population: {region.demographics?.population?.toLocaleString() || 'N/A'}</span>
+                            <span>Median Income: ${region.demographics?.medianHouseholdIncome?.toLocaleString() || 'N/A'}</span>
+                            <span>Median Age: {region.demographics?.medianAge || 'N/A'}</span>
+                            <span>Property Value: ${region.demographics?.medianPropertyValue?.toLocaleString() || 'N/A'}</span>
                           </div>
                         )}
                         {regionType === 'dma' && (
