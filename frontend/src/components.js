@@ -1349,6 +1349,8 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [showSimilarityAnalysis, setShowSimilarityAnalysis] = useState(false);
   const [selectedRegionForAnalysis, setSelectedRegionForAnalysis] = useState(null);
   const [showCSVUpload, setShowCSVUpload] = useState(false);
+  const [showLiftTestConfig, setShowLiftTestConfig] = useState(false);
+  const [liftTestResults, setLiftTestResults] = useState(null);
 
   // CSV upload handling
   const handleCSVUpload = (event) => {
