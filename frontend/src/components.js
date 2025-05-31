@@ -1868,6 +1868,12 @@ const LiftTestsList = () => {
           </div>
         ))}
       </div>
+
+      <LiftTestDetailModal
+        isOpen={!!selectedTestId}
+        onClose={() => setSelectedTestId(null)}
+        testId={selectedTestId}
+      />
     </div>
   );
 };
