@@ -229,6 +229,87 @@ const matchingModel = new DemographicMatchingModel({
 const realAPIService = new RealAPIService();
 
 // Enhanced Geographic API Service with real data integration
+// Real-time calculation functions for test design recommendations
+const calculateTestDuration = (regions) => {
+  if (!regions || regions.length === 0) return 'N/A';
+  
+  // Calculate total population across all regions
+  const totalPopulation = regions.reduce((sum, region) => {
+    const pop = region.demographics?.population || region.population || 0;
+    return sum + pop;
+  }, 0);
+  
+  // Base calculation on population size and statistical requirements
+  if (totalPopulation > 1000000) {
+    return '14-21 days';
+  } else if (totalPopulation > 500000) {
+    return '21-28 days';
+  } else if (totalPopulation > 100000) {
+    return '28-35 days';
+  } else {
+    return '35-42 days';
+  }
+};
+
+const calculateStatisticalPower = (regions) => {
+  if (!regions || regions.length === 0) return 'N/A';
+  
+  // Calculate based on sample size and regional diversity
+  const totalPopulation = regions.reduce((sum, region) => {
+    const pop = region.demographics?.population || region.population || 0;
+    return sum + pop;
+  }, 0);
+  
+  const regionCount = regions.length;
+  
+  // Higher population and more regions = higher statistical power
+  let power = 60; // Base power
+  
+  if (totalPopulation > 1000000) power += 20;
+  else if (totalPopulation > 500000) power += 15;
+  else if (totalPopulation > 100000) power += 10;
+  
+  if (regionCount > 10) power += 10;
+  else if (regionCount > 5) power += 5;
+  
+  // Cap at 95%
+  power = Math.min(power, 95);
+  
+  return `${power}%`;
+};
+
+const calculateDemographicBalance = (regions) => {
+  if (!regions || regions.length === 0) return 'N/A';
+  
+  // Calculate demographic diversity score
+  const incomes = regions.map(region => 
+    region.demographics?.medianHouseholdIncome || region.medianIncome || 50000
+  ).filter(income => income > 0);
+  
+  const ages = regions.map(region => 
+    region.demographics?.medianAge || region.avgAge || 35
+  ).filter(age => age > 0);
+  
+  if (incomes.length === 0 || ages.length === 0) return 'N/A';
+  
+  // Calculate coefficient of variation for income and age
+  const incomeAvg = incomes.reduce((a, b) => a + b, 0) / incomes.length;
+  const ageAvg = ages.reduce((a, b) => a + b, 0) / ages.length;
+  
+  const incomeStdDev = Math.sqrt(incomes.reduce((sq, n) => sq + Math.pow(n - incomeAvg, 2), 0) / incomes.length);
+  const ageStdDev = Math.sqrt(ages.reduce((sq, n) => sq + Math.pow(n - ageAvg, 2), 0) / ages.length);
+  
+  const incomeCV = incomeStdDev / incomeAvg;
+  const ageCV = ageStdDev / ageAvg;
+  
+  // Higher diversity = lower balance score (we want balanced groups)
+  const diversityScore = (incomeCV + ageCV) / 2;
+  const balanceScore = Math.max(60, 100 - (diversityScore * 200));
+  
+  return `${Math.round(balanceScore)}%`;
+};
+
+// GeographicAPI object
 const GeographicAPI = {
   // Get ZIP code data from our backend API
   async getZipCodeData(zipCode) {
