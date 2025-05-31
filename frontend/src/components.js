@@ -1801,7 +1801,8 @@ const LiftTestsList = () => {
         {liftTests.map((test) => (
           <div
             key={test.id}
-            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => setSelectedTestId(test.id)}
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex-1">
@@ -1813,6 +1814,9 @@ const LiftTestsList = () => {
                     {test.status}
                   </span>
                 </div>
+              </div>
+              <div className="text-xs text-blue-600 hover:text-blue-800">
+                View Details →
               </div>
             </div>
 
