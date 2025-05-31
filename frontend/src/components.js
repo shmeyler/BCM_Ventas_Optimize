@@ -1339,6 +1339,149 @@ const LiftTestAPI = {
 };
 
 // Enhanced Geo Testing Dashboard Component with States, ZIP codes, and DMAs
+// Lift Tests List Component
+const LiftTestsList = () => {
+  const [liftTests, setLiftTests] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadLiftTests();
+  }, []);
+
+  const loadLiftTests = async () => {
+    setLoading(true);
+    try {
+      const tests = await LiftTestAPI.getLiftTests();
+      setLiftTests(tests);
+    } catch (error) {
+      console.error('Error loading lift tests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPlatformIcon = (platform) => {
+    switch (platform) {
+      case 'meta': return '📘';
+      case 'google': return '🔍';
+      case 'pinterest': return '📌';
+      case 'tiktok': return '🎵';
+      default: return '📊';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bcm-orange mx-auto"></div>
+        <p className="text-sm text-gray-500 mt-2">Loading lift tests...</p>
+      </div>
+    );
+  }
+
+  if (liftTests.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <div className="text-4xl mb-4">📊</div>
+        <p className="text-sm">No lift tests created yet</p>
+        <p className="text-xs text-gray-400 mt-1">Configure a lift test to get started</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="font-semibold text-gray-900">Your Lift Tests ({liftTests.length})</h4>
+        <button
+          onClick={loadLiftTests}
+          className="text-xs text-bcm-orange hover:text-bcm-orange-dark"
+        >
+          Refresh
+        </button>
+      </div>
+      
+      <div className="space-y-3 max-h-96 overflow-y-auto">
+        {liftTests.map((test) => (
+          <div
+            key={test.id}
+            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex-1">
+                <h5 className="font-medium text-gray-900 text-sm">{test.test_name}</h5>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-lg">{getPlatformIcon(test.platform)}</span>
+                  <span className="text-xs text-gray-500 capitalize">{test.platform}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(test.status)}`}>
+                    {test.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+              <div>
+                <span className="font-medium">Test Type:</span><br />
+                <span className="capitalize">{test.test_type.replace('_', ' ')}</span>
+              </div>
+              <div>
+                <span className="font-medium">Regions:</span><br />
+                <span>{test.test_regions.length} test, {test.control_regions.length} control</span>
+              </div>
+              <div>
+                <span className="font-medium">Duration:</span><br />
+                <span>{test.start_date ? new Date(test.start_date).toLocaleDateString() : 'Not set'} - {test.end_date ? new Date(test.end_date).toLocaleDateString() : 'Not set'}</span>
+              </div>
+              <div>
+                <span className="font-medium">Budget:</span><br />
+                <span>{test.budget ? `$${test.budget.toLocaleString()}` : 'Not set'}</span>
+              </div>
+            </div>
+
+            {test.results && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900">{test.results.lift_percent}%</div>
+                    <div className="text-gray-500">Lift</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-medium text-gray-900">{test.results.p_value}</div>
+                    <div className="text-gray-500">P-Value</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`font-medium ${test.results.statistical_significance ? 'text-green-600' : 'text-red-600'}`}>
+                      {test.results.statistical_significance ? 'Significant' : 'Not Sig.'}
+                    </div>
+                    <div className="text-gray-500">Result</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="text-xs text-gray-400">
+                Created: {new Date(test.created_at).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Lift Test Configuration Modal
 const LiftTestConfigModal = ({ isOpen, onClose, selectedRegions, onCreateTest }) => {
   const [testConfig, setTestConfig] = useState({
