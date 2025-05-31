@@ -245,11 +245,7 @@ test_plan:
     - "CSV Upload Functionality"
     - "Geographic States Endpoint"
     - "Geographic DMAs Endpoint"
-    - "Geographic ZIP Code Endpoint"
-    - "Geographic Multiple ZIP Codes Endpoint"
-  stuck_tasks:
-    - "Geographic ZIP Code Endpoint"
-    - "Geographic Multiple ZIP Codes Endpoint"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
