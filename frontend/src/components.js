@@ -1335,6 +1335,44 @@ const LiftTestAPI = {
       console.error('Error getting recommendations:', error);
     }
     return null;
+  },
+
+  async deleteTest(testId) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/${testId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        console.log('✅ Test deleted successfully');
+        return true;
+      } else {
+        throw new Error(`Failed to delete test: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error deleting test:', error);
+      return false;
+    }
+  },
+
+  async updateTestStatus(testId, status) {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/lift-test/${testId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      
+      if (response.ok) {
+        console.log(`✅ Test status updated to ${status}`);
+        return true;
+      } else {
+        throw new Error(`Failed to update status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error updating test status:', error);
+      return false;
+    }
   }
 };
 
