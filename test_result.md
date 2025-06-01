@@ -107,15 +107,18 @@ user_problem_statement: "Test the geo-testing dashboard application now that I'v
 backend:
   - task: "Backend API Root Endpoint"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
         comment: "The root endpoint at /api/ is responding correctly with a 'Hello World' message. Status code 200."
+      - working: false
+        agent: "testing"
+        comment: "The root endpoint at /api/ is now returning a 404 Not Found error. This may be due to changes in the API structure for the enhanced BCM VentasAI Optimize backend."
 
   - task: "Status Check GET Endpoint"
     implemented: true
@@ -179,6 +182,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "The GET /api/geographic/zip/{zip_code} endpoint is now working correctly with the Census Bureau API integration. Successfully tested with ZIP codes 06877 (Ridgefield, CT), 94920 (Tiburon, CA), and 10001 (New York, NY). All ZIP codes return real demographic data from the Census Bureau API with the correct source 'US_CENSUS_BUREAU'. The 06877 ZIP code correctly shows Connecticut, not Massachusetts. The endpoint also handles invalid ZIP code formats and non-existent ZIP codes correctly."
+      - working: false
+        agent: "testing"
+        comment: "The GET /api/zip-lookup/{zip_code} legacy endpoint is returning a 500 error instead of a 404 for invalid ZIP codes. This indicates an issue with error handling in the legacy endpoint."
   
   - task: "Geographic Multiple ZIP Codes Endpoint"
     implemented: true
@@ -194,6 +200,150 @@ backend:
       - working: true
         agent: "testing"
         comment: "The GET /api/geographic/zips endpoint is now working correctly with the Census Bureau API integration. Successfully tested with multiple ZIP codes (94920, 10001, 90210) and it returns real demographic data from the Census Bureau API for all valid ZIP codes. The endpoint also handles a mix of valid and invalid ZIP codes correctly, and properly enforces the maximum limit of 50 ZIP codes."
+        
+  - task: "Objectives API - Types Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/objectives/types endpoint is working correctly. It returns a list of objective types, primary KPIs, and secondary KPIs. The response includes conversions, revenue, ROAS, brand awareness, and traffic objective types with their descriptions."
+        
+  - task: "Objectives API - Validate Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/objectives/validate endpoint is working correctly. It validates objective configurations and returns appropriate responses for both valid and invalid objectives. It correctly validates measurement windows and required fields."
+        
+  - task: "Budget API - Validate Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/budget/validate endpoint is working correctly. It validates budget configurations and returns appropriate responses for both valid and invalid budgets. It correctly validates budget consistency and provides warnings for low budgets."
+        
+  - task: "Budget API - Recommendations Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/budget/recommendations endpoint is working correctly. It provides budget recommendations based on objective type and target population. The response includes minimum and recommended values for daily budget, duration, and total budget."
+        
+  - task: "Market Selection API - Meta Units Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/markets/meta-units endpoint is working correctly. It returns geographic units from Meta with their metrics. The response includes unit details like population, historical conversions, spend, revenue, and conversion rates."
+        
+  - task: "Market Selection API - Auto Select Endpoint"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "The POST /api/markets/auto-select endpoint is returning a 500 error instead of a 400 error for invalid parameters. This indicates an issue with error handling in the endpoint."
+        
+  - task: "Market Selection API - Similarity Analysis Endpoint"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "The POST /api/markets/similarity-analysis endpoint is returning a 500 error instead of a 400 error for invalid inputs. This indicates an issue with error handling in the endpoint."
+        
+  - task: "Statistical Analysis API - Optimize Assignment Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/analysis/optimize-assignment endpoint is working correctly. It optimizes the assignment of geographic units to treatment and control groups. The response includes balanced treatment and control groups with balance metrics."
+        
+  - task: "Statistical Analysis API - Power Analysis Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/analysis/power-analysis endpoint is working correctly. It calculates statistical power and minimum detectable effect for test and control groups. The response includes MSE, variance, bias, coverage, power, significance level, and minimum detectable effect."
+        
+  - task: "Statistical Analysis API - Quality Validation Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/analysis/quality-validation endpoint is working correctly. It validates the quality of test designs. The response includes statistical metrics, balance score, adequacy indicators, overall quality score, recommendations, and warnings."
+        
+  - task: "Enhanced Test Management API - Create Test Endpoint"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "The POST /api/tests/create-enhanced endpoint is returning a 422 error instead of a 400 error for invalid inputs. This indicates an issue with validation in the endpoint, though it does correctly validate the required fields."
+        
+  - task: "Enhanced Test Management API - Get Tests Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/tests/enhanced endpoint is working correctly. It returns a list of enhanced tests with their details. The response includes test IDs, names, descriptions, objectives, budgets, and market selections."
 
 frontend:
   - task: "Data Sources Button Functionality"
