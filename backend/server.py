@@ -12,6 +12,10 @@ import uuid
 import asyncio
 
 # Import our new models and services
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from models import (
     GeoLiftTest, TestObjective, BudgetConfiguration, MarketSelection,
     GeographicUnit, TestGroup, QualityIndicators, StatisticalMetrics,
