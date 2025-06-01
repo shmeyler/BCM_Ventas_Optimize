@@ -620,6 +620,262 @@ def check_backend_logs():
         print(f"Error checking backend logs: {str(e)}")
         return False
 
+def test_lift_test_endpoints():
+    """Test the lift test management endpoints."""
+    print_separator("Testing Lift Test Management Endpoints")
+    
+    results = {
+        "create_lift_test": False,
+        "get_lift_tests": False,
+        "get_specific_lift_test": False,
+        "power_analysis": False,
+        "recommendations": False
+    }
+    
+    # Create a test lift test
+    print("\n--- Testing lift test creation ---")
+    test_id = None
+    try:
+        # Generate test data
+        from datetime import datetime, timedelta
+        
+        test_name = f"Test Lift Test {int(datetime.now().timestamp())}"
+        start_date = datetime.now().strftime("%Y-%m-%d")
+        end_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        
+        test_data = {
+            "test_name": test_name,
+            "test_regions": ["10001", "90210"],
+            "control_regions": ["06877", "94920"],
+            "start_date": start_date,
+            "end_date": end_date,
+            "platform": "meta",
+            "test_type": "brand_lift",
+            "budget": 50000,
+            "metrics": ["impressions", "clicks", "conversions"]
+        }
+        
+        response = requests.post(f"{API_BASE_URL}/lift-test/create", json=test_data)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+        else:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Validate response structure
+            required_fields = ["id", "test_name", "test_regions", "control_regions", 
+                              "start_date", "end_date", "platform", "test_type", 
+                              "budget", "metrics", "status", "created_at"]
+            
+            valid_structure = True
+            for field in required_fields:
+                if field not in data:
+                    print(f"❌ Test failed: Response missing required field '{field}'")
+                    valid_structure = False
+                    break
+            
+            if valid_structure:
+                test_id = data.get("id")
+                print(f"✅ Test passed for lift test creation. Test ID: {test_id}")
+                results["create_lift_test"] = True
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+    
+    # Get all lift tests
+    print("\n--- Testing lift tests retrieval ---")
+    try:
+        response = requests.get(f"{API_BASE_URL}/lift-test")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+        else:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)[:500]}...")  # Print first 500 chars
+            
+            # Validate response structure
+            if "tests" not in data or "total" not in data:
+                print("❌ Test failed: Response missing required fields")
+            else:
+                tests = data.get("tests", [])
+                if "total" in data and data["total"] != len(tests):
+                    print(f"❌ Test failed: Total count ({data['total']}) doesn't match number of tests ({len(tests)})")
+                else:
+                    print(f"✅ Test passed for lift tests retrieval. Found {len(tests)} tests.")
+                    results["get_lift_tests"] = True
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+    
+    # If we have a test ID, test the specific test retrieval
+    if test_id:
+        print(f"\n--- Testing specific lift test retrieval for ID: {test_id} ---")
+        try:
+            response = requests.get(f"{API_BASE_URL}/lift-test/{test_id}")
+            print(f"Status Code: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"❌ Test failed: Unexpected status code {response.status_code}")
+                print(f"Response: {response.text}")
+            else:
+                data = response.json()
+                print(f"Response: {json.dumps(data, indent=2)}")
+                
+                # Validate response structure
+                required_fields = ["id", "test_name", "test_regions", "control_regions", 
+                                  "start_date", "end_date", "platform", "test_type", 
+                                  "budget", "metrics", "status", "created_at"]
+                
+                valid_structure = True
+                for field in required_fields:
+                    if field not in data:
+                        print(f"❌ Test failed: Response missing required field '{field}'")
+                        valid_structure = False
+                        break
+                
+                if valid_structure and data.get("id") == test_id:
+                    print(f"✅ Test passed for specific lift test retrieval")
+                    results["get_specific_lift_test"] = True
+                else:
+                    print(f"❌ Test failed: Retrieved test ID ({data.get('id')}) doesn't match requested ID ({test_id})")
+        except Exception as e:
+            print(f"❌ Test failed with error: {str(e)}")
+        
+        # Test power analysis
+        print(f"\n--- Testing power analysis calculation for test ID: {test_id} ---")
+        try:
+            power_data = {
+                "test_regions": ["10001", "90210"],
+                "control_regions": ["06877", "94920"]
+            }
+            
+            response = requests.post(f"{API_BASE_URL}/lift-test/{test_id}/power-analysis", json=power_data)
+            print(f"Status Code: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"❌ Test failed: Unexpected status code {response.status_code}")
+                print(f"Response: {response.text}")
+            else:
+                data = response.json()
+                print(f"Response: {json.dumps(data, indent=2)}")
+                
+                # Validate response structure
+                required_fields = ["test_id", "power", "minimum_detectable_effect", 
+                                  "test_population", "control_population", "total_population", 
+                                  "recommended_duration_days"]
+                
+                valid_structure = True
+                for field in required_fields:
+                    if field not in data:
+                        print(f"❌ Test failed: Response missing required field '{field}'")
+                        valid_structure = False
+                        break
+                
+                if valid_structure and data.get("test_id") == test_id:
+                    print(f"✅ Test passed for power analysis calculation")
+                    print(f"   Power: {data.get('power')}")
+                    print(f"   Minimum Detectable Effect: {data.get('minimum_detectable_effect')}")
+                    print(f"   Test Population: {data.get('test_population')}")
+                    print(f"   Control Population: {data.get('control_population')}")
+                    print(f"   Recommended Duration: {data.get('recommended_duration_days')} days")
+                    results["power_analysis"] = True
+                else:
+                    print(f"❌ Test failed: Power analysis test ID ({data.get('test_id')}) doesn't match requested ID ({test_id})")
+        except Exception as e:
+            print(f"❌ Test failed with error: {str(e)}")
+        
+        # Test recommendations
+        print(f"\n--- Testing test recommendations for test ID: {test_id} ---")
+        try:
+            response = requests.get(f"{API_BASE_URL}/lift-test/{test_id}/recommendations")
+            print(f"Status Code: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"❌ Test failed: Unexpected status code {response.status_code}")
+                print(f"Response: {response.text}")
+            else:
+                data = response.json()
+                print(f"Response: {json.dumps(data, indent=2)}")
+                
+                # Validate response structure
+                if "recommendations" not in data:
+                    print("❌ Test failed: Response missing recommendations field")
+                else:
+                    recommendations = data.get("recommendations", [])
+                    if not recommendations:
+                        print("❌ Test failed: No recommendations returned")
+                    else:
+                        print(f"✅ Test passed for test recommendations. Found {len(recommendations)} recommendations.")
+                        results["recommendations"] = True
+        except Exception as e:
+            print(f"❌ Test failed with error: {str(e)}")
+    
+    # Overall result
+    all_passed = all(results.values())
+    if all_passed:
+        print("\n✅ All lift test management tests passed")
+    else:
+        print("\n❌ Some lift test management tests failed")
+        for test, result in results.items():
+            print(f"  - {test}: {'✅' if result else '❌'}")
+    
+    return all_passed, test_id
+
+def test_meta_ads_endpoints():
+    """Test the Meta Ads API integration endpoints."""
+    print_separator("Testing Meta Ads API Endpoints")
+    
+    results = {
+        "validate_credentials": False
+    }
+    
+    # Test Meta credentials validation
+    print("\n--- Testing Meta credentials validation ---")
+    try:
+        response = requests.get(f"{API_BASE_URL}/meta/validate")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+        else:
+            data = response.json()
+            print(f"Response: {json.dumps(data, indent=2)}")
+            
+            # Validate response structure
+            required_fields = ["status", "message", "has_access_token", "has_ad_account"]
+            
+            valid_structure = True
+            for field in required_fields:
+                if field not in data:
+                    print(f"❌ Test failed: Response missing required field '{field}'")
+                    valid_structure = False
+                    break
+            
+            if valid_structure:
+                print(f"✅ Test passed for Meta credentials validation")
+                print(f"   Status: {data.get('status')}")
+                print(f"   Message: {data.get('message')}")
+                print(f"   Has Access Token: {data.get('has_access_token')}")
+                print(f"   Has Ad Account: {data.get('has_ad_account')}")
+                results["validate_credentials"] = True
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+    
+    # Overall result
+    all_passed = all(results.values())
+    if all_passed:
+        print("\n✅ All Meta Ads API tests passed")
+    else:
+        print("\n❌ Some Meta Ads API tests failed")
+        for test, result in results.items():
+            print(f"  - {test}: {'✅' if result else '❌'}")
+    
+    return all_passed
+
 def run_all_tests():
     """Run all tests and return results"""
     results = {
@@ -630,6 +886,8 @@ def run_all_tests():
         "dmas_endpoint_working": False,
         "zip_endpoint_working": False,
         "zips_endpoint_working": False,
+        "lift_test_endpoints_working": False,
+        "meta_ads_endpoints_working": False,
         "logs_checked": False
     }
     
@@ -657,7 +915,14 @@ def run_all_tests():
     # Test 7: Geographic Multiple ZIPs Endpoint
     results["zips_endpoint_working"] = test_zips_endpoint()
     
-    # Test 8: Check Backend Logs
+    # Test 8: Lift Test Management Endpoints
+    lift_test_result, test_id = test_lift_test_endpoints()
+    results["lift_test_endpoints_working"] = lift_test_result
+    
+    # Test 9: Meta Ads API Endpoints
+    results["meta_ads_endpoints_working"] = test_meta_ads_endpoints()
+    
+    # Test 10: Check Backend Logs
     results["logs_checked"] = check_backend_logs()
     
     # Print summary
@@ -669,6 +934,8 @@ def run_all_tests():
     print(f"GET /api/geographic/dmas working: {'✅' if results['dmas_endpoint_working'] else '❌'}")
     print(f"GET /api/geographic/zip/{'{zip_code}'} working: {'✅' if results['zip_endpoint_working'] else '❌'}")
     print(f"GET /api/geographic/zips working: {'✅' if results['zips_endpoint_working'] else '❌'}")
+    print(f"Lift test management endpoints working: {'✅' if results['lift_test_endpoints_working'] else '❌'}")
+    print(f"Meta Ads API endpoints working: {'✅' if results['meta_ads_endpoints_working'] else '❌'}")
     print(f"Backend logs checked: {'✅' if results['logs_checked'] else '❌'}")
     
     return results
