@@ -432,14 +432,22 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Data Sources Button Functionality"
-    - "Region Selection Toggle Functionality"
-    - "CSV Upload Functionality"
-    - "Geographic States Endpoint"
-    - "Geographic DMAs Endpoint"
-    - "Complete Geographic Functionality"
-    - "State Search Functionality"
-  stuck_tasks: []
+    - "Objectives API - Types Endpoint"
+    - "Objectives API - Validate Endpoint"
+    - "Budget API - Validate Endpoint"
+    - "Budget API - Recommendations Endpoint"
+    - "Market Selection API - Meta Units Endpoint"
+    - "Market Selection API - Auto Select Endpoint"
+    - "Market Selection API - Similarity Analysis Endpoint"
+    - "Statistical Analysis API - Optimize Assignment Endpoint"
+    - "Statistical Analysis API - Power Analysis Endpoint"
+    - "Statistical Analysis API - Quality Validation Endpoint"
+    - "Enhanced Test Management API - Create Test Endpoint"
+    - "Enhanced Test Management API - Get Tests Endpoint"
+  stuck_tasks:
+    - "Market Selection API - Auto Select Endpoint"
+    - "Market Selection API - Similarity Analysis Endpoint"
+    - "Enhanced Test Management API - Create Test Endpoint"
   test_all: false
   test_priority: "high_first"
 
