@@ -855,14 +855,14 @@ def test_create_enhanced_test():
         response = requests.get(f"{API_BASE_URL}/markets/meta-units")
         if response.status_code != 200:
             print(f"❌ Test failed: Could not get geographic units for testing")
-            return False
+            return (False, None)
         
         units_data = response.json()
         all_units = units_data.get("units", [])
         
         if not all_units or len(all_units) < 4:
             print("❌ Test failed: Not enough units for test creation")
-            return False
+            return (False, None)
         
         # Create test data
         test_data = {
@@ -896,7 +896,7 @@ def test_create_enhanced_test():
         if response.status_code != 200:
             print(f"❌ Test failed: Unexpected status code {response.status_code}")
             print(f"Response: {response.text}")
-            return False
+            return (False, None)
         
         data = response.json()
         print(f"Response: {json.dumps(data, indent=2)}")
@@ -906,7 +906,7 @@ def test_create_enhanced_test():
         for field in required_fields:
             if field not in data:
                 print(f"❌ Test failed: Response missing required field '{field}'")
-                return False
+                return (False, None)
         
         # Save test ID for other tests
         test_id = data.get("test_id")
@@ -925,14 +925,14 @@ def test_create_enhanced_test():
         
         if response.status_code != 400:
             print(f"❌ Test failed: Expected status code 400, got {response.status_code}")
-            return False
+            return (False, None)
         
         print("✅ Test passed")
-        return True, test_id
+        return (True, test_id)
         
     except Exception as e:
         print(f"❌ Test failed with error: {str(e)}")
-        return False, None
+        return (False, None)
 
 def test_get_enhanced_tests():
     """Test GET /api/tests/enhanced endpoint"""
