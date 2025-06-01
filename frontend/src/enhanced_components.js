@@ -1701,3 +1701,16 @@ const ApprovalLaunchStep = ({ onComplete, testConfig }) => {
     </div>
   );
 };
+
+// Export enhanced components
+const EnhancedComponents = {
+  Enhanced5StepWorkflow,
+  EnhancedGeoTestingDashboard,
+  ObjectivesStep,
+  BudgetStep,
+  MarketSelectionStep,
+  StatisticalAnalysisStep,
+  ApprovalLaunchStep
+};
+
+export default EnhancedComponents;
