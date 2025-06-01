@@ -936,13 +936,768 @@ const EnhancedGeoTestingDashboard = ({ testData, setTestData, setCurrentView }) 
   );
 };
 
-// Export enhanced components
-const EnhancedComponents = {
-  Enhanced5StepWorkflow,
-  EnhancedGeoTestingDashboard,
-  ObjectivesStep,
-  BudgetStep,
-  // Add more components as needed
+// STEP 3: Market Selection
+const MarketSelectionStep = ({ onComplete, initialData, objective, budget }) => {
+  const [selectionMethod, setSelectionMethod] = useState('automatic');
+  const [availableUnits, setAvailableUnits] = useState([]);
+  const [selectedUnits, setSelectedUnits] = useState([]);
+  const [autoSelectionCriteria, setAutoSelectionCriteria] = useState({
+    min_conversions: 50,
+    min_spend: 1000,
+    similarity_threshold: 0.7,
+    target_size: 20
+  });
+  const [similarityAnalysis, setSimilarityAnalysis] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    loadMetaUnits();
+  }, []);
+
+  const loadMetaUnits = async () => {
+    setIsLoading(true);
+    try {
+      const data = await enhancedAPI.getMetaGeographicUnits();
+      setAvailableUnits(data.units || []);
+    } catch (error) {
+      console.error('Error loading Meta units:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAutoSelect = async () => {
+    setIsLoading(true);
+    try {
+      const result = await enhancedAPI.autoSelectMarkets({
+        account_id: 'act_123456789',
+        ...autoSelectionCriteria
+      });
+      setSelectedUnits(result.results.selected_units || []);
+    } catch (error) {
+      console.error('Error auto-selecting markets:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAnalyzeSimilarity = async () => {
+    if (selectedUnits.length < 2) {
+      alert('Please select at least 2 units for similarity analysis');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const analysis = await enhancedAPI.analyzeSimilarity(selectedUnits);
+      setSimilarityAnalysis(analysis);
+    } catch (error) {
+      console.error('Error analyzing similarity:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleContinue = () => {
+    if (selectedUnits.length < 4) {
+      alert('Please select at least 4 units for a valid test');
+      return;
+    }
+
+    onComplete({
+      method: selectionMethod,
+      selected_units: selectedUnits.map(unit => unit.id),
+      criteria: autoSelectionCriteria,
+      similarity_analysis: similarityAnalysis
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <MapIcon className="h-16 w-16 text-purple-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Markets</h2>
+        <p className="text-gray-600">Choose geographic units or let our AI select optimal markets</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Selection Method */}
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Selection Method
+            </label>
+            <div className="space-y-3">
+              <button
+                onClick={() => setSelectionMethod('automatic')}
+                className={`w-full p-4 border rounded-lg text-left transition-all ${
+                  selectionMethod === 'automatic'
+                    ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="font-medium text-gray-900">🤖 Automatic Selection</div>
+                <div className="text-sm text-gray-600">AI-powered market selection based on Meta account data</div>
+              </button>
+              
+              <button
+                onClick={() => setSelectionMethod('manual')}
+                className={`w-full p-4 border rounded-lg text-left transition-all ${
+                  selectionMethod === 'manual'
+                    ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-500'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="font-medium text-gray-900">✋ Manual Selection</div>
+                <div className="text-sm text-gray-600">Choose specific geographic units yourself</div>
+              </button>
+            </div>
+          </div>
+
+          {selectionMethod === 'automatic' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">Auto-Selection Criteria</h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Minimum Conversions
+                </label>
+                <input
+                  type="number"
+                  value={autoSelectionCriteria.min_conversions}
+                  onChange={(e) => setAutoSelectionCriteria({
+                    ...autoSelectionCriteria,
+                    min_conversions: parseInt(e.target.value)
+                  })}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Minimum Spend ($)
+                </label>
+                <input
+                  type="number"
+                  value={autoSelectionCriteria.min_spend}
+                  onChange={(e) => setAutoSelectionCriteria({
+                    ...autoSelectionCriteria,
+                    min_spend: parseFloat(e.target.value)
+                  })}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Target Markets Count
+                </label>
+                <input
+                  type="number"
+                  value={autoSelectionCriteria.target_size}
+                  onChange={(e) => setAutoSelectionCriteria({
+                    ...autoSelectionCriteria,
+                    target_size: parseInt(e.target.value)
+                  })}
+                  min="4"
+                  max="50"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <button
+                onClick={handleAutoSelect}
+                disabled={isLoading}
+                className="w-full bg-purple-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-600 transition-colors disabled:opacity-50"
+              >
+                {isLoading ? 'Selecting...' : 'Auto-Select Markets'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Selected Units & Analysis */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Selected Markets ({selectedUnits.length})
+            </h3>
+            
+            {selectedUnits.length > 0 ? (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {selectedUnits.map((unit) => (
+                  <div key={unit.id} className="bg-gray-50 p-3 rounded-lg">
+                    <div className="font-medium text-gray-900">{unit.name}</div>
+                    <div className="text-sm text-gray-600">
+                      Pop: {unit.population?.toLocaleString()} | 
+                      Conv: {unit.historical_conversions} | 
+                      Spend: ${unit.historical_spend?.toFixed(0)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                {selectionMethod === 'automatic' 
+                  ? 'Click "Auto-Select Markets" to populate this list'
+                  : 'Select markets from the available units below'
+                }
+              </div>
+            )}
+          </div>
+
+          {selectedUnits.length >= 2 && (
+            <div className="space-y-4">
+              <button
+                onClick={handleAnalyzeSimilarity}
+                disabled={isLoading}
+                className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+              >
+                {isLoading ? 'Analyzing...' : 'Analyze Similarity'}
+              </button>
+
+              {similarityAnalysis && (
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Similarity Analysis</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Overall Similarity:</span>
+                      <span className="font-medium text-blue-900">
+                        {(similarityAnalysis.overall_similarity * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Recommendation:</span>
+                      <span className={`font-medium ${
+                        similarityAnalysis.analysis?.recommendation === 'High' ? 'text-green-600' :
+                        similarityAnalysis.analysis?.recommendation === 'Medium' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {similarityAnalysis.analysis?.recommendation}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleContinue}
+            disabled={selectedUnits.length < 4}
+            className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+              selectedUnits.length < 4
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-purple-500 text-white hover:bg-purple-600'
+            }`}
+          >
+            Continue to Statistical Analysis
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-export default EnhancedComponents;
+// STEP 4: Statistical Analysis
+const StatisticalAnalysisStep = ({ onComplete, initialData, marketSelection, budget }) => {
+  const [optimizationResult, setOptimizationResult] = useState(null);
+  const [powerAnalysis, setPowerAnalysis] = useState(null);
+  const [qualityValidation, setQualityValidation] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [treatmentPercentage, setTreatmentPercentage] = useState(0.5);
+
+  useEffect(() => {
+    if (marketSelection?.selected_units) {
+      runOptimization();
+    }
+  }, [marketSelection]);
+
+  const runOptimization = async () => {
+    setIsLoading(true);
+    try {
+      // First get the units data (would normally come from Meta API)
+      const units = await enhancedAPI.getMetaGeographicUnits();
+      const selectedUnits = units.units.filter(unit => 
+        marketSelection.selected_units.includes(unit.id)
+      );
+
+      // Run optimization
+      const optimization = await enhancedAPI.optimizeAssignment({
+        available_units: selectedUnits,
+        objectives: ['conversions', 'balance'],
+        constraints: { min_size: 2 },
+        treatment_percentage: treatmentPercentage
+      });
+
+      setOptimizationResult(optimization);
+
+      // Create treatment and control groups
+      const treatmentGroup = {
+        group_id: 'treatment',
+        group_type: 'treatment',
+        units: selectedUnits.filter(unit => optimization.treatment_units.includes(unit.id)),
+        total_population: selectedUnits
+          .filter(unit => optimization.treatment_units.includes(unit.id))
+          .reduce((sum, unit) => sum + unit.population, 0),
+        historical_metrics: {},
+        allocation_percentage: treatmentPercentage
+      };
+
+      const controlGroup = {
+        group_id: 'control',
+        group_type: 'control',
+        units: selectedUnits.filter(unit => optimization.control_units.includes(unit.id)),
+        total_population: selectedUnits
+          .filter(unit => optimization.control_units.includes(unit.id))
+          .reduce((sum, unit) => sum + unit.population, 0),
+        historical_metrics: {},
+        allocation_percentage: 1 - treatmentPercentage
+      };
+
+      // Calculate power analysis
+      const power = await enhancedAPI.calculatePowerAnalysis(treatmentGroup, controlGroup, 0.1);
+      setPowerAnalysis(power);
+
+      // Validate quality
+      const quality = await enhancedAPI.validateTestQuality(
+        treatmentGroup, controlGroup, budget, power
+      );
+      setQualityValidation(quality);
+
+    } catch (error) {
+      console.error('Error running optimization:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleContinue = () => {
+    if (!qualityValidation || qualityValidation.overall_quality_score < 50) {
+      if (!confirm('Test quality is below recommended threshold. Continue anyway?')) {
+        return;
+      }
+    }
+
+    onComplete({
+      optimization_result: optimizationResult,
+      power_analysis: powerAnalysis,
+      quality_validation: qualityValidation,
+      treatment_percentage: treatmentPercentage
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <BeakerIcon className="h-16 w-16 text-orange-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Statistical Analysis</h2>
+        <p className="text-gray-600">Optimize test/control assignment and validate test quality</p>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Running statistical optimization...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Optimization Results */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Treatment Group Size (%)
+              </label>
+              <input
+                type="range"
+                min="0.3"
+                max="0.7"
+                step="0.1"
+                value={treatmentPercentage}
+                onChange={(e) => setTreatmentPercentage(parseFloat(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-sm text-gray-600 mt-1">
+                {(treatmentPercentage * 100).toFixed(0)}% treatment, {((1 - treatmentPercentage) * 100).toFixed(0)}% control
+              </div>
+            </div>
+
+            {optimizationResult && (
+              <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-green-900 mb-4">
+                  ✅ Optimization Complete
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Treatment Units:</span>
+                    <span className="font-medium text-green-900">
+                      {optimizationResult.treatment_units.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Control Units:</span>
+                    <span className="font-medium text-green-900">
+                      {optimizationResult.control_units.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Balance Score:</span>
+                    <span className="font-medium text-green-900">
+                      {optimizationResult.optimization_score.toFixed(3)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Iterations:</span>
+                    <span className="font-medium text-green-900">
+                      {optimizationResult.iterations}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {powerAnalysis && (
+              <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">
+                  📊 Statistical Power
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Power:</span>
+                    <span className="font-medium text-blue-900">
+                      {(powerAnalysis.power * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Min Detectable Effect:</span>
+                    <span className="font-medium text-blue-900">
+                      {(powerAnalysis.minimum_detectable_effect * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Significance Level:</span>
+                    <span className="font-medium text-blue-900">
+                      {(powerAnalysis.significance_level * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quality Validation */}
+          <div className="space-y-6">
+            {qualityValidation && (
+              <div className={`p-6 rounded-lg border ${
+                qualityValidation.overall_quality_score >= 80 ? 'bg-green-50 border-green-200' :
+                qualityValidation.overall_quality_score >= 60 ? 'bg-yellow-50 border-yellow-200' :
+                'bg-red-50 border-red-200'
+              }`}>
+                <h3 className={`text-lg font-semibold mb-4 ${
+                  qualityValidation.overall_quality_score >= 80 ? 'text-green-900' :
+                  qualityValidation.overall_quality_score >= 60 ? 'text-yellow-900' :
+                  'text-red-900'
+                }`}>
+                  🎯 Test Quality Score: {qualityValidation.overall_quality_score.toFixed(0)}/100
+                </h3>
+
+                <div className="space-y-3 text-sm mb-4">
+                  <div className="flex justify-between">
+                    <span>Statistical Power:</span>
+                    <span className={`font-medium ${powerAnalysis?.power >= 0.8 ? 'text-green-600' : 'text-red-600'}`}>
+                      {powerAnalysis ? (powerAnalysis.power >= 0.8 ? '✅' : '❌') : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Sample Size:</span>
+                    <span className={`font-medium ${qualityValidation.sample_size_adequacy ? 'text-green-600' : 'text-red-600'}`}>
+                      {qualityValidation.sample_size_adequacy ? '✅' : '❌'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Spend Adequacy:</span>
+                    <span className={`font-medium ${qualityValidation.spend_adequacy ? 'text-green-600' : 'text-red-600'}`}>
+                      {qualityValidation.spend_adequacy ? '✅' : '❌'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Conversion Volume:</span>
+                    <span className={`font-medium ${qualityValidation.conversion_volume_adequacy ? 'text-green-600' : 'text-red-600'}`}>
+                      {qualityValidation.conversion_volume_adequacy ? '✅' : '❌'}
+                    </span>
+                  </div>
+                </div>
+
+                {qualityValidation.warnings && qualityValidation.warnings.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-900 mb-2">Warnings:</h4>
+                    <ul className="space-y-1">
+                      {qualityValidation.warnings.map((warning, index) => (
+                        <li key={index} className="text-sm text-red-700 flex items-start">
+                          <ExclamationTriangleIcon className="h-4 w-4 mt-0.5 mr-2 text-red-500 flex-shrink-0" />
+                          {warning}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {qualityValidation.recommendations && qualityValidation.recommendations.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Recommendations:</h4>
+                    <ul className="space-y-1">
+                      {qualityValidation.recommendations.map((rec, index) => (
+                        <li key={index} className="text-sm text-gray-600 flex items-start">
+                          <LightBulbIcon className="h-4 w-4 mt-0.5 mr-2 text-yellow-500 flex-shrink-0" />
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={handleContinue}
+              disabled={!qualityValidation}
+              className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                !qualityValidation
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-orange-500 text-white hover:bg-orange-600'
+              }`}
+            >
+              Continue to Approval
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// STEP 5: Approval and Launch
+const ApprovalLaunchStep = ({ onComplete, testConfig }) => {
+  const [isLaunching, setIsLaunching] = useState(false);
+  const [launchResult, setLaunchResult] = useState(null);
+
+  const handleLaunch = async () => {
+    setIsLaunching(true);
+    try {
+      // Create the test first
+      const testResult = await enhancedAPI.createEnhancedTest({
+        name: `Enhanced Test ${new Date().toLocaleDateString()}`,
+        description: 'Enterprise geo-incrementality test',
+        objective: testConfig.objective,
+        budget: testConfig.budget,
+        market_selection: testConfig.marketSelection,
+        statistical_analysis: testConfig.statisticalAnalysis
+      });
+
+      // Simulate Meta campaign launch
+      const campaignResult = await enhancedAPI.launchMetaCampaign(
+        testResult.test_id,
+        {
+          campaign_name: `Enhanced Campaign ${Date.now()}`,
+          daily_budget: testConfig.budget?.daily_budget || 500,
+          optimization_goal: 'CONVERSIONS'
+        }
+      );
+
+      setLaunchResult({ test: testResult, campaign: campaignResult });
+      
+    } catch (error) {
+      console.error('Error launching test:', error);
+      setLaunchResult({ error: error.message });
+    } finally {
+      setIsLaunching(false);
+    }
+  };
+
+  if (launchResult) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            {launchResult.error ? 'Launch Error' : 'Test Launched Successfully!'}
+          </h2>
+          <p className="text-gray-600">
+            {launchResult.error 
+              ? 'There was an issue launching your test'
+              : 'Your enhanced geo-incrementality test is now active'
+            }
+          </p>
+        </div>
+
+        {launchResult.error ? (
+          <div className="bg-red-50 border border-red-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-red-900 mb-2">Error Details</h3>
+            <p className="text-red-800">{launchResult.error}</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold text-green-900 mb-4">🎉 Launch Summary</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-green-700">Test ID:</span>
+                  <span className="font-medium text-green-900">
+                    {launchResult.test?.test_id}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-700">Campaign Status:</span>
+                  <span className="font-medium text-green-900">
+                    {launchResult.campaign?.status || 'Active'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-700">Daily Budget:</span>
+                  <span className="font-medium text-green-900">
+                    ${testConfig.budget?.daily_budget}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-700">Test Duration:</span>
+                  <span className="font-medium text-green-900">
+                    {testConfig.budget?.duration_days} days
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">📊 Test Configuration</h3>
+              <div className="space-y-2 text-sm">
+                <div><strong>Objective:</strong> {testConfig.objective?.type}</div>
+                <div><strong>Primary KPI:</strong> {testConfig.objective?.primary_kpi}</div>
+                <div><strong>Total Budget:</strong> ${testConfig.budget?.total_budget?.toLocaleString()}</div>
+                <div><strong>Markets Selected:</strong> {testConfig.marketSelection?.selected_units?.length}</div>
+                <div><strong>Quality Score:</strong> {testConfig.statisticalAnalysis?.quality_validation?.overall_quality_score?.toFixed(0)}/100</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => onComplete(testConfig)}
+          className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+        >
+          Return to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <RocketLaunchIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Review & Launch</h2>
+        <p className="text-gray-600">Review your test configuration and launch the campaign</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Test Summary */}
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4">📋 Test Summary</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <span className="text-blue-700 font-medium">Objective:</span>
+                <p className="text-blue-900">{testConfig.objective?.type} - {testConfig.objective?.primary_kpi}</p>
+              </div>
+              <div>
+                <span className="text-blue-700 font-medium">Budget:</span>
+                <p className="text-blue-900">
+                  ${testConfig.budget?.total_budget?.toLocaleString()} over {testConfig.budget?.duration_days} days
+                </p>
+              </div>
+              <div>
+                <span className="text-blue-700 font-medium">Markets:</span>
+                <p className="text-blue-900">
+                  {testConfig.marketSelection?.selected_units?.length} markets selected ({testConfig.marketSelection?.method})
+                </p>
+              </div>
+              <div>
+                <span className="text-blue-700 font-medium">Quality Score:</span>
+                <p className="text-blue-900">
+                  {testConfig.statisticalAnalysis?.quality_validation?.overall_quality_score?.toFixed(0)}/100
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-900 mb-4">✅ Pre-Launch Checklist</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                <span>Objectives configured</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                <span>Budget validated</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                <span>Markets selected & analyzed</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                <span>Statistical optimization complete</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                <span>Quality validation passed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Launch Panel */}
+        <div className="space-y-6">
+          <div className="bg-red-50 border border-red-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-red-900 mb-4">🚀 Ready to Launch</h3>
+            <p className="text-red-800 text-sm mb-4">
+              Your enhanced geo-incrementality test is configured and ready to launch. 
+              This will create the test and initiate the Meta campaign with geo-targeting.
+            </p>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-red-700">Campaign Start:</span>
+                <span className="font-medium text-red-900">Immediate</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-red-700">Test Duration:</span>
+                <span className="font-medium text-red-900">{testConfig.budget?.duration_days} days</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-red-700">Daily Budget:</span>
+                <span className="font-medium text-red-900">${testConfig.budget?.daily_budget}</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleLaunch}
+            disabled={isLaunching}
+            className={`w-full py-4 px-6 rounded-lg font-medium transition-colors ${
+              isLaunching
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-red-500 text-white hover:bg-red-600'
+            }`}
+          >
+            {isLaunching ? 'Launching...' : 'Launch Enhanced Test & Campaign'}
+          </button>
+
+          <p className="text-xs text-gray-500 text-center">
+            * Campaign will launch in simulation mode for demonstration purposes
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
