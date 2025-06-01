@@ -144,6 +144,7 @@ class MetaDataService:
             business_id="123456789",
             geographic_insights=[],
             conversion_data={},
+            spend_data={},
             performance_metrics={
                 'total_spend_90d': random.uniform(50000, 200000),
                 'total_conversions_90d': random.randint(1000, 5000),
