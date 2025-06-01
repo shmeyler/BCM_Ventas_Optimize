@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 # Base URL from frontend/.env
-BASE_URL = "https://75eb7d53-02b9-49ef-b414-bc06129d461f.preview.emergentagent.com"
+BASE_URL = "https://1502ab0f-91f7-418e-946e-af806b35d68b.preview.emergentagent.com"
 API_BASE_URL = f"{BASE_URL}/api"
 
 def print_separator(title: str):
