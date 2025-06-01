@@ -1,5 +1,6 @@
 import random
 import json
+import numpy as np
 from typing import Dict, List, Any
 from models import MetaAccountData, GeographicUnit
 from datetime import datetime, timedelta
