@@ -438,11 +438,12 @@ const ObjectivesStep = ({ onComplete, initialData }) => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Primary KPI</option>
-              {objectiveTypesData.primary_kpis?.map((kpi) => (
-                <option key={kpi} value={kpi} className="capitalize">
-                  {kpi.replace('_', ' ')}
-                </option>
-              ))}
+              <option value="purchase">Purchase</option>
+              <option value="add_to_cart">Add To Cart</option>
+              <option value="lead">Lead</option>
+              <option value="page_view">Page View</option>
+              <option value="app_install">App Install</option>
+              <option value="custom_conversion">Custom Conversion</option>
             </select>
           </div>
 
