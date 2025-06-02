@@ -408,7 +408,7 @@ const ObjectivesStep = ({ onComplete, initialData }) => {
               Objective Type
             </label>
             <div className="grid grid-cols-1 gap-3">
-              {objectiveTypes.objective_types?.map((type) => (
+              {objectiveTypesData.objective_types?.map((type) => (
                 <button
                   key={type.value}
                   onClick={() => setSelectedObjective({...selectedObjective, type: type.value})}
