@@ -343,7 +343,11 @@ const Enhanced5StepWorkflow = ({ onComplete }) => {
 
 // STEP 1: Objectives Configuration
 const ObjectivesStep = ({ onComplete, initialData }) => {
-  const [objectiveTypes, setObjectiveTypes] = useState([]);
+  const [objectiveTypesData, setObjectiveTypesData] = useState({
+    objective_types: [],
+    primary_kpis: [],
+    secondary_kpis: []
+  });
   const [selectedObjective, setSelectedObjective] = useState(initialData || {
     type: '',
     primary_kpi: '',
@@ -361,7 +365,7 @@ const ObjectivesStep = ({ onComplete, initialData }) => {
   const loadObjectiveTypes = async () => {
     try {
       const data = await enhancedAPI.getObjectiveTypes();
-      setObjectiveTypes(data);
+      setObjectiveTypesData(data);
     } catch (error) {
       console.error('Error loading objective types:', error);
     }
