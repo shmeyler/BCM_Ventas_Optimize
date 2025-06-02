@@ -43,89 +43,32 @@ import {
 // Enhanced API Service for 5-Step Workflow
 class EnhancedAPIService {
   constructor() {
-    // Detect environment and set appropriate base URL
-    const isDevelopment = window.location.hostname === 'localhost';
-    this.baseURL = isDevelopment 
-      ? 'http://localhost:8001' 
-      : process.env.REACT_APP_BACKEND_URL;
+    this.baseURL = process.env.REACT_APP_BACKEND_URL;
   }
 
   // STEP 1: Objectives API
   async getObjectiveTypes() {
-    try {
-      const response = await fetch(`${this.baseURL}/api/objectives/types`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    } catch (error) {
-      console.error('Failed to fetch objective types:', error);
-      // Return fallback data
-      return {
-        objective_types: [
-          {"value": "conversions", "label": "Conversions", "description": "Measure incremental conversions"},
-          {"value": "revenue", "label": "Revenue", "description": "Measure incremental revenue"},
-          {"value": "roas", "label": "ROAS", "description": "Measure return on ad spend"},
-          {"value": "brand_awareness", "label": "Brand Awareness", "description": "Measure brand lift"},
-          {"value": "traffic", "label": "Traffic", "description": "Measure incremental website traffic"}
-        ],
-        primary_kpis: ["purchase", "add_to_cart", "lead", "page_view", "app_install", "custom_conversion"],
-        secondary_kpis: ["view_content", "search", "add_to_wishlist", "initiate_checkout", "subscribe"]
-      };
-    }
+    const response = await fetch(`${this.baseURL}/api/objectives/types`);
+    return response.json();
   }
 
   async validateObjective(objective) {
-    try {
-      const response = await fetch(`${this.baseURL}/api/objectives/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(objective)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Failed to validate objective:', error);
-      // Return a successful validation result as fallback
-      return {
-        valid: true,
-        recommendations: [],
-        estimated_timeline: objective.measurement_window + 7
-      };
-    }
+    const response = await fetch(`${this.baseURL}/api/objectives/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(objective)
+    });
+    return response.json();
   }
 
   // STEP 2: Budget API
   async validateBudget(budget) {
-    try {
-      const response = await fetch(`${this.baseURL}/api/budget/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(budget)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    } catch (error) {
-      console.error('Failed to validate budget:', error);
-      // Return a successful validation result as fallback
-      return {
-        valid: true,
-        warnings: [],
-        recommendations: [],
-        estimated_reach: {
-          min_population: budget.total_budget * 10,
-          max_population: budget.total_budget * 50
-        }
-      };
-    }
+    const response = await fetch(`${this.baseURL}/api/budget/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(budget)
+    });
+    return response.json();
   }
 
   async getBudgetRecommendations(objectiveType, targetPopulation) {
