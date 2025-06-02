@@ -364,7 +364,10 @@ const ObjectivesStep = ({ onComplete, initialData }) => {
 
   const loadObjectiveTypes = async () => {
     try {
+      console.log('Loading objective types...');
       const data = await enhancedAPI.getObjectiveTypes();
+      console.log('Received data:', data);
+      console.log('Primary KPIs:', data.primary_kpis);
       setObjectiveTypesData(data);
     } catch (error) {
       console.error('Error loading objective types:', error);
