@@ -345,13 +345,16 @@ const GeographicAPI = {
     try {
       console.log(`📍 Fetching data for ZIP code: ${zipCode} from backend`);
       
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/geographic/zip/${zipCode}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/zip-lookup/${zipCode}`);
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`✅ Backend data retrieved for ZIP ${zipCode} (Source: ${data.source})`);
+        console.log(`✅ Backend data retrieved for ZIP ${zipCode}`);
         return {
-          ...data,
+          id: zipCode,
+          name: `${data.city}, ${data.state} (${zipCode})`,
+          demographics: data.demographics,
+          source: 'US_CENSUS_BUREAU',
           selected: false,
           type: null
         };
