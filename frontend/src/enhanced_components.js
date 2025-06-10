@@ -773,6 +773,15 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
           >
             {isValidating ? 'Validating...' : `Validate & Continue ${budgetConfig.total_budget >= 500 && budgetConfig.duration_days >= 7 ? '✓' : ''}`}
           </button>
+          
+          {/* Debug info - remove after fixing */}
+          <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
+            <strong>Debug Info:</strong><br/>
+            Total Budget: ${budgetConfig.total_budget} (need ≥ $500)<br/>
+            Duration: {budgetConfig.duration_days} days (need ≥ 7)<br/>
+            Is Validating: {isValidating ? 'Yes' : 'No'}<br/>
+            Button should be: {budgetConfig.total_budget >= 500 && budgetConfig.duration_days >= 7 && !isValidating ? 'ENABLED' : 'DISABLED'}
+          </div>
         </div>
       </div>
     </div>
