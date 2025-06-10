@@ -646,7 +646,10 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
             <input
               type="number"
               value={budgetConfig.duration_days}
-              onChange={(e) => setBudgetConfig({...budgetConfig, duration_days: parseInt(e.target.value) || 0})}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                setBudgetConfig({...budgetConfig, duration_days: value});
+              }}
               min="7"
               max="90"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
