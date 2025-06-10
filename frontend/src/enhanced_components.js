@@ -629,7 +629,10 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
             <input
               type="number"
               value={budgetConfig.daily_budget}
-              onChange={(e) => setBudgetConfig({...budgetConfig, daily_budget: parseFloat(e.target.value) || 0})}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                setBudgetConfig({...budgetConfig, daily_budget: value});
+              }}
               min="50"
               step="10"
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
