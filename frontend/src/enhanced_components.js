@@ -567,7 +567,7 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
   useEffect(() => {
     // Auto-calculate total budget when daily budget or duration changes
     const newTotal = budgetConfig.daily_budget * budgetConfig.duration_days;
-    if (newTotal !== budgetConfig.total_budget) {
+    if (Math.abs(newTotal - budgetConfig.total_budget) > 0.01) { // Avoid infinite loops with floating point comparison
       setBudgetConfig(prev => ({ ...prev, total_budget: newTotal }));
     }
   }, [budgetConfig.daily_budget, budgetConfig.duration_days]);
