@@ -5,7 +5,7 @@ import uuid
 import json
 
 class BCMVentasAIDemographicTester:
-    def __init__(self, base_url="https://1502ab0f-91f7-418e-946e-af806b35d68b.preview.emergentagent.com"):
+    def __init__(self, base_url="https://b3177cf9-593c-490f-8a72-9902ce7c89d0.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
