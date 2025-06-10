@@ -771,7 +771,7 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
                 : 'bg-green-500 text-white hover:bg-green-600'
             }`}
           >
-            {isValidating ? 'Validating...' : 'Validate & Continue'}
+            {isValidating ? 'Validating...' : `Validate & Continue ${budgetConfig.total_budget >= 500 && budgetConfig.duration_days >= 7 ? '✓' : ''}`}
           </button>
         </div>
       </div>
