@@ -587,21 +587,31 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
   const handleValidateAndContinue = async () => {
     setIsValidating(true);
     
-    // Hardcoded successful validation for now
-    const validationResult = {
-      valid: true,
-      warnings: [],
-      recommendations: [],
-      estimated_reach: {
-        min_population: budgetConfig.total_budget * 10,
-        max_population: budgetConfig.total_budget * 50
-      }
-    };
-    
-    setValidation(validationResult);
-    onComplete(budgetConfig);
-    setIsValidating(false);
+    try {
+      // Hardcoded successful validation for now
+      const validationResult = {
+        valid: true,
+        warnings: [],
+        recommendations: [],
+        estimated_reach: {
+          min_population: budgetConfig.total_budget * 10,
+          max_population: budgetConfig.total_budget * 50
+        }
+      };
+      
+      setValidation(validationResult);
+      onComplete(budgetConfig);
+    } catch (error) {
+      console.error('Validation error:', error);
+    } finally {
+      setIsValidating(false);
+    }
   };
+
+  // Check if button should be enabled
+  const isButtonEnabled = Number(budgetConfig.total_budget) >= 500 && 
+                         Number(budgetConfig.duration_days) >= 7 && 
+                         !isValidating;
 
   const applyRecommendation = () => {
     if (recommendations) {
