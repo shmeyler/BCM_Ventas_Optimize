@@ -559,10 +559,11 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
   const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
-    if (objective) {
+    if (objective?.type) {
+      console.log('Loading budget recommendations for objective:', objective.type);
       loadBudgetRecommendations();
     }
-  }, [objective]);
+  }, [objective?.type]); // Re-run when objective type changes
 
   useEffect(() => {
     // Auto-calculate total budget when daily budget or duration changes
