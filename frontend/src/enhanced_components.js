@@ -792,23 +792,24 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
 
           <button
             onClick={handleValidateAndContinue}
-            disabled={budgetConfig.total_budget < 500 || budgetConfig.duration_days < 7 || isValidating}
+            disabled={Number(budgetConfig.total_budget) < 500 || Number(budgetConfig.duration_days) < 7 || isValidating}
             className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-              budgetConfig.total_budget < 500 || budgetConfig.duration_days < 7 || isValidating
+              Number(budgetConfig.total_budget) < 500 || Number(budgetConfig.duration_days) < 7 || isValidating
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-green-500 text-white hover:bg-green-600'
             }`}
           >
-            {isValidating ? 'Validating...' : `Validate & Continue ${budgetConfig.total_budget >= 500 && budgetConfig.duration_days >= 7 ? '✓' : ''}`}
+            {isValidating ? 'Validating...' : `Validate & Continue ${Number(budgetConfig.total_budget) >= 500 && Number(budgetConfig.duration_days) >= 7 ? '✓' : ''}`}
           </button>
           
           {/* Debug info - remove after fixing */}
           <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
             <strong>Debug Info:</strong><br/>
-            Total Budget: ${budgetConfig.total_budget} (need ≥ $500)<br/>
-            Duration: {budgetConfig.duration_days} days (need ≥ 7)<br/>
+            Total Budget: ${budgetConfig.total_budget} (type: {typeof budgetConfig.total_budget}) (need ≥ $500)<br/>
+            Duration: {budgetConfig.duration_days} days (type: {typeof budgetConfig.duration_days}) (need ≥ 7)<br/>
             Is Validating: {isValidating ? 'Yes' : 'No'}<br/>
-            Button should be: {budgetConfig.total_budget >= 500 && budgetConfig.duration_days >= 7 && !isValidating ? 'ENABLED' : 'DISABLED'}
+            Validation Check: Total ≥ 500? {Number(budgetConfig.total_budget) >= 500 ? 'Yes' : 'No'}, Duration ≥ 7? {Number(budgetConfig.duration_days) >= 7 ? 'Yes' : 'No'}<br/>
+            Button should be: {Number(budgetConfig.total_budget) >= 500 && Number(budgetConfig.duration_days) >= 7 && !isValidating ? 'ENABLED' : 'DISABLED'}
           </div>
         </div>
       </div>
