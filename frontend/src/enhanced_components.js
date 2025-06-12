@@ -575,7 +575,9 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
 
   const loadBudgetRecommendations = async () => {
     try {
+      console.log('Fetching recommendations for objective type:', objective?.type);
       const recs = await enhancedAPI.getBudgetRecommendations(objective.type, 100000);
+      console.log('Received recommendations:', recs);
       setRecommendations(recs);
     } catch (error) {
       console.error('Error loading budget recommendations:', error);
