@@ -350,10 +350,21 @@ const GeographicAPI = {
       if (response.ok) {
         const data = await response.json();
         console.log(`✅ Backend data retrieved for ZIP ${zipCode}`);
+        
+        // Map backend data structure to frontend expected format
         return {
           id: zipCode,
           name: `${data.city}, ${data.state} (${zipCode})`,
-          demographics: data.demographics,
+          demographics: {
+            population: data.demographics.total_population,
+            medianIncome: data.demographics.median_income,
+            medianAge: data.demographics.median_age,
+            age18to24: data.demographics.age_18_24,
+            age25to34: data.demographics.age_25_34,
+            age35to44: data.demographics.age_35_44,
+            medianHouseholdIncome: data.demographics.median_income, // For calculations
+            totalPopulation: data.demographics.total_population
+          },
           source: 'US_CENSUS_BUREAU',
           selected: false,
           type: null
