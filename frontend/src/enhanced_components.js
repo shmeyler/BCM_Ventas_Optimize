@@ -697,9 +697,19 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
 
         {/* Recommendations and Validation */}
         <div className="space-y-6">
-          {recommendations && (
-            <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4">💡 Recommendations</h3>
+          {/* Budget Recommendations & Debug */}
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4">💡 Recommendations</h3>
+            
+            {/* Debug Info */}
+            <div className="mb-4 p-3 bg-gray-100 rounded text-sm">
+              <strong>Debug Info:</strong><br/>
+              Objective Type: {objective?.type || 'Not set'}<br/>
+              Recommendations Loaded: {recommendations ? 'Yes' : 'No'}<br/>
+              API Call Status: Check console for details
+            </div>
+            
+            {recommendations ? (
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-blue-700">Recommended Daily:</span>
@@ -719,15 +729,24 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
                     ${recommendations.recommendations.recommended_total_budget}
                   </span>
                 </div>
+                <div className="text-xs text-blue-600 mt-2">
+                  For {recommendations.objective_type} campaigns
+                </div>
               </div>
-              <button
-                onClick={applyRecommendation}
-                className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Apply Recommendations
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="text-gray-500 text-sm">
+                Loading recommendations...
+              </div>
+            )}
+            
+            <button
+              onClick={applyRecommendation}
+              disabled={!recommendations}
+              className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+            >
+              Apply Recommendations
+            </button>
+          </div>
 
           {validation && (
             <div className={`p-6 rounded-lg ${validation.valid ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
