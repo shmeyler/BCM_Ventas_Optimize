@@ -518,7 +518,95 @@ async def launch_meta_campaign(test_id: str, campaign_config: dict = Body(...)):
         raise HTTPException(status_code=500, detail=f"Failed to launch campaign: {str(e)}")
 
 # =============================================================================
-# META API VALIDATION ENDPOINTS
+# META CAMPAIGN SELECTION ENDPOINTS
+# =============================================================================
+
+@app.get("/api/meta/accounts")
+async def get_meta_accounts():
+    """Get available Meta ad accounts"""
+    try:
+        validation = meta_service.validate_connection()
+        
+        if validation["status"] != "connected":
+            return {
+                "status": "error",
+                "error": "Meta API not connected"
+            }
+        
+        accounts = meta_service.get_ad_accounts()
+        return {
+            "status": "success",
+            "accounts": accounts
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error", 
+            "error": f"Failed to fetch accounts: {str(e)}"
+        }
+
+@app.get("/api/meta/campaigns")
+async def get_meta_campaigns(account_id: str = Query(...)):
+    """Get campaigns for a specific Meta ad account"""
+    try:
+        validation = meta_service.validate_connection()
+        
+        if validation["status"] != "connected":
+            return {
+                "status": "error",
+                "error": "Meta API not connected"
+            }
+        
+        campaigns = meta_service.get_campaigns(account_id)
+        return {
+            "status": "success",
+            "account_id": account_id,
+            "campaigns": campaigns
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Failed to fetch campaigns: {str(e)}"
+        }
+
+@app.post("/api/meta/campaign-insights")
+async def get_campaign_geographic_insights(request: dict = Body(...)):
+    """Get geographic insights from specific campaigns"""
+    try:
+        validation = meta_service.validate_connection()
+        
+        if validation["status"] != "connected":
+            return {
+                "status": "error", 
+                "error": "Meta API not connected"
+            }
+        
+        account_id = request.get("account_id")
+        campaign_ids = request.get("campaign_ids", [])
+        date_range = request.get("date_range_days", 90)
+        
+        insights = meta_service.get_campaign_geographic_insights(
+            account_id, campaign_ids, date_range
+        )
+        
+        return {
+            "status": "success",
+            "account_id": account_id,
+            "campaign_ids": campaign_ids,
+            "date_range_days": date_range,
+            "insights_count": len(insights),
+            "insights": insights
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Failed to fetch campaign insights: {str(e)}"
+        }
+
+# =============================================================================
+# EXISTING META ENDPOINTS
 # =============================================================================
 
 @app.get("/api/meta/validate")
