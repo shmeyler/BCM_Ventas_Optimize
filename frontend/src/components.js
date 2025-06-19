@@ -885,7 +885,6 @@ const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, on
 
       {showAPIManager && (
         <APIKeyManager 
-          isOpen={showAPIManager}
           onClose={() => setShowAPIManager(false)}
         />
       )}
