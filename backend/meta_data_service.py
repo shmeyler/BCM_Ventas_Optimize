@@ -34,6 +34,12 @@ class MetaDataService:
         self.business_id = os.environ.get('META_BUSINESS_ID')
         self.ad_account_id = os.environ.get('META_AD_ACCOUNT_ID', 'act_123456789')
         
+        print(f"🔧 Meta API Config Debug:")
+        print(f"   App ID: {self.app_id}")
+        print(f"   App Secret: {'Yes' if self.app_secret else 'No'}")
+        print(f"   Access Token: {'Yes' if self.access_token else 'No'}")
+        print(f"   SDK Available: {META_SDK_AVAILABLE}")
+        
         # Initialize Meta API if available
         self.meta_api_initialized = False
         if META_SDK_AVAILABLE and self.access_token:
@@ -44,6 +50,8 @@ class MetaDataService:
             except Exception as e:
                 print(f"❌ Meta API initialization failed: {e}")
                 self.meta_api_initialized = False
+        else:
+            print(f"❌ Meta API not initialized: SDK={META_SDK_AVAILABLE}, Token={'Yes' if self.access_token else 'No'}")
         
         # Fallback data
         self.dummy_account_data = self._generate_dummy_account_data()
