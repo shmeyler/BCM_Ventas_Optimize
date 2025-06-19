@@ -1626,7 +1626,10 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
               {useMetaData && (
                 <div className="mt-4 p-4 bg-white rounded-lg">
                   <button
-                    onClick={() => setShowCampaignSelector(true)}
+                    onClick={() => {
+                      console.log('🎯 Select Meta Campaigns button clicked');
+                      setShowCampaignSelector(true);
+                    }}
                     className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     🎯 Select Meta Campaigns
@@ -1634,6 +1637,11 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
                   <p className="text-xs text-gray-600 mt-2 text-center">
                     Choose specific campaigns to analyze their geographic performance
                   </p>
+                  
+                  {/* Debug info */}
+                  <div className="mt-2 text-xs text-gray-500">
+                    Modal state: {showCampaignSelector ? 'OPEN' : 'CLOSED'}
+                  </div>
                 </div>
               )}
             </div>
