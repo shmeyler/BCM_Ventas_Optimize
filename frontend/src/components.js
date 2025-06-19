@@ -2295,6 +2295,7 @@ const LiftTestsList = () => {
   const [liftTests, setLiftTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedTestId, setSelectedTestId] = useState(null);
+  const [useMetaData, setUseMetaData] = useState(false); // Add Meta data toggle state
 
   useEffect(() => {
     loadLiftTests();
