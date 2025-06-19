@@ -210,6 +210,44 @@ class MetaDataService:
         
         # Could add more sophisticated region-to-ZIP mapping here
         return None
+    
+    def validate_connection(self) -> Dict[str, Any]:
+        """Validate Meta API connection and return status"""
+        if not self.meta_api_initialized:
+            return {
+                "status": "disconnected",
+                "has_access_token": bool(self.access_token),
+                "has_ad_account": bool(self.ad_account_id),
+                "error": "Meta SDK not initialized"
+            }
+        
+        try:
+            # Test API connection
+            account = AdAccount(self.ad_account_id)
+            account_info = account.api_get(fields=[AdAccount.Field.name, AdAccount.Field.account_status])
+            
+            return {
+                "status": "connected",
+                "has_access_token": True,
+                "has_ad_account": True,
+                "account_name": account_info.get('name', 'Unknown'),
+                "account_status": account_info.get('account_status', 'Unknown'),
+                "account_id": self.ad_account_id
+            }
+        except FacebookRequestError as e:
+            return {
+                "status": "error",
+                "has_access_token": bool(self.access_token),
+                "has_ad_account": bool(self.ad_account_id),
+                "error": f"Meta API Error: {e}"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "has_access_token": bool(self.access_token),
+                "has_ad_account": bool(self.ad_account_id),
+                "error": f"Connection Error: {e}"
+            }
         """Validate Meta API connection and return status"""
         if not self.meta_api_initialized:
             return {
