@@ -1605,11 +1605,25 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
                     className="mr-3"
                   />
                   <div>
-                    <span className="font-medium text-orange-800">Meta Performance Data</span>
-                    <p className="text-sm text-orange-700">Use real advertising performance and conversion data</p>
+                    <span className="font-medium text-orange-800">Meta Campaign Data</span>
+                    <p className="text-sm text-orange-700">Use real advertising performance and conversion data from specific campaigns</p>
                   </div>
                 </label>
               </div>
+              
+              {useMetaData && (
+                <div className="mt-4 p-4 bg-white rounded-lg">
+                  <button
+                    onClick={() => setShowCampaignSelector(true)}
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    🎯 Select Meta Campaigns
+                  </button>
+                  <p className="text-xs text-gray-600 mt-2 text-center">
+                    Choose specific campaigns to analyze their geographic performance
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
