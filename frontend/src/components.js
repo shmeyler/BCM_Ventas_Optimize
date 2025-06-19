@@ -492,7 +492,7 @@ const GeographicAPI = {
     }
   },
 
-  // Enhanced similar regions finding with real data
+  // Enhanced similar regions finding with real Meta data
   async findSimilarRegions(selectedRegion, regionType, criteria = {}) {
     try {
       console.log(`🔍 Finding similar regions for: ${selectedRegion.name}`);
@@ -502,8 +502,14 @@ const GeographicAPI = {
         customWeights = {},
         minSimilarity = 0.7,
         maxResults = 5,
-        includeValidation = true
+        includeValidation = true,
+        useMetaData = false  // New parameter for Meta data toggle
       } = criteria;
+      
+      // If Meta data is enabled, use Meta performance similarity
+      if (useMetaData) {
+        return await this.findSimilarRegionsWithMeta(selectedRegion, regionType, criteria);
+      }
       
       // Get enhanced demographic data if we have real APIs
       let enhancedRegion = selectedRegion;
