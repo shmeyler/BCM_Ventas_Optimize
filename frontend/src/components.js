@@ -1453,11 +1453,21 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
           )}
         </div>
       </div>
+      
+      {/* Meta Campaign Selector Modal */}
+      {showCampaignSelector && (
+        <MetaCampaignSelector
+          onClose={() => setShowCampaignSelector(false)}
+          onCampaignSelect={(data) => {
+            setSelectedCampaigns(data.campaigns);
+            console.log('Selected campaigns:', data);
+            // TODO: Store campaign insights for use in similarity analysis
+          }}
+        />
+      )}
     </div>
   );
 };
-
-// Data Sources API Key Manager with Meta Integration
 const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
   const [apiKeys, setApiKeys] = useState({
     census: 'Connected ✓',
