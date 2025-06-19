@@ -1464,6 +1464,8 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
     meta: 'Checking...'
   });
   const [metaStatus, setMetaStatus] = useState(null);
+  const [showCampaignSelector, setShowCampaignSelector] = useState(false);
+  const [selectedCampaigns, setSelectedCampaigns] = useState([]);
   
   useEffect(() => {
     checkMetaConnection();
