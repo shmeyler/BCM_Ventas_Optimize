@@ -57,7 +57,159 @@ class MetaDataService:
         self.dummy_account_data = self._generate_dummy_account_data()
         self.zip_conversion_data = self._generate_zip_conversion_data()
         
-    def validate_connection(self) -> Dict[str, Any]:
+    def get_ad_accounts(self) -> List[Dict[str, Any]]:
+        """Get all ad accounts accessible to this user"""
+        if not self.meta_api_initialized:
+            return []
+        
+        try:
+            from facebook_business.adobjects.user import User
+            
+            me = User(fbid='me')
+            ad_accounts = me.get_ad_accounts(fields=[
+                'id', 'name', 'account_status', 'currency', 'timezone_name'
+            ])
+            
+            accounts = []
+            for account in ad_accounts:
+                accounts.append({
+                    'id': account.get('id'),
+                    'name': account.get('name'),
+                    'status': account.get('account_status'),
+                    'currency': account.get('currency'),
+                    'timezone': account.get('timezone_name')
+                })
+            
+            return accounts
+            
+        except Exception as e:
+            print(f"Error fetching ad accounts: {e}")
+            return []
+    
+    def get_campaigns(self, account_id: str) -> List[Dict[str, Any]]:
+        """Get all campaigns for a specific ad account"""
+        if not self.meta_api_initialized:
+            return []
+        
+        try:
+            account = AdAccount(account_id)
+            campaigns = account.get_campaigns(fields=[
+                'id', 'name', 'status', 'objective', 'created_time', 'start_time', 'stop_time'
+            ])
+            
+            campaign_list = []
+            for campaign in campaigns:
+                campaign_list.append({
+                    'id': campaign.get('id'),
+                    'name': campaign.get('name'),
+                    'status': campaign.get('status'),
+                    'objective': campaign.get('objective'),
+                    'created_time': campaign.get('created_time'),
+                    'start_time': campaign.get('start_time'),
+                    'stop_time': campaign.get('stop_time')
+                })
+            
+            return campaign_list
+            
+        except Exception as e:
+            print(f"Error fetching campaigns: {e}")
+            return []
+    
+    def get_campaign_geographic_insights(self, account_id: str, campaign_ids: List[str], date_range: int = 90) -> List[Dict[str, Any]]:
+        """Get geographic insights from specific campaigns"""
+        if not self.meta_api_initialized:
+            return []
+        
+        try:
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=date_range)
+            
+            insights = []
+            
+            for campaign_id in campaign_ids:
+                try:
+                    from facebook_business.adobjects.campaign import Campaign
+                    
+                    campaign = Campaign(campaign_id)
+                    campaign_insights = campaign.get_insights(
+                        fields=[
+                            AdsInsights.Field.impressions,
+                            AdsInsights.Field.clicks,
+                            AdsInsights.Field.spend,
+                            AdsInsights.Field.actions,
+                            AdsInsights.Field.cpm,
+                            AdsInsights.Field.ctr,
+                            AdsInsights.Field.region
+                        ],
+                        params={
+                            'time_range': {
+                                'since': start_date.strftime('%Y-%m-%d'),
+                                'until': end_date.strftime('%Y-%m-%d')
+                            },
+                            'breakdowns': ['region'],
+                            'level': 'campaign'
+                        }
+                    )
+                    
+                    for insight in campaign_insights:
+                        # Process conversion actions
+                        conversions = 0
+                        if 'actions' in insight:
+                            for action in insight.get('actions', []):
+                                if action.get('action_type') in ['purchase', 'lead', 'complete_registration']:
+                                    conversions += int(action.get('value', 0))
+                        
+                        spend = float(insight.get('spend', 0))
+                        clicks = int(insight.get('clicks', 0))
+                        impressions = int(insight.get('impressions', 0))
+                        
+                        # Extract ZIP code from region if available
+                        region = insight.get('region', '')
+                        zip_code = self._extract_zip_from_region(region)
+                        
+                        if zip_code:  # Only include if we can extract a ZIP code
+                            processed_insight = {
+                                'campaign_id': campaign_id,
+                                'location_type': 'zip',
+                                'location_id': zip_code,
+                                'location_name': f"ZIP {zip_code}",
+                                'region': region,
+                                'date_range': f"{date_range} days",
+                                'metrics': {
+                                    'impressions': impressions,
+                                    'clicks': clicks,
+                                    'conversions': conversions,
+                                    'spend': spend,
+                                    'revenue': conversions * 50,  # Estimate based on conversions
+                                    'cpm': float(insight.get('cpm', 0)),
+                                    'ctr': float(insight.get('ctr', 0)),
+                                    'conversion_rate': (conversions / clicks * 100) if clicks > 0 else 0,
+                                    'roas': (conversions * 50) / spend if spend > 0 else 0
+                                }
+                            }
+                            insights.append(processed_insight)
+                
+                except Exception as e:
+                    print(f"Error processing campaign {campaign_id}: {e}")
+                    continue
+            
+            return insights
+            
+        except Exception as e:
+            print(f"Error fetching campaign geographic insights: {e}")
+            return []
+    
+    def _extract_zip_from_region(self, region: str) -> Optional[str]:
+        """Extract ZIP code from region string if possible"""
+        import re
+        
+        # Try to find 5-digit ZIP codes in the region string
+        zip_match = re.search(r'\b(\d{5})\b', region)
+        if zip_match:
+            return zip_match.group(1)
+        
+        # Could add more sophisticated region-to-ZIP mapping here
+        return None
         """Validate Meta API connection and return status"""
         if not self.meta_api_initialized:
             return {
