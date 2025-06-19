@@ -1248,16 +1248,22 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
   const loadAccounts = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Loading Meta accounts...');
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/accounts`);
       const data = await response.json();
       
+      console.log('📊 Accounts response:', data);
+      
       if (data.status === 'success') {
         setAccounts(data.accounts);
+        console.log(`✅ Loaded ${data.accounts.length} accounts`);
       } else {
-        console.error('Failed to load accounts:', data.error);
+        console.error('❌ Failed to load accounts:', data.error);
+        alert(`Failed to load accounts: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error loading accounts:', error);
+      console.error('💥 Error loading accounts:', error);
+      alert(`Error loading accounts: ${error.message}`);
     }
     setLoading(false);
   };
