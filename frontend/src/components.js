@@ -1237,7 +1237,6 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
     meta: 'Checking...'
   });
   const [metaStatus, setMetaStatus] = useState(null);
-  const [useMetaData, setUseMetaData] = useState(false);
   
   useEffect(() => {
     checkMetaConnection();
