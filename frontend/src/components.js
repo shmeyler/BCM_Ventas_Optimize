@@ -1232,6 +1232,231 @@ const KnowledgeBase = () => {
 };
 
 // API Key Management Component (inline to fix import issues)
+// Meta Campaign Selector Component
+const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaigns, setSelectedCampaigns] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1); // 1: Select Account, 2: Select Campaigns
+
+  useEffect(() => {
+    loadAccounts();
+  }, []);
+
+  const loadAccounts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/accounts`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setAccounts(data.accounts);
+      } else {
+        console.error('Failed to load accounts:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading accounts:', error);
+    }
+    setLoading(false);
+  };
+
+  const loadCampaigns = async (accountId) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/campaigns?account_id=${accountId}`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setCampaigns(data.campaigns);
+        setStep(2);
+      } else {
+        console.error('Failed to load campaigns:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading campaigns:', error);
+    }
+    setLoading(false);
+  };
+
+  const handleCampaignToggle = (campaign) => {
+    setSelectedCampaigns(prev => {
+      const isSelected = prev.find(c => c.id === campaign.id);
+      if (isSelected) {
+        return prev.filter(c => c.id !== campaign.id);
+      } else {
+        return [...prev, campaign];
+      }
+    });
+  };
+
+  const handleLoadInsights = async () => {
+    if (selectedCampaigns.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/campaign-insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account_id: selectedAccount.id,
+          campaign_ids: selectedCampaigns.map(c => c.id),
+          date_range_days: 90
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        onCampaignSelect({
+          account: selectedAccount,
+          campaigns: selectedCampaigns,
+          insights: data.insights
+        });
+        onClose();
+      } else {
+        console.error('Failed to load campaign insights:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading campaign insights:', error);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {step === 1 ? 'Select Meta Ad Account' : 'Select Campaigns'}
+            </h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <span className="text-2xl">×</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="text-gray-600 mt-2">Loading...</p>
+            </div>
+          )}
+
+          {/* Step 1: Account Selection */}
+          {step === 1 && !loading && (
+            <div className="space-y-4">
+              <p className="text-gray-600 mb-6">Choose the Meta ad account containing your campaigns:</p>
+              {accounts.map(account => (
+                <div 
+                  key={account.id}
+                  onClick={() => {
+                    setSelectedAccount(account);
+                    loadCampaigns(account.id);
+                  }}
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors"
+                >
+                  <h3 className="font-semibold text-gray-900">{account.name}</h3>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <span>ID: {account.id}</span>
+                    <span className="mx-2">•</span>
+                    <span>Currency: {account.currency}</span>
+                    <span className="mx-2">•</span>
+                    <span className={`${account.status === 1 ? 'text-green-600' : 'text-red-600'}`}>
+                      {account.status === 1 ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Step 2: Campaign Selection */}
+          {step === 2 && !loading && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-gray-600">Account: <strong>{selectedAccount?.name}</strong></p>
+                  <p className="text-sm text-gray-500">Select campaigns to analyze their geographic performance:</p>
+                </div>
+                <button
+                  onClick={() => setStep(1)}
+                  className="text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  ← Back to Accounts
+                </button>
+              </div>
+
+              <div className="max-h-96 overflow-y-auto space-y-3">
+                {campaigns.map(campaign => {
+                  const isSelected = selectedCampaigns.find(c => c.id === campaign.id);
+                  return (
+                    <div 
+                      key={campaign.id}
+                      onClick={() => handleCampaignToggle(campaign)}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        isSelected 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{campaign.name}</h3>
+                          <div className="text-sm text-gray-600 mt-1">
+                            <span>Objective: {campaign.objective}</span>
+                            <span className="mx-2">•</span>
+                            <span className={`${
+                              campaign.status === 'ACTIVE' ? 'text-green-600' : 
+                              campaign.status === 'PAUSED' ? 'text-yellow-600' : 'text-gray-600'
+                            }`}>
+                              {campaign.status}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCampaignToggle(campaign)}
+                            className="h-5 w-5 text-blue-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-600">
+                    {selectedCampaigns.length} campaign(s) selected
+                  </p>
+                  <button
+                    onClick={handleLoadInsights}
+                    disabled={selectedCampaigns.length === 0 || loading}
+                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                      selectedCampaigns.length > 0 
+                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    Load Campaign Data
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Data Sources API Key Manager with Meta Integration
 const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
   const [apiKeys, setApiKeys] = useState({
