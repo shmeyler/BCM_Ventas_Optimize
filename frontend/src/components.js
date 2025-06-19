@@ -3599,41 +3599,100 @@ const LiveAnalytics = ({ testData, setCurrentView }) => {
   );
 };
 
-// Attribution Modeling Component (updated colors)
+// Attribution Modeling Component (updated with lighter shading and enhanced analytics)
 const AttributionModeling = ({ testData }) => {
   return (
-    <section className="py-16 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <section className="py-16 bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Smart Attribution Analysis</h2>
-          <p className="text-xl text-gray-300">Compare last-click attribution vs. incrementality-based attribution</p>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Smart Attribution Analysis</h2>
+          <p className="text-xl text-gray-600">Compare last-click attribution vs. incrementality-based attribution</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Attribution Comparison</h3>
+        {/* Power Analysis Section (inspired by your GeoLift interface) */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">Attribution Power Analysis</h3>
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Expected Attribution Accuracy at 95% Confidence</h4>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={[
+                    {weeks: 2, accuracy: 65}, {weeks: 4, accuracy: 78}, {weeks: 6, accuracy: 85}, 
+                    {weeks: 8, accuracy: 91}, {weeks: 10, accuracy: 95}, {weeks: 12, accuracy: 97}
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="weeks" stroke="#6B7280" label={{ value: 'Test Duration (weeks)', position: 'insideBottom', offset: -5 }} />
+                    <YAxis stroke="#6B7280" label={{ value: 'Attribution Accuracy (%)', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Line type="monotone" dataKey="accuracy" stroke="rgb(227, 128, 68)" strokeWidth={3} dot={{ fill: 'rgb(227, 128, 68)', strokeWidth: 2, r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Minimum Detectable Attribution Shift</h4>
+              <div className="space-y-4">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-800">Current Test Duration</span>
+                    <span className="text-lg font-bold text-blue-900">8 weeks</span>
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-2xl font-bold text-blue-900">±2.3%</div>
+                    <div className="text-sm text-blue-700">Attribution shift detection threshold</div>
+                  </div>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="text-sm font-medium text-green-800 mb-2">Statistical Power: 91%</div>
+                  <div className="text-sm font-medium text-green-800 mb-2">Confidence Level: 95%</div>
+                  <div className="text-sm text-green-700">Sample Size: 847,293 conversions</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Attribution Comparison - Updated Design */}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Attribution Comparison</h3>
             <div className="space-y-4">
               {mockAttributionData.map((channel, index) => (
-                <div key={index} className="bg-white/5 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold">{channel.channel}</span>
-                    <span className={`text-sm px-2 py-1 rounded ${
-                      channel.difference > 0 ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="font-semibold text-gray-900">{channel.channel}</span>
+                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${
+                      channel.difference > 0 
+                        ? 'bg-green-100 text-green-800' 
+                        : channel.difference < 0 
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
                     }`}>
                       {channel.difference > 0 ? '+' : ''}{channel.difference}%
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-300">Last-click: {channel.attribution}%</p>
-                      <div className="w-full bg-gray-700 rounded-full h-2 mt-1">
-                        <div className="bg-gray-400 h-2 rounded-full" style={{width: `${channel.attribution}%`}}></div>
+                      <p className="text-gray-600 mb-1">Last-click: {channel.attribution}%</p>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="bg-gray-500 h-3 rounded-full transition-all duration-500" style={{width: `${channel.attribution}%`}}></div>
                       </div>
                     </div>
                     <div>
-                      <p className="text-orange-300">Incrementality: {channel.incrementality}%</p>
-                      <div className="w-full bg-orange-900 rounded-full h-2 mt-1">
-                        <div className="h-2 rounded-full" style={{width: `${channel.incrementality}%`, backgroundColor: 'rgb(227, 128, 68)'}}></div>
+                      <p className="text-orange-700 mb-1">Incrementality: {channel.incrementality}%</p>
+                      <div className="w-full bg-orange-100 rounded-full h-3">
+                        <div className="h-3 rounded-full transition-all duration-500" style={{
+                          width: `${channel.incrementality}%`, 
+                          backgroundColor: 'rgb(227, 128, 68)'
+                        }}></div>
                       </div>
                     </div>
                   </div>
@@ -3642,43 +3701,88 @@ const AttributionModeling = ({ testData }) => {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Attribution Insights</h3>
+          {/* Attribution Insights Chart - Updated Design */}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Attribution Insights</h3>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={mockAttributionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
-                <XAxis dataKey="channel" stroke="white" />
-                <YAxis stroke="white" />
+              <BarChart data={mockAttributionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="channel" stroke="#6B7280" fontSize={12} />
+                <YAxis stroke="#6B7280" fontSize={12} />
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    border: 'none',
-                    borderRadius: '8px'
+                    backgroundColor: 'white',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
                 />
                 <Legend />
-                <Bar dataKey="attribution" fill="#9CA3AF" name="Last-click Attribution" />
-                <Bar dataKey="incrementality" fill="rgb(227, 128, 68)" name="Incrementality-based" />
+                <Bar dataKey="attribution" fill="#9CA3AF" name="Last-click Attribution" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="incrementality" fill="rgb(227, 128, 68)" name="Incrementality-based" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="mt-12 text-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold mb-4">Key Findings</h3>
+        {/* Candidate Markets Analysis (inspired by your interface) */}
+        <div className="mt-8 bg-white rounded-2xl shadow-lg p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900">Top Attribution Markets</h3>
+            <span className="text-sm text-gray-500">Showing top 6 markets out of 15</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Market</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Baseline Attribution</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Incremental Attribution</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Estimated Accuracy</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {market: 'California (Los Angeles, San Francisco)', baseline: '$2.1M', incremental: '$2.4M', accuracy: '94.2%', confidence: '0.12%'},
+                  {market: 'New York (NYC, Albany, Rochester)', baseline: '$1.8M', incremental: '$2.1M', accuracy: '91.8%', confidence: '0.15%'},
+                  {market: 'Texas (Houston, Dallas, Austin)', baseline: '$1.6M', incremental: '$1.9M', accuracy: '89.5%', confidence: '0.18%'},
+                  {market: 'Florida (Miami, Orlando, Tampa)', baseline: '$1.2M', incremental: '$1.4M', accuracy: '87.3%', confidence: '0.21%'},
+                  {market: 'Illinois (Chicago, Rockford)', baseline: '$980K', incremental: '$1.1M', accuracy: '85.7%', confidence: '0.24%'},
+                  {market: 'Washington (Seattle, Spokane)', baseline: '$820K', incremental: '$950K', accuracy: '83.9%', confidence: '0.27%'}
+                ].map((row, index) => (
+                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-4 text-sm font-medium text-gray-900">{row.market}</td>
+                    <td className="py-3 px-4 text-sm text-gray-700">{row.baseline}</td>
+                    <td className="py-3 px-4 text-sm text-gray-700">{row.incremental}</td>
+                    <td className="py-3 px-4 text-sm text-gray-700">{row.accuracy}</td>
+                    <td className="py-3 px-4 text-sm text-gray-700">{row.confidence}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 text-sm text-gray-500">
+            Simulated $15,000 additional investment
+          </div>
+        </div>
+
+        {/* Key Findings - Updated Design */}
+        <div className="mt-8">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Key Findings</h3>
             <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-3xl font-bold text-green-400">+$89K</p>
-                <p className="text-gray-300">Incremental revenue identified</p>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <p className="text-3xl font-bold text-green-600">+$89K</p>
+                <p className="text-gray-600 mt-2">Incremental revenue identified</p>
               </div>
-              <div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
                 <p className="text-3xl font-bold" style={{color: 'rgb(227, 128, 68)'}}>23%</p>
-                <p className="text-gray-300">Attribution adjustment</p>
+                <p className="text-gray-600 mt-2">Attribution adjustment</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-yellow-400">$2.1M</p>
-                <p className="text-gray-300">Annual revenue impact</p>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <p className="text-3xl font-bold text-blue-600">$2.1M</p>
+                <p className="text-gray-600 mt-2">Annual revenue impact</p>
               </div>
             </div>
           </div>
