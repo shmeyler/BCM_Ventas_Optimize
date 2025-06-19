@@ -531,6 +531,33 @@ async def validate_meta_connection():
             "error": f"Validation failed: {str(e)}"
         }
 
+@app.get("/api/meta/insights")
+async def get_meta_insights(account_id: str = Query(default=None), days: int = Query(default=90)):
+    """Get real Meta geographic insights (data access enabled)"""
+    try:
+        validation = meta_service.validate_connection()
+        
+        if account_id is None:
+            account_id = meta_service.ad_account_id
+        
+        insights = meta_service.get_geographic_insights(account_id, days)
+        
+        return {
+            "status": "success",
+            "meta_connection": validation["status"],
+            "account_id": account_id,
+            "date_range_days": days,
+            "insights_count": len(insights),
+            "insights": insights,
+            "note": "✅ Real Meta data access enabled"
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Failed to fetch Meta insights: {str(e)}"
+        }
+
 @app.post("/api/meta/campaign/create")
 async def create_meta_campaign(campaign_request: dict = Body(...)):
     """Create a Meta campaign for geo-incrementality testing (SIMULATION MODE ONLY)"""
