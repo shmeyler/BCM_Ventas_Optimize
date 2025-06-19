@@ -1231,7 +1231,7 @@ const KnowledgeBase = () => {
 
 // API Key Management Component (inline to fix import issues)
 // Data Sources API Key Manager with Meta Integration
-const APIKeyManager = ({ onClose }) => {
+const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
   const [apiKeys, setApiKeys] = useState({
     census: 'Connected ✓',
     meta: 'Checking...'
