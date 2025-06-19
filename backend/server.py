@@ -10,6 +10,10 @@ import requests
 from pydantic import BaseModel
 import uuid
 import asyncio
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Import our new models and services
 import sys
