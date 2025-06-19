@@ -1462,21 +1462,14 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
       
       {/* Meta Campaign Selector Modal */}
       {showCampaignSelector && (
-        <div>
-          <div className="fixed inset-0 bg-red-500 bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-white p-4 rounded">
-              <h2>TEST MODAL - MetaCampaignSelector should appear here</h2>
-              <button onClick={() => setShowCampaignSelector(false)} className="bg-red-500 text-white p-2">Close</button>
-            </div>
-          </div>
-          <MetaCampaignSelector
-            onClose={() => setShowCampaignSelector(false)}
-            onCampaignSelect={(data) => {
-              setSelectedCampaigns(data.campaigns);
-              console.log('Selected campaigns:', data);
-              // TODO: Store campaign insights for use in similarity analysis
-            }}
-          />
+        <MetaCampaignSelector
+          onClose={() => setShowCampaignSelector(false)}
+          onCampaignSelect={(data) => {
+            setSelectedCampaigns(data.campaigns);
+            console.log('Selected campaigns:', data);
+            setShowCampaignSelector(false);
+          }}
+        />
         </div>
       )}
     </div>
