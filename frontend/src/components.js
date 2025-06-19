@@ -1470,7 +1470,6 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
             setShowCampaignSelector(false);
           }}
         />
-        </div>
       )}
     </div>
   );
