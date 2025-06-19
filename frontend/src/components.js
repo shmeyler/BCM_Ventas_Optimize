@@ -1123,166 +1123,201 @@ const KnowledgeBase = () => {
 };
 
 // API Key Management Component (inline to fix import issues)
-const APIKeyManager = ({ isOpen, onClose }) => {
-  const [apiService] = useState(() => new RealAPIService());
-  const [apiKeys, setApiKeys] = useState({});
-  const [validationStatus, setValidationStatus] = useState({});
-  const [usageStats, setUsageStats] = useState(null);
-  const [isValidating, setIsValidating] = useState({});
-
+// Data Sources API Key Manager with Meta Integration
+const APIKeyManager = ({ onClose }) => {
+  const [apiKeys, setApiKeys] = useState({
+    census: 'Connected ✓',
+    meta: 'Checking...'
+  });
+  const [metaStatus, setMetaStatus] = useState(null);
+  const [useMetaData, setUseMetaData] = useState(false);
+  
   useEffect(() => {
-    if (isOpen) {
-      loadCurrentKeys();
-      loadUsageStats();
-    }
-  }, [isOpen]);
-
-  const loadCurrentKeys = () => {
-    const keys = apiService.loadAPIKeys();
-    setApiKeys(keys);
-    
-    // Check which keys are already validated
-    Object.keys(keys).forEach(service => {
-      if (keys[service]) {
-        setValidationStatus(prev => ({
-          ...prev,
-          [service]: { valid: true, message: 'Stored key (not re-validated)' }
-        }));
-      }
-    });
-  };
-
-  const loadUsageStats = () => {
-    const stats = apiService.getUsageStatistics();
-    setUsageStats(stats);
-  };
-
-  const handleKeyUpdate = (service, value) => {
-    setApiKeys(prev => ({
-      ...prev,
-      [service]: value
-    }));
-  };
-
-  const validateAPIKey = async (service) => {
-    if (!apiKeys[service] || apiKeys[service].trim() === '') {
-      setValidationStatus(prev => ({
-        ...prev,
-        [service]: { valid: false, message: 'API key is required' }
-      }));
-      return;
-    }
-
-    setIsValidating(prev => ({ ...prev, [service]: true }));
-
+    checkMetaConnection();
+  }, []);
+  
+  const checkMetaConnection = async () => {
     try {
-      const result = await apiService.validateAPIKey(service, apiKeys[service]);
-      setValidationStatus(prev => ({
-        ...prev,
-        [service]: result
-      }));
-
-      if (result.valid) {
-        await apiService.saveAPIKey(service, apiKeys[service]);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/validate`);
+      const status = await response.json();
+      setMetaStatus(status);
+      
+      if (status.status === 'connected') {
+        setApiKeys(prev => ({ ...prev, meta: 'Connected ✓' }));
+      } else {
+        setApiKeys(prev => ({ ...prev, meta: 'Disconnected' }));
       }
     } catch (error) {
-      setValidationStatus(prev => ({
-        ...prev,
-        [service]: { 
-          valid: false, 
-          message: 'Validation failed: ' + error.message 
-        }
-      }));
+      console.error('Meta validation failed:', error);
+      setApiKeys(prev => ({ ...prev, meta: 'Error' }));
     }
-
-    setIsValidating(prev => ({ ...prev, [service]: false }));
   };
 
-  if (!isOpen) return null;
-
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 flex items-center">
-            <KeyIcon className="h-8 w-8 mr-3 text-bcm-orange" />
-            Data Source Configuration
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Free Government Sources */}
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <span className="text-green-600">✅</span>
-            <span className="ml-2">Free Government Sources</span>
-          </h3>
-          <div className="grid gap-4">
-            {['census', 'datausa', 'usps'].map(service => (
-              <div key={service} className="bg-green-50 border border-green-200 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="text-2xl mr-3">
-                      {service === 'census' ? '🏛️' : service === 'datausa' ? '🇺🇸' : '📮'}
-                    </span>
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 capitalize">
-                        {service === 'census' ? 'US Census Bureau' : 
-                         service === 'datausa' ? 'DataUSA.io' :
-                         'USPS ZIP Code API'}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {service === 'census' 
-                          ? 'Comprehensive demographic and economic data' 
-                          : service === 'datausa'
-                          ? 'Government data aggregation from Census, BLS, and federal sources'
-                          : 'ZIP code validation and geographic data'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                      FREE
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg">
-                  <p className="text-sm text-green-700">
-                    <CheckCircleIcon className="h-4 w-4 inline mr-1" />
-                    Active and ready to use - No API key required
-                  </p>
-                </div>
-              </div>
-            ))}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-gray-900">Data Sources</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <span className="text-2xl">×</span>
+            </button>
           </div>
         </div>
 
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-          >
-            Close
-          </button>
+        <div className="p-6 space-y-6">
+          {/* Census Bureau API */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-green-800">US Census Bureau API</h3>
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                {apiKeys.census}
+              </span>
+            </div>
+            <p className="text-green-700 text-sm mb-3">
+              Provides demographic data including population, median income, age distributions, and geographic boundaries.
+            </p>
+            <div className="text-xs text-green-600">
+              ✓ Population data ✓ Income demographics ✓ Age distributions ✓ Geographic boundaries
+            </div>
+          </div>
+
+          {/* Meta Business API */}
+          <div className={`border rounded-lg p-6 ${
+            metaStatus?.status === 'connected' 
+              ? 'bg-blue-50 border-blue-200' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-lg font-semibold ${
+                metaStatus?.status === 'connected' ? 'text-blue-800' : 'text-gray-800'
+              }`}>
+                Meta Business API
+              </h3>
+              <div className="flex items-center space-x-3">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  metaStatus?.status === 'connected' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {apiKeys.meta}
+                </span>
+                {metaStatus?.status === 'connected' && (
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={useMetaData}
+                      onChange={(e) => setUseMetaData(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-blue-700">Use Meta Data</span>
+                  </label>
+                )}
+              </div>
+            </div>
+            
+            {metaStatus?.status === 'connected' ? (
+              <>
+                <p className="text-blue-700 text-sm mb-3">
+                  Provides real advertising performance data including impressions, conversions, spend, and demographic insights by region.
+                </p>
+                <div className="text-xs text-blue-600 mb-3">
+                  ✓ Performance metrics ✓ Conversion data ✓ Spend analytics ✓ Demographic targeting
+                </div>
+                <div className="bg-blue-100 p-3 rounded text-xs text-blue-800">
+                  <strong>Account:</strong> {metaStatus.account_name} | <strong>Status:</strong> {metaStatus.account_status}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-700 text-sm mb-3">
+                  Connect Meta Business API to access real advertising performance data and enhance geo-testing accuracy.
+                </p>
+                <div className="text-xs text-gray-600">
+                  🔒 Campaign launch disabled for safety | ✓ Data access enabled
+                </div>
+                {metaStatus?.error && (
+                  <div className="mt-3 bg-red-100 p-3 rounded text-xs text-red-800">
+                    <strong>Connection Issue:</strong> {metaStatus.error}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Data Source Selection */}
+          {metaStatus?.status === 'connected' && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-orange-800 mb-4">Data Source Selection</h3>
+              <div className="space-y-3">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="dataSource"
+                    checked={!useMetaData}
+                    onChange={() => setUseMetaData(false)}
+                    className="mr-3"
+                  />
+                  <div>
+                    <span className="font-medium text-orange-800">Census Bureau Data</span>
+                    <p className="text-sm text-orange-700">Use demographic and population data for market analysis</p>
+                  </div>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="dataSource"
+                    checked={useMetaData}
+                    onChange={() => setUseMetaData(true)}
+                    className="mr-3"
+                  />
+                  <div>
+                    <span className="font-medium text-orange-800">Meta Performance Data</span>
+                    <p className="text-sm text-orange-700">Use real advertising performance and conversion data</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Integration Status */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-800 mb-2">Integration Status</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Census API:</span>
+                <span className="ml-2 text-green-600 font-medium">Active</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Meta API:</span>
+                <span className={`ml-2 font-medium ${
+                  metaStatus?.status === 'connected' ? 'text-blue-600' : 'text-gray-500'
+                }`}>
+                  {metaStatus?.status === 'connected' ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </motion.div>
-    </motion.div>
+
+        <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              {useMetaData && metaStatus?.status === 'connected' 
+                ? '🔗 Using Meta performance data for enhanced accuracy'
+                : '📊 Using Census demographic data'
+              }
+            </div>
+            <button
+              onClick={onClose}
+              className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            >
+              Save Configuration
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
