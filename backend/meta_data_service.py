@@ -1,19 +1,91 @@
+import os
 import random
 import json
 import numpy as np
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from models import MetaAccountData, GeographicUnit
 from datetime import datetime, timedelta
+import requests
+
+# Try to import Meta SDK, fallback gracefully if not available
+try:
+    from facebook_business.api import FacebookAdsApi
+    from facebook_business.adobjects.adaccount import AdAccount
+    from facebook_business.adobjects.adsinsights import AdsInsights
+    from facebook_business.adobjects.targetingsearch import TargetingSearch
+    from facebook_business.adobjects.campaign import Campaign
+    from facebook_business.exceptions import FacebookRequestError
+    META_SDK_AVAILABLE = True
+except ImportError:
+    print("Meta SDK not available, using dummy data")
+    META_SDK_AVAILABLE = False
 
 class MetaDataService:
     """
-    Service layer for Meta API data - currently using realistic dummy data
-    Structured to easily swap in real Meta API calls
+    Service layer for Meta API data with real Meta Business API integration
+    Falls back to dummy data if API is not available
     """
     
     def __init__(self):
+        # Meta API configuration from environment
+        self.app_id = os.environ.get('META_APP_ID')
+        self.app_secret = os.environ.get('META_APP_SECRET')
+        self.access_token = os.environ.get('META_ACCESS_TOKEN')
+        self.business_id = os.environ.get('META_BUSINESS_ID')
+        self.ad_account_id = os.environ.get('META_AD_ACCOUNT_ID', 'act_123456789')
+        
+        # Initialize Meta API if available
+        self.meta_api_initialized = False
+        if META_SDK_AVAILABLE and self.access_token:
+            try:
+                FacebookAdsApi.init(self.app_id, self.app_secret, self.access_token)
+                self.meta_api_initialized = True
+                print("✅ Meta API initialized successfully")
+            except Exception as e:
+                print(f"❌ Meta API initialization failed: {e}")
+                self.meta_api_initialized = False
+        
+        # Fallback data
         self.dummy_account_data = self._generate_dummy_account_data()
         self.zip_conversion_data = self._generate_zip_conversion_data()
+        
+    def validate_connection(self) -> Dict[str, Any]:
+        """Validate Meta API connection and return status"""
+        if not self.meta_api_initialized:
+            return {
+                "status": "disconnected",
+                "has_access_token": bool(self.access_token),
+                "has_ad_account": bool(self.ad_account_id),
+                "error": "Meta SDK not initialized"
+            }
+        
+        try:
+            # Test API connection
+            account = AdAccount(self.ad_account_id)
+            account_info = account.api_get(fields=[AdAccount.Field.name, AdAccount.Field.account_status])
+            
+            return {
+                "status": "connected",
+                "has_access_token": True,
+                "has_ad_account": True,
+                "account_name": account_info.get('name', 'Unknown'),
+                "account_status": account_info.get('account_status', 'Unknown'),
+                "account_id": self.ad_account_id
+            }
+        except FacebookRequestError as e:
+            return {
+                "status": "error",
+                "has_access_token": bool(self.access_token),
+                "has_ad_account": bool(self.ad_account_id),
+                "error": f"Meta API Error: {e}"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "has_access_token": bool(self.access_token),
+                "has_ad_account": bool(self.ad_account_id),
+                "error": f"Connection Error: {e}"
+            }
         
     def get_account_data(self, account_id: str = None) -> MetaAccountData:
         """
