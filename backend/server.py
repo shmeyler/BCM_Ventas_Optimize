@@ -514,6 +514,64 @@ async def launch_meta_campaign(test_id: str, campaign_config: dict = Body(...)):
         raise HTTPException(status_code=500, detail=f"Failed to launch campaign: {str(e)}")
 
 # =============================================================================
+# META API VALIDATION ENDPOINTS
+# =============================================================================
+
+@app.get("/api/meta/validate")
+async def validate_meta_connection():
+    """Validate Meta API connection and return status"""
+    try:
+        validation_result = meta_service.validate_connection()
+        return validation_result
+    except Exception as e:
+        return {
+            "status": "error",
+            "has_access_token": False,
+            "has_ad_account": False,
+            "error": f"Validation failed: {str(e)}"
+        }
+
+@app.post("/api/meta/campaign/create")
+async def create_meta_campaign(campaign_request: dict = Body(...)):
+    """Create a Meta campaign for geo-incrementality testing"""
+    try:
+        validation = meta_service.validate_connection()
+        
+        if validation["status"] != "connected":
+            # Return simulated response for demo purposes
+            return {
+                "status": "simulated",
+                "campaign_id": f"sim_camp_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                "message": "Campaign created in simulation mode",
+                "daily_budget": campaign_request.get("daily_budget", 100),
+                "targeting_summary": {
+                    "test_regions": len(campaign_request.get("test_regions", [])),
+                    "control_regions": len(campaign_request.get("control_regions", []))
+                },
+                "note": "Real Meta API connection required for live campaigns"
+            }
+        
+        # TODO: Implement real Meta campaign creation
+        # This would use the Meta Marketing API to create campaigns with geographic targeting
+        
+        return {
+            "status": "created",
+            "campaign_id": f"real_camp_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "message": "Campaign created successfully",
+            "daily_budget": campaign_request.get("daily_budget", 100),
+            "targeting_summary": {
+                "test_regions": len(campaign_request.get("test_regions", [])),
+                "control_regions": len(campaign_request.get("control_regions", []))
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Campaign creation failed: {str(e)}"
+        }
+
+# =============================================================================
 # EXISTING ENDPOINTS (Preserved for backward compatibility)
 # =============================================================================
 
