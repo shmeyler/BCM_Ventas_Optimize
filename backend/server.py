@@ -533,42 +533,30 @@ async def validate_meta_connection():
 
 @app.post("/api/meta/campaign/create")
 async def create_meta_campaign(campaign_request: dict = Body(...)):
-    """Create a Meta campaign for geo-incrementality testing"""
+    """Create a Meta campaign for geo-incrementality testing (SIMULATION MODE ONLY)"""
     try:
         validation = meta_service.validate_connection()
         
-        if validation["status"] != "connected":
-            # Return simulated response for demo purposes
-            return {
-                "status": "simulated",
-                "campaign_id": f"sim_camp_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "message": "Campaign created in simulation mode",
-                "daily_budget": campaign_request.get("daily_budget", 100),
-                "targeting_summary": {
-                    "test_regions": len(campaign_request.get("test_regions", [])),
-                    "control_regions": len(campaign_request.get("control_regions", []))
-                },
-                "note": "Real Meta API connection required for live campaigns"
-            }
-        
-        # TODO: Implement real Meta campaign creation
-        # This would use the Meta Marketing API to create campaigns with geographic targeting
+        # ALWAYS use simulation mode for campaign creation (safety feature)
+        campaign_id = f"sim_camp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         return {
-            "status": "created",
-            "campaign_id": f"real_camp_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "message": "Campaign created successfully",
+            "status": "simulated",
+            "campaign_id": campaign_id,
+            "message": "Campaign created in SIMULATION MODE (Launch disabled for safety)",
             "daily_budget": campaign_request.get("daily_budget", 100),
             "targeting_summary": {
                 "test_regions": len(campaign_request.get("test_regions", [])),
                 "control_regions": len(campaign_request.get("control_regions", []))
-            }
+            },
+            "meta_connection_status": validation["status"],
+            "note": "✅ Data access enabled, 🔒 Campaign launch disabled for safety"
         }
         
     except Exception as e:
         return {
             "status": "error",
-            "error": f"Campaign creation failed: {str(e)}"
+            "error": f"Campaign simulation failed: {str(e)}"
         }
 
 # =============================================================================
