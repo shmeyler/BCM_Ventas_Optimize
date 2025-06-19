@@ -340,7 +340,108 @@ const calculateDemographicBalance = (regions) => {
 
 // GeographicAPI object
 const GeographicAPI = {
-  // Get ZIP code data from our backend API
+  // Find similar regions using Meta performance data
+  async findSimilarRegionsWithMeta(selectedRegion, regionType, criteria = {}) {
+    try {
+      console.log(`🎯 Finding Meta performance-based similar regions for: ${selectedRegion.name}`);
+      
+      const { maxResults = 5, minSimilarity = 0.7 } = criteria;
+      
+      // Get Meta insights data for all regions
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/insights?days=90`);
+      const metaData = await response.json();
+      
+      if (metaData.status !== 'success' || !metaData.insights) {
+        console.error('Failed to fetch Meta insights');
+        return [];
+      }
+      
+      // Find the selected region in Meta data
+      const selectedMetaRegion = metaData.insights.find(insight => 
+        insight.location_id === selectedRegion.id || 
+        insight.location_name.includes(selectedRegion.id)
+      );
+      
+      if (!selectedMetaRegion) {
+        console.log('Selected region not found in Meta data, using fallback');
+        return [];
+      }
+      
+      console.log(`📊 Found Meta data for ${selectedRegion.name}:`, selectedMetaRegion.metrics);
+      
+      // Calculate similarity based on Meta performance metrics
+      const similarities = metaData.insights
+        .filter(insight => insight.location_id !== selectedRegion.id)
+        .map(insight => ({
+          ...insight,
+          similarity: this.calculateMetaPerformanceSimilarity(
+            selectedMetaRegion.metrics, 
+            insight.metrics
+          )
+        }))
+        .filter(region => region.similarity >= minSimilarity)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, maxResults);
+      
+      // Convert to the expected format
+      const similarRegions = similarities.map(insight => ({
+        id: insight.location_id,
+        name: insight.location_name,
+        similarity: insight.similarity,
+        demographics: {
+          population: insight.metrics.impressions, // Using impressions as reach proxy
+          medianIncome: Math.round(insight.metrics.revenue / insight.metrics.conversions * 12) || 50000,
+          conversions: insight.metrics.conversions,
+          spend: insight.metrics.spend,
+          ctr: insight.metrics.ctr,
+          conversionRate: insight.metrics.conversion_rate,
+          roas: insight.metrics.roas
+        },
+        source: 'META_BUSINESS_API',
+        metaMetrics: insight.metrics,
+        selected: false,
+        type: null
+      }));
+      
+      console.log(`🎯 Found ${similarRegions.length} Meta performance-similar regions`);
+      return similarRegions;
+      
+    } catch (error) {
+      console.error('Error finding Meta-similar regions:', error);
+      return [];
+    }
+  },
+
+  // Calculate similarity based on Meta performance metrics
+  calculateMetaPerformanceSimilarity(metrics1, metrics2) {
+    const weights = {
+      conversion_rate: 0.3,  // Most important for similar performance
+      ctr: 0.25,            // Click-through rate similarity
+      roas: 0.2,            // Return on ad spend
+      cpm: 0.15,            // Cost efficiency
+      spend: 0.1            // Spend level similarity
+    };
+    
+    let totalSimilarity = 0;
+    let totalWeight = 0;
+    
+    Object.keys(weights).forEach(metric => {
+      if (metrics1[metric] && metrics2[metric]) {
+        const val1 = metrics1[metric];
+        const val2 = metrics2[metric];
+        
+        // Calculate percentage similarity (closer to 1 = more similar)
+        const maxVal = Math.max(val1, val2);
+        const minVal = Math.min(val1, val2);
+        const similarity = minVal / maxVal;
+        
+        totalSimilarity += similarity * weights[metric];
+        totalWeight += weights[metric];
+      }
+    });
+    
+    return totalWeight > 0 ? totalSimilarity / totalWeight : 0;
+  },
   async getZipCodeData(zipCode) {
     try {
       console.log(`📍 Fetching data for ZIP code: ${zipCode} from backend`);
