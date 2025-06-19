@@ -890,6 +890,7 @@ const knowledgeBaseData = [
 // Header Component with BCM branding and API management
 const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, onLogout }) => {
   const [showAPIManager, setShowAPIManager] = useState(false);
+  const [useMetaData, setUseMetaData] = useState(false); // New state for Meta data toggle
 
   const handleDataSourcesClick = () => {
     console.log('Data Sources button clicked!');
