@@ -2808,7 +2808,11 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
       setIsLoading(true);
       
       try {
-        const similar = await GeographicAPI.findSimilarRegions(selectedRegion, regionType);
+        const similar = await GeographicAPI.findSimilarRegions(selectedRegion, regionType, {
+          useMetaData: useMetaData,
+          minSimilarity: 0.7,
+          maxResults: 5
+        });
         setSimilarRegions(similar);
         setShowSimilarityAnalysis(true);
       } catch (error) {
