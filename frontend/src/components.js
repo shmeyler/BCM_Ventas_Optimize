@@ -1658,20 +1658,16 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
                     Modal state: {showCampaignSelector ? 'OPEN' : 'CLOSED'}
                   </div>
                   
-                  {/* Simple test modal */}
+                  {/* Meta Campaign Selector Modal */}
                   {showCampaignSelector && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                      <div className="bg-white p-6 rounded-lg max-w-md">
-                        <h2 className="text-xl font-bold mb-4">Test Modal Working!</h2>
-                        <p className="mb-4">If you see this, the modal trigger is working.</p>
-                        <button 
-                          onClick={() => setShowCampaignSelector(false)}
-                          className="bg-red-500 text-white px-4 py-2 rounded"
-                        >
-                          Close Test Modal
-                        </button>
-                      </div>
-                    </div>
+                    <MetaCampaignSelector
+                      onClose={() => setShowCampaignSelector(false)}
+                      onCampaignSelect={(data) => {
+                        setSelectedCampaigns(data.campaigns);
+                        console.log('Selected campaigns:', data);
+                        setShowCampaignSelector(false);
+                      }}
+                    />
                   )}
                 </div>
               )}
