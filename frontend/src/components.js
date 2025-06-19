@@ -3160,6 +3160,30 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
                     
                     <div className="flex space-x-2 ml-4">
                       <button
+                        onClick={() => {
+                          setSelectedRegionForAnalysis(region);
+                          setIsLoading(true);
+                          
+                          GeographicAPI.findSimilarRegions(region, regionType, {
+                            useMetaData: useMetaData,
+                            minSimilarity: 0.7,
+                            maxResults: 5
+                          }).then(similar => {
+                            setSimilarRegions(similar);
+                            setShowSimilarityAnalysis(true);
+                            setIsLoading(false);
+                          }).catch(error => {
+                            console.error('Error finding similar regions:', error);
+                            setIsLoading(false);
+                          });
+                        }}
+                        className="bg-blue-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors"
+                        title={useMetaData ? "Find similar regions based on Meta performance data" : "Find similar regions based on demographics"}
+                      >
+                        {useMetaData ? '🎯 Meta Similar' : '📊 Find Similar'}
+                      </button>
+                      
+                      <button
                         onClick={() => selectRegion(region.id, 'test')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                           region.type === 'test'
