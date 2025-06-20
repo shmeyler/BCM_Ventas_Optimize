@@ -1637,6 +1637,13 @@ def run_all_tests():
         "approve_enhanced_test": False,
         "launch_meta_campaign": False,
         
+        # Meta Campaign Integration
+        "meta_validate_connection": False,
+        "meta_accounts": False,
+        "meta_campaigns": False,
+        "meta_campaign_insights": False,
+        "budget_recommendations_meta": False,
+        
         # Legacy Endpoints
         "zip_lookup_endpoint": False
     }
@@ -1677,6 +1684,13 @@ def run_all_tests():
         results["approve_enhanced_test"] = test_approve_enhanced_test(test_id)
         results["launch_meta_campaign"] = test_launch_meta_campaign(test_id)
     
+    # Meta Campaign Integration Tests
+    results["meta_validate_connection"] = test_meta_validate_connection()
+    results["meta_accounts"] = test_meta_accounts()
+    results["meta_campaigns"] = test_meta_campaigns()
+    results["meta_campaign_insights"] = test_meta_campaign_insights()
+    results["budget_recommendations_meta"] = test_budget_recommendations_meta()
+    
     # Legacy Endpoints Tests
     results["zip_lookup_endpoint"] = test_zip_lookup_endpoint()
     
@@ -1708,6 +1722,13 @@ def run_all_tests():
     print(f"PUT /api/tests/enhanced/{'{test_id}'}/statistical-analysis: {'✅' if results['update_statistical_analysis'] else '❌'}")
     print(f"PUT /api/tests/enhanced/{'{test_id}'}/approve: {'✅' if results['approve_enhanced_test'] else '❌'}")
     print(f"POST /api/tests/enhanced/{'{test_id}'}/launch-meta-campaign: {'✅' if results['launch_meta_campaign'] else '❌'}")
+    
+    print("\nMeta Campaign Integration")
+    print(f"GET /api/meta/validate: {'✅' if results['meta_validate_connection'] else '❌'}")
+    print(f"GET /api/meta/accounts: {'✅' if results['meta_accounts'] else '❌'}")
+    print(f"GET /api/meta/campaigns: {'✅' if results['meta_campaigns'] else '❌'}")
+    print(f"POST /api/meta/campaign-insights: {'✅' if results['meta_campaign_insights'] else '❌'}")
+    print(f"POST /api/budget/recommendations-meta: {'✅' if results['budget_recommendations_meta'] else '❌'}")
     
     print("\nLegacy Endpoints")
     print(f"GET /api/zip-lookup/{'{zip_code}'}: {'✅' if results['zip_lookup_endpoint'] else '❌'}")
