@@ -1689,13 +1689,6 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
                 </div>
               )}
             </div>
-          )} text-gray-500">
-                    Modal state: {showCampaignSelector ? 'OPEN' : 'CLOSED'}
-                  </div>
-                  
-                </div>
-              )}
-            </div>
           )}
 
           {/* Integration Status */}
