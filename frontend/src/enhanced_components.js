@@ -197,6 +197,8 @@ const Enhanced5StepWorkflow = ({ onComplete }) => {
     statisticalAnalysis: null,
     approval: null
   });
+  const [selectedCampaignData, setSelectedCampaignData] = useState(null); // Store Meta campaign data
+  const [useMetaData, setUseMetaData] = useState(false);
 
   const steps = [
     { number: 1, title: 'Set Objectives', icon: ChartPieIcon, color: 'blue' },
