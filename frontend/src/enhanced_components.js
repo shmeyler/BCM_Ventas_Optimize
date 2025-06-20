@@ -283,6 +283,7 @@ const Enhanced5StepWorkflow = ({ onComplete }) => {
             onComplete={handleStepComplete}
             initialData={testConfig.budget}
             objective={testConfig.objective}
+            selectedCampaignData={selectedCampaignData}
           />
         )}
         {currentStep === 3 && (
