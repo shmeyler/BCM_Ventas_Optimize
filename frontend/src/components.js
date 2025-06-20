@@ -1477,14 +1477,10 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
                   
                   <button
                     onClick={handleLoadInsights}
-                    disabled={selectedCampaigns.length === 0 || loading}
-                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                      selectedCampaigns.length > 0 && !loading
-                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
+                    disabled={false} // Temporarily force enable for testing
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
-                    {loading ? 'Loading...' : `Load Campaign Data (${selectedCampaigns.length})`}
+                    Load Campaign Data ({selectedCampaigns.length})
                   </button>
                 </div>
               </div>
