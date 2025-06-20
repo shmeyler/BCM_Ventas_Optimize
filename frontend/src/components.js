@@ -1650,17 +1650,6 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
                     Modal state: {showCampaignSelector ? 'OPEN' : 'CLOSED'}
                   </div>
                   
-                  {/* Meta Campaign Selector Modal */}
-                  {showCampaignSelector && (
-                    <MetaCampaignSelector
-                      onClose={() => setShowCampaignSelector(false)}
-                      onCampaignSelect={(data) => {
-                        setSelectedCampaigns(data.campaigns);
-                        console.log('Selected campaigns:', data);
-                        setShowCampaignSelector(false);
-                      }}
-                    />
-                  )}
                 </div>
               )}
             </div>
