@@ -578,8 +578,28 @@ const BudgetStep = ({ onComplete, initialData, objective }) => {
   const loadBudgetRecommendations = async () => {
     try {
       console.log('Fetching recommendations for objective type:', objective?.type);
-      const recs = await enhancedAPI.getBudgetRecommendations(objective.type, 100000);
-      console.log('Received recommendations:', recs);
+      console.log('Using Meta campaign data:', selectedCampaignData?.insights?.length || 0, 'campaigns');
+      
+      let recs;
+      if (selectedCampaignData?.insights && selectedCampaignData.insights.length > 0) {
+        // Use Meta campaign data for recommendations
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/budget/recommendations-meta`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            objective_type: objective.type,
+            campaign_insights: selectedCampaignData.insights,
+            target_population: 100000
+          })
+        });
+        recs = await response.json();
+        console.log('📊 Meta-based recommendations:', recs);
+      } else {
+        // Fallback to generic recommendations
+        recs = await enhancedAPI.getBudgetRecommendations(objective.type, 100000);
+        console.log('📈 Generic recommendations:', recs);
+      }
+      
       setRecommendations(recs);
     } catch (error) {
       console.error('Error loading budget recommendations:', error);
