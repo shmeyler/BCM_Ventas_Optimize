@@ -1650,22 +1650,44 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
               
               {useMetaData && (
                 <div className="mt-4 p-4 bg-white rounded-lg">
-                  <button
-                    onClick={() => {
-                      console.log('🎯 Select Meta Campaigns button clicked');
-                      setShowCampaignSelector(true);
-                      alert('Modal should open now. State: ' + showCampaignSelector);
-                    }}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    🎯 Select Meta Campaigns
-                  </button>
-                  <p className="text-xs text-gray-600 mt-2 text-center">
-                    Choose specific campaigns to analyze their geographic performance
-                  </p>
-                  
-                  {/* Debug info */}
-                  <div className="mt-2 text-xs text-gray-500">
+                  {campaignData ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-800">
+                          ✅ {campaignData.campaigns.length} campaigns selected from {campaignData.account.name}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setCampaignData(null);
+                            setSelectedCampaigns([]);
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          Change
+                        </button>
+                      </div>
+                      <div className="text-xs text-blue-600">
+                        Campaigns: {campaignData.campaigns.map(c => c.name).join(', ')}
+                      </div>
+                      <div className="text-xs text-blue-600 mt-1">
+                        Insights loaded: {campaignData.insights?.length || 0} geographic regions
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-blue-800 mb-3">Select Meta campaigns to use real performance data for recommendations</p>
+                      <button
+                        onClick={() => setShowCampaignSelector(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                      >
+                        🎯 Select Meta Campaigns
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )} text-gray-500">
                     Modal state: {showCampaignSelector ? 'OPEN' : 'CLOSED'}
                   </div>
                   
