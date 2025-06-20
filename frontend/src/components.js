@@ -1752,7 +1752,7 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
           }}
         />
       )}
-    </div>
+    </>
   );
 };
 
