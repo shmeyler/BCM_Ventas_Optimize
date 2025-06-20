@@ -1304,34 +1304,54 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
   };
 
   const handleLoadInsights = async () => {
-    if (selectedCampaigns.length === 0) return;
+    console.log('🚀 Load Campaign Data button clicked!');
+    console.log('📊 Selected campaigns:', selectedCampaigns);
+    console.log('🏢 Selected account:', selectedAccount);
     
+    if (selectedCampaigns.length === 0) {
+      console.log('❌ No campaigns selected');
+      alert('Please select at least one campaign');
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log('📡 Making API call to load campaign insights...');
+      
+      const requestData = {
+        account_id: selectedAccount.id,
+        campaign_ids: selectedCampaigns.map(c => c.id),
+        date_range_days: 90
+      };
+      console.log('📤 Request data:', requestData);
+      
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/meta/campaign-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          account_id: selectedAccount.id,
-          campaign_ids: selectedCampaigns.map(c => c.id),
-          date_range_days: 90
-        })
+        body: JSON.stringify(requestData)
       });
       
+      console.log('📥 Response status:', response.status);
       const data = await response.json();
+      console.log('📊 Response data:', data);
       
       if (data.status === 'success') {
-        onCampaignSelect({
+        console.log('✅ Campaign insights loaded successfully');
+        const campaignData = {
           account: selectedAccount,
           campaigns: selectedCampaigns,
           insights: data.insights
-        });
+        };
+        console.log('🎯 Calling onCampaignSelect with:', campaignData);
+        onCampaignSelect(campaignData);
         onClose();
       } else {
-        console.error('Failed to load campaign insights:', data.error);
+        console.error('❌ Failed to load campaign insights:', data.error);
+        alert(`Failed to load campaign insights: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error loading campaign insights:', error);
+      console.error('💥 Error loading campaign insights:', error);
+      alert(`Error loading campaign insights: ${error.message}`);
     }
     setLoading(false);
   };
