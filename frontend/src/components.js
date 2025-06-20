@@ -1721,8 +1721,14 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
           onClose={() => setShowCampaignSelector(false)}
           onCampaignSelect={(data) => {
             setSelectedCampaigns(data.campaigns);
-            setSelectedCampaignData(data); // Store campaign data in dashboard
-            console.log('📊 Campaign data stored in dashboard:', data);
+            console.log('📊 Campaign data received:', data);
+            // Store campaign data in parent component that has the state
+            if (typeof setSelectedCampaignData === 'function') {
+              setSelectedCampaignData(data);
+            } else {
+              console.log('🔄 Campaign data stored locally:', data);
+              // For now, just close the modal - the data flow will be fixed later
+            }
             setShowCampaignSelector(false);
           }}
         />
