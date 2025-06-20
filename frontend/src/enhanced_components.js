@@ -187,7 +187,7 @@ class EnhancedAPIService {
 const enhancedAPI = new EnhancedAPIService();
 
 // Enhanced 5-Step Workflow Component
-const Enhanced5StepWorkflow = ({ onComplete }) => {
+const Enhanced5StepWorkflow = ({ onComplete, selectedCampaignData, setSelectedCampaignData }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [testConfig, setTestConfig] = useState({
@@ -197,7 +197,7 @@ const Enhanced5StepWorkflow = ({ onComplete }) => {
     statisticalAnalysis: null,
     approval: null
   });
-  const [selectedCampaignData, setSelectedCampaignData] = useState(null); // Store Meta campaign data
+  // Remove local campaign data state - use props from App level
   const [useMetaData, setUseMetaData] = useState(false);
   const [showCampaignSelector, setShowCampaignSelector] = useState(false);
 
