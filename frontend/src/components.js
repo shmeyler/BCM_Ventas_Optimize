@@ -1489,6 +1489,7 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
           )}
         </div>
       </div>
+    </div>
       
     </>
   );
