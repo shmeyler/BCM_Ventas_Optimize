@@ -121,6 +121,8 @@ function App() {
               testData={testData}
               setTestData={setTestData}
               setCurrentView={setCurrentView}
+              selectedCampaignData={selectedCampaignData}
+              setSelectedCampaignData={setSelectedCampaignData}
             />
           ) : (
             <GeoTestingDashboard 
