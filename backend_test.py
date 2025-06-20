@@ -1261,8 +1261,293 @@ def test_launch_meta_campaign(test_id):
         return False
 
 # =============================================================================
-# LEGACY ENDPOINTS TESTS
+# META CAMPAIGN INTEGRATION TESTS
 # =============================================================================
+
+def test_meta_validate_connection():
+    """Test GET /api/meta/validate endpoint"""
+    print_separator("Testing GET /api/meta/validate endpoint")
+    
+    try:
+        response = requests.get(f"{API_BASE_URL}/meta/validate")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+        
+        data = response.json()
+        print(f"Response: {json.dumps(data, indent=2)}")
+        
+        # Validate response structure
+        required_fields = ["status", "has_access_token", "has_ad_account"]
+        for field in required_fields:
+            if field not in data:
+                print(f"❌ Test failed: Response missing required field '{field}'")
+                return False
+        
+        # Check connection status
+        connection_status = data.get("status")
+        print(f"Meta API Connection Status: {connection_status}")
+        
+        # Even if not connected, the endpoint should work
+        print("✅ Test passed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+        return False
+
+def test_meta_accounts():
+    """Test GET /api/meta/accounts endpoint"""
+    print_separator("Testing GET /api/meta/accounts endpoint")
+    
+    try:
+        response = requests.get(f"{API_BASE_URL}/meta/accounts")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+        
+        data = response.json()
+        print(f"Response: {json.dumps(data, indent=2)}")
+        
+        # Validate response structure
+        required_fields = ["status"]
+        for field in required_fields:
+            if field not in data:
+                print(f"❌ Test failed: Response missing required field '{field}'")
+                return False
+        
+        # Check if accounts are returned
+        if data.get("status") == "success":
+            accounts = data.get("accounts", [])
+            print(f"Found {len(accounts)} Meta ad accounts")
+            
+            # Check if Aon accounts are present
+            aon_accounts = [acc for acc in accounts if "Aon" in acc.get("name", "")]
+            if aon_accounts:
+                print(f"Found Aon accounts: {[acc.get('name') for acc in aon_accounts]}")
+            else:
+                print("No Aon accounts found in the response")
+        
+        # Even if no accounts are found, the endpoint should work
+        print("✅ Test passed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+        return False
+
+def test_meta_campaigns():
+    """Test GET /api/meta/campaigns endpoint"""
+    print_separator("Testing GET /api/meta/campaigns endpoint")
+    
+    try:
+        # Use the default account ID from the environment
+        account_id = os.environ.get('META_AD_ACCOUNT_ID', 'act_123456789')
+        params = {"account_id": account_id}
+        
+        response = requests.get(f"{API_BASE_URL}/meta/campaigns", params=params)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+        
+        data = response.json()
+        print(f"Response: {json.dumps(data, indent=2)}")
+        
+        # Validate response structure
+        required_fields = ["status", "account_id"]
+        for field in required_fields:
+            if field not in data:
+                print(f"❌ Test failed: Response missing required field '{field}'")
+                return False
+        
+        # Check if campaigns are returned
+        if data.get("status") == "success":
+            campaigns = data.get("campaigns", [])
+            print(f"Found {len(campaigns)} Meta campaigns for account {account_id}")
+            
+            if campaigns:
+                # Print first campaign details
+                first_campaign = campaigns[0]
+                print(f"First campaign: {json.dumps(first_campaign, indent=2)}")
+        
+        # Even if no campaigns are found, the endpoint should work
+        print("✅ Test passed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+        return False
+
+def test_meta_campaign_insights():
+    """Test POST /api/meta/campaign-insights endpoint"""
+    print_separator("Testing POST /api/meta/campaign-insights endpoint")
+    
+    try:
+        # Use the default account ID from the environment
+        account_id = os.environ.get('META_AD_ACCOUNT_ID', 'act_123456789')
+        
+        # First get campaigns to use their IDs
+        campaigns_response = requests.get(f"{API_BASE_URL}/meta/campaigns", params={"account_id": account_id})
+        
+        campaign_ids = []
+        if campaigns_response.status_code == 200:
+            campaigns_data = campaigns_response.json()
+            if campaigns_data.get("status") == "success":
+                campaigns = campaigns_data.get("campaigns", [])
+                campaign_ids = [campaign.get("id") for campaign in campaigns[:3]]  # Get first 3 campaign IDs
+        
+        # If no real campaigns found, use dummy IDs
+        if not campaign_ids:
+            campaign_ids = ["123456789", "987654321"]
+            print("No real campaigns found, using dummy campaign IDs")
+        else:
+            print(f"Using real campaign IDs: {campaign_ids}")
+        
+        # Request body
+        request_body = {
+            "account_id": account_id,
+            "campaign_ids": campaign_ids,
+            "date_range_days": 90
+        }
+        
+        response = requests.post(f"{API_BASE_URL}/meta/campaign-insights", json=request_body)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+        
+        data = response.json()
+        print(f"Response: {json.dumps(data, indent=2)[:1000]}...")  # Print first 1000 chars
+        
+        # Validate response structure
+        required_fields = ["status", "account_id", "campaign_ids", "date_range_days"]
+        for field in required_fields:
+            if field not in data:
+                print(f"❌ Test failed: Response missing required field '{field}'")
+                return False
+        
+        # Check if insights are returned
+        if data.get("status") == "success":
+            insights = data.get("insights", [])
+            print(f"Found {len(insights)} geographic insights")
+            
+            if insights:
+                # Print first insight details
+                first_insight = insights[0]
+                print(f"First insight: {json.dumps(first_insight, indent=2)}")
+        
+        # Even if no insights are found, the endpoint should work
+        print("✅ Test passed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+        return False
+
+def test_budget_recommendations_meta():
+    """Test POST /api/budget/recommendations-meta endpoint"""
+    print_separator("Testing POST /api/budget/recommendations-meta endpoint")
+    
+    try:
+        # First get campaign insights to use for recommendations
+        account_id = os.environ.get('META_AD_ACCOUNT_ID', 'act_123456789')
+        
+        # Get campaigns
+        campaigns_response = requests.get(f"{API_BASE_URL}/meta/campaigns", params={"account_id": account_id})
+        
+        campaign_ids = []
+        if campaigns_response.status_code == 200:
+            campaigns_data = campaigns_response.json()
+            if campaigns_data.get("status") == "success":
+                campaigns = campaigns_data.get("campaigns", [])
+                campaign_ids = [campaign.get("id") for campaign in campaigns[:3]]  # Get first 3 campaign IDs
+        
+        # If no real campaigns found, use dummy IDs
+        if not campaign_ids:
+            campaign_ids = ["123456789", "987654321"]
+            print("No real campaigns found, using dummy campaign IDs")
+        else:
+            print(f"Using real campaign IDs: {campaign_ids}")
+        
+        # Get campaign insights
+        insights_request = {
+            "account_id": account_id,
+            "campaign_ids": campaign_ids,
+            "date_range_days": 90
+        }
+        
+        insights_response = requests.post(f"{API_BASE_URL}/meta/campaign-insights", json=insights_request)
+        
+        campaign_insights = []
+        if insights_response.status_code == 200:
+            insights_data = insights_response.json()
+            if insights_data.get("status") == "success":
+                campaign_insights = insights_data.get("insights", [])
+        
+        # Request body for budget recommendations
+        request_body = {
+            "objective_type": "conversions",
+            "campaign_insights": campaign_insights,
+            "target_population": 200000
+        }
+        
+        response = requests.post(f"{API_BASE_URL}/budget/recommendations-meta", json=request_body)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code != 200:
+            print(f"❌ Test failed: Unexpected status code {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+        
+        data = response.json()
+        print(f"Response: {json.dumps(data, indent=2)}")
+        
+        # Validate response structure
+        required_fields = ["objective_type", "target_population", "recommendations"]
+        for field in required_fields:
+            if field not in data:
+                print(f"❌ Test failed: Response missing required field '{field}'")
+                return False
+        
+        # Check if campaign data is included when insights are provided
+        if campaign_insights:
+            if "campaign_data" not in data:
+                print("❌ Test failed: Campaign data not included in response despite providing insights")
+                return False
+            
+            campaign_data = data.get("campaign_data", {})
+            print(f"Campaign data: {json.dumps(campaign_data, indent=2)}")
+        
+        # Validate recommendations structure
+        recommendations = data.get("recommendations", {})
+        recommendation_fields = [
+            "minimum_daily_budget", "recommended_daily_budget", 
+            "minimum_duration_days", "recommended_duration_days",
+            "minimum_total_budget", "recommended_total_budget"
+        ]
+        
+        for field in recommendation_fields:
+            if field not in recommendations:
+                print(f"❌ Test failed: Recommendations missing required field '{field}'")
+                return False
+        
+        print("✅ Test passed")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Test failed with error: {str(e)}")
+        return False
 
 def test_zip_lookup_endpoint():
     """Test the legacy /api/zip-lookup/{zip_code} endpoint"""
