@@ -1287,13 +1287,19 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
   };
 
   const handleCampaignToggle = (campaign) => {
+    console.log('🎯 Campaign toggle clicked:', campaign.name);
     setSelectedCampaigns(prev => {
       const isSelected = prev.find(c => c.id === campaign.id);
+      let newSelection;
       if (isSelected) {
-        return prev.filter(c => c.id !== campaign.id);
+        newSelection = prev.filter(c => c.id !== campaign.id);
+        console.log('❌ Removed campaign:', campaign.name);
       } else {
-        return [...prev, campaign];
+        newSelection = [...prev, campaign];
+        console.log('✅ Added campaign:', campaign.name);
       }
+      console.log('📊 Total selected campaigns:', newSelection.length);
+      return newSelection;
     });
   };
 
