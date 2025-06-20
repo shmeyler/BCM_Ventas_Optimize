@@ -996,6 +996,8 @@ const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, on
           onClose={() => setShowAPIManager(false)}
           useMetaData={useMetaData}
           setUseMetaData={setUseMetaData}
+          selectedCampaignData={selectedCampaignData}
+          setSelectedCampaignData={setSelectedCampaignData}
         />
       )}
     </>
