@@ -852,7 +852,7 @@ const BudgetStep = ({ onComplete, initialData, objective, selectedCampaignData }
 };
 
 // Enhanced Dashboard Component
-const EnhancedGeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
+const EnhancedGeoTestingDashboard = ({ testData, setTestData, setCurrentView, selectedCampaignData, setSelectedCampaignData }) => {
   const [showWorkflow, setShowWorkflow] = useState(false);
   const [enhancedTests, setEnhancedTests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
