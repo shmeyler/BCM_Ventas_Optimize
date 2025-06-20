@@ -1497,7 +1497,7 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
   );
 };
 
-const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
+const APIKeyManager = ({ onClose, useMetaData, setUseMetaData, selectedCampaignData, setSelectedCampaignData }) => {
   const [apiKeys, setApiKeys] = useState({
     census: 'Connected ✓',
     meta: 'Checking...'
