@@ -1490,7 +1490,7 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
         </div>
       </div>
       
-    </>
+    </div>
   );
 };
 const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
