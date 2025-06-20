@@ -894,6 +894,8 @@ const EnhancedGeoTestingDashboard = ({ testData, setTestData, setCurrentView, se
     return (
       <Enhanced5StepWorkflow 
         onComplete={handleWorkflowComplete}
+        selectedCampaignData={selectedCampaignData}
+        setSelectedCampaignData={setSelectedCampaignData}
       />
     );
   }
