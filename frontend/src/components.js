@@ -1743,8 +1743,10 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData, selectedCampaignD
             console.log('✅ Campaign data received in APIKeyManager:', data);
             setSelectedCampaigns(data.campaigns);
             setCampaignData(data); // Store locally in APIKeyManager
+            setSelectedCampaignData(data); // Store in App-level state for Enhanced Mode
             setShowCampaignSelector(false); // Close modal
             console.log('🔄 Modal should now close, campaign data stored');
+            console.log('🚀 Campaign data sent to Enhanced Mode:', data);
           }}
         />
       )}
