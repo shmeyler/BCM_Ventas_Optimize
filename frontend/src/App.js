@@ -65,6 +65,8 @@ function App() {
           setShowLoginModal={setShowLoginModal}
           isLoggedIn={isLoggedIn}
           onLogout={handleLogout}
+          selectedCampaignData={selectedCampaignData}
+          setSelectedCampaignData={setSelectedCampaignData}
         />
         
         <LoginModal 
