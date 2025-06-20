@@ -6,9 +6,15 @@ from datetime import datetime, date, timedelta
 from typing import Dict, Any, List, Optional
 import uuid
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # Base URL from frontend/.env
-BASE_URL = "http://localhost:8001"
-API_BASE_URL = f"{BASE_URL}/api"
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001')
+API_BASE_URL = f"{BACKEND_URL}/api"
 
 def print_separator(title: str):
     """Print a separator with a title."""
