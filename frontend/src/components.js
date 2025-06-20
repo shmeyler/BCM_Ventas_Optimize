@@ -888,7 +888,7 @@ const knowledgeBaseData = [
 ];
 
 // Header Component with BCM branding and API management
-const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, onLogout }) => {
+const Header = ({ currentView, setCurrentView, setShowLoginModal, isLoggedIn, onLogout, selectedCampaignData, setSelectedCampaignData }) => {
   const [showAPIManager, setShowAPIManager] = useState(false);
   const [useMetaData, setUseMetaData] = useState(false); // New state for Meta data toggle
 
