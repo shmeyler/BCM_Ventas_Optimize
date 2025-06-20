@@ -1690,6 +1690,7 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
                   )}
                 </div>
             </div>
+            </div>
           )}
 
           {/* Integration Status */}
