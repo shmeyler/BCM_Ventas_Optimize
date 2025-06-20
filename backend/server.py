@@ -149,6 +149,63 @@ async def validate_budget(budget: BudgetConfiguration):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/api/budget/recommendations-meta")
+async def get_meta_budget_recommendations(request: dict = Body(...)):
+    """Get budget recommendations based on real Meta campaign data"""
+    try:
+        objective_type = request.get("objective_type")
+        campaign_insights = request.get("campaign_insights", [])
+        target_population = request.get("target_population", 100000)
+        
+        if not campaign_insights:
+            # Fallback to generic recommendations
+            return await get_budget_recommendations(objective_type, target_population)
+        
+        # Calculate budget based on real Meta campaign performance
+        total_spend = sum(insight.get("metrics", {}).get("spend", 0) for insight in campaign_insights)
+        total_impressions = sum(insight.get("metrics", {}).get("impressions", 0) for insight in campaign_insights)
+        total_conversions = sum(insight.get("metrics", {}).get("conversions", 0) for insight in campaign_insights)
+        
+        if total_spend > 0 and total_impressions > 0:
+            # Calculate actual performance metrics
+            avg_cpm = (total_spend / total_impressions) * 1000
+            avg_conversion_cost = total_spend / total_conversions if total_conversions > 0 else 50
+            
+            # Scale recommendations based on target population
+            population_multiplier = target_population / total_impressions if total_impressions > 0 else 1
+            
+            # Calculate recommended budgets based on actual performance
+            recommended_daily = max(150, avg_conversion_cost * 10 * population_multiplier)
+            recommended_total = recommended_daily * 21  # 3 weeks default
+            
+            return {
+                "objective_type": objective_type,
+                "target_population": target_population,
+                "campaign_data": {
+                    "total_campaigns": len(campaign_insights),
+                    "historical_spend": total_spend,
+                    "avg_cpm": round(avg_cpm, 2),
+                    "avg_conversion_cost": round(avg_conversion_cost, 2)
+                },
+                "recommendations": {
+                    "minimum_daily_budget": max(100, recommended_daily * 0.5),
+                    "recommended_daily_budget": round(recommended_daily),
+                    "minimum_duration_days": 14,
+                    "recommended_duration_days": 21,
+                    "minimum_total_budget": round(recommended_daily * 0.5 * 14),
+                    "recommended_total_budget": round(recommended_total)
+                },
+                "rationale": f"Based on your actual Meta campaign performance: ${total_spend:,.0f} spend across {len(campaign_insights)} campaigns with ${avg_conversion_cost:.0f} average conversion cost"
+            }
+        else:
+            # Fallback to generic if no spend data
+            return await get_budget_recommendations(objective_type, target_population)
+            
+    except Exception as e:
+        return {
+            "error": f"Failed to calculate Meta-based recommendations: {str(e)}"
+        }
+
 @app.get("/api/budget/recommendations")
 async def get_budget_recommendations(
     objective_type: str = Query(...),
