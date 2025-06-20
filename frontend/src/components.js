@@ -1442,16 +1442,23 @@ const MetaCampaignSelector = ({ onClose, onCampaignSelect }) => {
                   <p className="text-sm text-gray-600">
                     {selectedCampaigns.length} campaign(s) selected
                   </p>
+                  
+                  {/* Debug info */}
+                  <div className="text-xs text-gray-500 mr-4">
+                    Selected: {JSON.stringify(selectedCampaigns.map(c => c.name))}
+                    Loading: {loading ? 'Yes' : 'No'}
+                  </div>
+                  
                   <button
                     onClick={handleLoadInsights}
                     disabled={selectedCampaigns.length === 0 || loading}
                     className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                      selectedCampaigns.length > 0 
+                      selectedCampaigns.length > 0 && !loading
                         ? 'bg-blue-600 text-white hover:bg-blue-700' 
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    Load Campaign Data
+                    {loading ? 'Loading...' : `Load Campaign Data (${selectedCampaigns.length})`}
                   </button>
                 </div>
               </div>
