@@ -2991,6 +2991,7 @@ const GeoTestingDashboard = ({ testData, setTestData, setCurrentView }) => {
   const [liftTestResults, setLiftTestResults] = useState(null);
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [useMetaData, setUseMetaData] = useState(false); // Add Meta data toggle state
+  const [selectedCampaignData, setSelectedCampaignData] = useState(null); // Add campaign data state
 
   // CSV upload handling
   const handleCSVUpload = (event) => {
