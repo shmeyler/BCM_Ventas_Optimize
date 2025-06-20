@@ -29,6 +29,7 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true); // Start logged in for testing
   const [useEnhancedMode, setUseEnhancedMode] = useState(true); // Default to enhanced mode
+  const [selectedCampaignData, setSelectedCampaignData] = useState(null); // Meta campaign data for enhanced mode
   const [testData, setTestData] = useState({
     selectedRegions: [],
     testConfiguration: {},
