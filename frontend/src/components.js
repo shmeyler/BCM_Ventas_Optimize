@@ -1701,8 +1701,8 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
           onClose={() => setShowCampaignSelector(false)}
           onCampaignSelect={(data) => {
             setSelectedCampaigns(data.campaigns);
-            setSelectedCampaignData(data); // Store campaign data in Enhanced Mode
-            console.log('📊 Campaign data stored in Enhanced Mode:', data);
+            setSelectedCampaignData(data); // Store campaign data in dashboard
+            console.log('📊 Campaign data stored in dashboard:', data);
             setShowCampaignSelector(false);
           }}
         />
