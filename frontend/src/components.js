@@ -1524,18 +1524,19 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">Data Sources</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              <span className="text-2xl">×</span>
-            </button>
+    <>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Data Sources</h2>
+              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                <span className="text-2xl">×</span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6">
           {/* Census Bureau API */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
