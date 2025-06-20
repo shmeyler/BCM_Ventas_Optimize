@@ -1505,7 +1505,6 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData }) => {
   const [showCampaignSelector, setShowCampaignSelector] = useState(false);
   const [selectedCampaigns, setSelectedCampaigns] = useState([]);
   const [campaignData, setCampaignData] = useState(null); // Store campaign data locally
-  const [campaignData, setCampaignData] = useState(null); // Store campaign data locally
   
   useEffect(() => {
     checkMetaConnection();
