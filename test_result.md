@@ -333,7 +333,7 @@ backend:
         agent: "testing"
         comment: "The POST /api/tests/create-enhanced endpoint is returning a 422 error instead of a 400 error for invalid inputs. This indicates an issue with validation in the endpoint, though it does correctly validate the required fields."
         
-  - task: "Enhanced Test Management API - Get Tests Endpoint"
+  - task: "Meta API Validation Endpoint"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -343,7 +343,55 @@ backend:
     status_history:
       - working: true
         agent: "testing"
-        comment: "The GET /api/tests/enhanced endpoint is working correctly. It returns a list of enhanced tests with their details. The response includes test IDs, names, descriptions, objectives, budgets, and market selections."
+        comment: "The GET /api/meta/validate endpoint is working correctly. It successfully validates the Meta API connection and returns the connection status, account name, and account status. The API is properly connected with a valid access token and ad account."
+        
+  - task: "Meta Ad Accounts Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/meta/accounts endpoint is working correctly. It successfully retrieves available Meta ad accounts. The response includes the expected Aon accounts: 'Aon - NSO' and 'Aon - HPSO'. The accounts have valid IDs, status, currency, and timezone information."
+        
+  - task: "Meta Campaigns Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The GET /api/meta/campaigns endpoint is working correctly. It successfully handles the request for campaigns from a specific account. While no campaigns were returned in the test environment, the endpoint correctly processes the request and returns a valid response structure with the expected fields."
+        
+  - task: "Meta Campaign Insights Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/meta/campaign-insights endpoint is working correctly. It successfully handles the request for geographic insights from specific campaigns. While no insights were returned in the test environment (due to no real campaigns), the endpoint correctly processes the request and returns a valid response structure with the expected fields."
+        
+  - task: "Budget Recommendations Meta Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "The POST /api/budget/recommendations-meta endpoint is working correctly. It successfully handles the request for budget recommendations based on Meta campaign data. When no real campaign insights are available, it correctly falls back to the generic recommendations endpoint. The response includes all required fields: minimum and recommended values for daily budget, duration, and total budget."
 
 frontend:
   - task: "Data Sources Button Functionality"
