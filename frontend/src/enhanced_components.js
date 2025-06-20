@@ -548,7 +548,7 @@ const ObjectivesStep = ({ onComplete, initialData }) => {
 };
 
 // STEP 2: Budget Configuration
-const BudgetStep = ({ onComplete, initialData, objective }) => {
+const BudgetStep = ({ onComplete, initialData, objective, selectedCampaignData }) => {
   const [budgetConfig, setBudgetConfig] = useState(initialData || {
     total_budget: 10000,
     daily_budget: 500,
