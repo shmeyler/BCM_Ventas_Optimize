@@ -267,6 +267,10 @@ const Enhanced5StepWorkflow = ({ onComplete, selectedCampaignData, setSelectedCa
                   Using standard industry benchmarks for recommendations. 
                   Select Meta campaigns in Data Sources for personalized calculations.
                 </p>
+                {/* Debug info */}
+                <div className="text-xs text-red-600 mt-2">
+                  Debug: selectedCampaignData = {JSON.stringify(selectedCampaignData)}
+                </div>
               </div>
             </div>
             <div className="text-xs text-orange-600 text-right">
