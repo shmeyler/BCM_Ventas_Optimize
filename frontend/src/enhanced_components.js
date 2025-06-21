@@ -636,24 +636,29 @@ const BudgetStep = ({ onComplete, initialData, objective, selectedCampaignData }
   const loadBudgetRecommendations = async () => {
     try {
       console.log('Fetching recommendations for objective type:', objective?.type);
-      console.log('Using Meta campaign data:', selectedCampaignData?.insights?.length || 0, 'campaigns');
+      console.log('Using Meta campaign data - campaigns:', selectedCampaignData?.campaigns?.length || 0, 'insights:', selectedCampaignData?.insights?.length || 0);
       
       let recs;
-      if (selectedCampaignData?.insights && selectedCampaignData.insights.length > 0) {
-        // Use Meta campaign data for recommendations
+      if (selectedCampaignData?.campaigns && selectedCampaignData.campaigns.length > 0) {
+        // Use Meta campaign data for recommendations (even if insights are empty)
+        console.log('🚀 Using Meta campaign data for budget calculations');
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/budget/recommendations-meta`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             objective_type: objective.type,
-            campaign_insights: selectedCampaignData.insights,
-            target_population: 100000
+            campaign_insights: selectedCampaignData.insights || [],
+            target_population: 100000,
+            // Include campaign info even if insights are empty
+            account_info: selectedCampaignData.account,
+            campaigns_info: selectedCampaignData.campaigns
           })
         });
         recs = await response.json();
         console.log('📊 Meta-based recommendations:', recs);
       } else {
         // Fallback to generic recommendations
+        console.log('📈 No Meta campaigns selected, using generic recommendations');
         recs = await enhancedAPI.getBudgetRecommendations(objective.type, 100000);
         console.log('📈 Generic recommendations:', recs);
       }
