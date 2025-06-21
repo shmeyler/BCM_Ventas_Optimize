@@ -744,27 +744,67 @@ const BudgetStep = ({ onComplete, initialData, objective, selectedCampaignData }
             </div>
             
             {recommendations ? (
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-blue-700">Recommended Daily:</span>
-                  <span className="font-medium text-blue-900">
-                    ${recommendations.recommendations.recommended_daily_budget}
-                  </span>
+              <div className="space-y-4">
+                {/* Data Source Indicator */}
+                {selectedCampaignData?.insights && selectedCampaignData.insights.length > 0 ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center text-blue-800 font-medium mb-2">
+                      <span className="text-lg">📊</span>
+                      <span className="ml-2">Using Real Meta Campaign Data</span>
+                    </div>
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <div>Account: {selectedCampaignData.account?.name}</div>
+                      <div>Campaigns analyzed: {selectedCampaignData.campaigns?.length || 0}</div>
+                      <div>Geographic insights: {selectedCampaignData.insights?.length || 0} regions</div>
+                      {recommendations.campaign_data && (
+                        <div className="mt-2 pt-2 border-t border-blue-200">
+                          <div>Historical spend: ${recommendations.campaign_data.historical_spend?.toLocaleString()}</div>
+                          <div>Average CPM: ${recommendations.campaign_data.avg_cpm}</div>
+                          <div>Average conversion cost: ${recommendations.campaign_data.avg_conversion_cost}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <div className="flex items-center text-orange-800 font-medium mb-2">
+                      <span className="text-lg">📈</span>
+                      <span className="ml-2">Using Industry Benchmark Data</span>
+                    </div>
+                    <div className="text-sm text-orange-700">
+                      No Meta campaign data selected. Recommendations based on industry standards.
+                    </div>
+                  </div>
+                )}
+
+                {/* Budget Recommendations */}
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Recommended Daily:</span>
+                    <span className="font-medium text-blue-900">
+                      ${recommendations.recommendations.recommended_daily_budget}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Recommended Duration:</span>
+                    <span className="font-medium text-blue-900">
+                      {recommendations.recommendations.recommended_duration_days} days
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Recommended Total:</span>
+                    <span className="font-medium text-blue-900">
+                      ${recommendations.recommendations.recommended_total_budget}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-blue-700">Recommended Duration:</span>
-                  <span className="font-medium text-blue-900">
-                    {recommendations.recommendations.recommended_duration_days} days
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-blue-700">Recommended Total:</span>
-                  <span className="font-medium text-blue-900">
-                    ${recommendations.recommendations.recommended_total_budget}
-                  </span>
-                </div>
-                <div className="text-xs text-blue-600 mt-2">
-                  For {recommendations.objective_type} campaigns
+
+                {/* Statistical Rationale */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <div className="text-sm font-medium text-gray-800 mb-2">Statistical Rationale:</div>
+                  <div className="text-xs text-gray-600">
+                    {recommendations.rationale || `Based on ${recommendations.objective_type} campaign objectives and target population of ${recommendations.target_population?.toLocaleString()} people.`}
+                  </div>
                 </div>
               </div>
             ) : (
