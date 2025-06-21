@@ -188,6 +188,9 @@ const enhancedAPI = new EnhancedAPIService();
 
 // Enhanced 5-Step Workflow Component
 const Enhanced5StepWorkflow = ({ onComplete, selectedCampaignData, setSelectedCampaignData }) => {
+  // Debug logging
+  console.log('🔍 Enhanced5StepWorkflow received selectedCampaignData:', selectedCampaignData);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [testConfig, setTestConfig] = useState({
