@@ -229,6 +229,51 @@ const Enhanced5StepWorkflow = ({ onComplete, selectedCampaignData, setSelectedCa
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Meta Data Status Indicator */}
+      {selectedCampaignData?.insights && selectedCampaignData.insights.length > 0 ? (
+        <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-2xl mr-3">🚀</span>
+              <div>
+                <h3 className="text-lg font-semibold text-blue-900">
+                  Meta Campaign Data Active
+                </h3>
+                <p className="text-blue-700 text-sm">
+                  Using real performance data from {selectedCampaignData.campaigns?.length} campaigns 
+                  from {selectedCampaignData.account?.name} for statistical calculations
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-blue-600 text-right">
+              <div>{selectedCampaignData.insights?.length} geo insights</div>
+              <div>Live campaign data</div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6 bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-2xl mr-3">📊</span>
+              <div>
+                <h3 className="text-lg font-semibold text-orange-900">
+                  Industry Benchmark Mode
+                </h3>
+                <p className="text-orange-700 text-sm">
+                  Using standard industry benchmarks for recommendations. 
+                  Select Meta campaigns in Data Sources for personalized calculations.
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-orange-600 text-right">
+              <div>Generic data</div>
+              <div>Industry averages</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progress Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
