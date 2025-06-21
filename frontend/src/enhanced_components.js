@@ -807,7 +807,7 @@ const BudgetStep = ({ onComplete, initialData, objective, selectedCampaignData }
             {recommendations ? (
               <div className="space-y-4">
                 {/* Data Source Indicator */}
-                {selectedCampaignData?.insights && selectedCampaignData.insights.length > 0 ? (
+                {selectedCampaignData?.campaigns && selectedCampaignData.campaigns.length > 0 ? (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <div className="flex items-center text-blue-800 font-medium mb-2">
                       <span className="text-lg">📊</span>
@@ -816,7 +816,7 @@ const BudgetStep = ({ onComplete, initialData, objective, selectedCampaignData }
                     <div className="text-sm text-blue-700 space-y-1">
                       <div>Account: {selectedCampaignData.account?.name}</div>
                       <div>Campaigns analyzed: {selectedCampaignData.campaigns?.length || 0}</div>
-                      <div>Geographic insights: {selectedCampaignData.insights?.length || 0} regions</div>
+                      <div>Geographic insights: {selectedCampaignData.insights?.length || 0} regions{selectedCampaignData.insights?.length === 0 ? ' (using campaign-level data)' : ''}</div>
                       {recommendations.campaign_data && (
                         <div className="mt-2 pt-2 border-t border-blue-200">
                           <div>Historical spend: ${recommendations.campaign_data.historical_spend?.toLocaleString()}</div>
