@@ -1691,6 +1691,7 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData, selectedCampaignD
                     </div>
                   )}
                 </div>
+              )}
             </div>
           )}
 
