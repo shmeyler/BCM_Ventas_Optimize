@@ -233,7 +233,7 @@ const Enhanced5StepWorkflow = ({ onComplete, selectedCampaignData, setSelectedCa
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Meta Data Status Indicator */}
-      {selectedCampaignData?.insights && selectedCampaignData.insights.length > 0 ? (
+      {selectedCampaignData?.campaigns && selectedCampaignData.campaigns.length > 0 ? (
         <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -245,12 +245,16 @@ const Enhanced5StepWorkflow = ({ onComplete, selectedCampaignData, setSelectedCa
                 <p className="text-blue-700 text-sm">
                   Using real performance data from {selectedCampaignData.campaigns?.length} campaigns 
                   from {selectedCampaignData.account?.name} for statistical calculations
+                  {selectedCampaignData.insights?.length > 0 ? 
+                    ` (${selectedCampaignData.insights.length} geographic insights loaded)` : 
+                    ' (loading insights...)'
+                  }
                 </p>
               </div>
             </div>
             <div className="text-xs text-blue-600 text-right">
-              <div>{selectedCampaignData.insights?.length} geo insights</div>
-              <div>Live campaign data</div>
+              <div>{selectedCampaignData.campaigns?.length} campaigns</div>
+              <div>{selectedCampaignData.insights?.length || 0} geo insights</div>
             </div>
           </div>
         </div>
