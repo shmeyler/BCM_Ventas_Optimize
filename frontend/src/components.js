@@ -1732,6 +1732,7 @@ const APIKeyManager = ({ onClose, useMetaData, setUseMetaData, selectedCampaignD
         </div>
       </div>
       </div>
+      </div>
       
       {/* Meta Campaign Selector Modal */}
       {showCampaignSelector && (
